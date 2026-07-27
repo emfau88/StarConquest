@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="StarConquest is a fast strategy game about linking star systems and redirecting energy."
+    />
+    <meta name="theme-color" content="#030914" />
+    <title>StarConquest — First Contact</title>
+  </head>
+  <body>
+    <main id="app" class="game-shell">
+      <canvas
+        id="game-canvas"
+        aria-label="StarConquest game field"
+      ></canvas>
+
+      <header class="hud" aria-label="Mission status">
+        <div class="hud__mission">
+          <span class="hud__eyebrow" id="hud-sector">Sector 01</span>
+          <strong class="hud__title" id="hud-title">First Contact</strong>
+        </div>
+
+        <p class="hud__objective" id="hud-objective">
+          Capture the red system
+        </p>
+
+        <div class="hud__actions">
+          <time class="hud__time" id="hud-time" datetime="PT0S">00:00</time>
+          <button
+            class="icon-button"
+            id="restart-button"
+            type="button"
+            data-icon="↻"
+          >
+            Restart
+          </button>
+          <button
+            class="icon-button"
+            id="audio-button"
+            type="button"
+            data-icon="♪"
+          >
+            Audio on
+          </button>
+          <button
+            class="icon-button"
+            id="fullscreen-button"
+            type="button"
+            data-icon="⛶"
+          >
+            Fullscreen
+          </button>
+          <button
+            class="icon-button icon-button--primary"
+            id="pause-button"
+            type="button"
+            data-icon="Ⅱ"
+          >
+            Pause
+          </button>
+        </div>
+      </header>
+
+      <aside class="status-card" aria-live="polite">
+        <span class="status-card__pulse" aria-hidden="true"></span>
+        <span id="status-message">
+          Drag from your blue system to another star
+        </span>
+      </aside>
+
+      <section
+        class="result-overlay"
+        id="result-overlay"
+        aria-live="assertive"
+        hidden
+      >
+        <div class="result-card">
+          <span class="result-card__eyebrow" id="result-eyebrow">
+            Sector secured
+          </span>
+          <h1 id="result-title">Network captured</h1>
+          <div class="result-card__stars" id="result-stars" aria-label="3 stars">
+            ★★★
+          </div>
+          <p id="result-summary">First Contact completed in 00:00</p>
+          <button id="retry-button" type="button">Play again</button>
+        </div>
+      </section>
+
+      <section class="orientation-message" aria-label="Device orientation">
+        <strong>Rotate your device</strong>
+        <span>StarConquest is designed for landscape play.</span>
+      </section>
+
+      <noscript>StarConquest requires JavaScript.</noscript>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

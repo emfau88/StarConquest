@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tentacle Wars</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
+        html,body{width:100%;height:100%;background:#050c05;overflow:hidden;font-family:'Share Tech Mono',monospace;position:fixed;}
+        #gameCanvas{display:block;width:100%;height:100%;}
+        #topHud{position:absolute;top:0;left:0;right:0;height:34px;background:rgba(0,0,0,0.82);border-bottom:1px solid rgba(60,140,60,0.2);display:flex;align-items:center;padding:0 8px;gap:10px;pointer-events:none;z-index:10;font-size:11px;color:rgba(170,215,170,0.85);}
+        #topHud .sep{color:rgba(60,140,60,0.3);}
+        #topHud .val{color:#88ee88;font-weight:700;}
+        #topHud .msg{flex:1;text-align:center;color:rgba(120,180,120,0.6);font-size:9px;overflow:hidden;white-space:nowrap;}
+        #topHud .tw{display:flex;align-items:center;gap:4px;margin-left:auto;}
+        #topHud .tl{color:rgba(110,160,110,0.55);font-size:9px;}
+        #topHud .tv{color:#aaff88;font-size:12px;font-weight:700;min-width:24px;text-align:right;}
+        #powerBar{position:absolute;top:3px;right:8px;width:72px;height:9px;border:1px solid rgba(60,140,60,0.3);border-radius:1px;overflow:hidden;pointer-events:none;z-index:11;display:flex;}
+        #pbP{height:100%;background:#33bb33;transition:width 0.4s;}
+        #pbE{height:100%;background:#bb2233;transition:width 0.4s;}
+        #transferSelector{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10;pointer-events:all;}
+        .tbtn{background:rgba(0,18,0,0.88);border:1px solid rgba(70,160,70,0.3);color:#77bb77;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Share Tech Mono',monospace;transition:all 0.15s;}
+        .tbtn.active{background:rgba(30,120,30,0.45);border-color:#55bb55;color:#99ee99;box-shadow:0 0 7px rgba(60,180,60,0.3);}
+        .tbtn:active{transform:scale(0.91);}
+        .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;background:rgba(2,7,2,0.95);backdrop-filter:blur(5px);}
+        .obox{text-align:center;max-width:380px;padding:30px 24px;width:92%;}
+        .obox h1{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;color:#33dd33;text-shadow:0 0 20px rgba(50,190,50,0.5);letter-spacing:4px;margin-bottom:5px;}
+        .obox .sub{font-size:10px;color:rgba(70,150,70,0.55);letter-spacing:5px;margin-bottom:22px;font-family:'Orbitron',sans-serif;}
+        .obox p{color:rgba(150,205,150,0.8);font-size:12px;line-height:1.8;margin-bottom:18px;}
+        .btn-p{background:linear-gradient(135deg,#28bb44,#168832);color:#000;border:none;padding:12px 32px;border-radius:3px;cursor:pointer;font-weight:700;font-size:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;transition:all 0.2s;box-shadow:0 0 14px rgba(30,160,30,0.4);}
+        .btn-p:hover{transform:scale(1.04);} .btn-p:active{transform:scale(0.95);}
+        .btn-s{background:transparent;color:rgba(110,170,110,0.65);border:1px solid rgba(70,150,70,0.2);padding:8px 18px;border-radius:3px;cursor:pointer;font-size:11px;font-family:'Share Tech Mono',monospace;margin-top:8px;transition:all 0.2s;display:block;width:fit-content;margin-left:auto;margin-right:auto;}
+        .btn-s:hover{border-color:rgba(70,190,70,0.45);color:#99ee99;}
+        #levelIntro{display:none;}
+        .lvl-badge{font-family:'Orbitron',sans-serif;font-size:10px;color:rgba(50,170,50,0.55);letter-spacing:4px;margin-bottom:6px;}
+        #levelIntro h2{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#99ffaa;margin-bottom:12px;}
+        .story-txt{color:rgba(130,195,130,0.75);font-size:12px;line-height:1.8;margin-bottom:18px;text-align:left;border-left:2px solid rgba(50,150,50,0.3);padding-left:12px;}
+        .lstats{display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+        .sbox{background:rgba(0,35,0,0.55);border:1px solid rgba(50,150,50,0.2);border-radius:3px;padding:6px 12px;}
+        .sbox .sv{font-family:'Orbitron',sans-serif;font-size:15px;color:#55ee55;font-weight:700;}
+        .sbox .sk{font-size:9px;color:rgba(110,170,110,0.45);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+        #gameOver{display:none;}
+        #gameOver h2{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;margin-bottom:6px;}
+        .go-stars{font-size:26px;margin-bottom:8px;letter-spacing:4px;}
+        .go-sub{font-size:12px;color:rgba(150,200,150,0.6);margin-bottom:20px;}
+        .btn-row{display:flex;flex-direction:column;align-items:center;gap:7px;}
+        #levelSelect{display:none;}
+        #levelSelect h2{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#33dd33;margin-bottom:16px;letter-spacing:3px;}
+        .lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px;max-width:280px;}
+        .ltile{background:rgba(0,18,0,0.65);border:1px solid rgba(50,150,50,0.2);border-radius:3px;padding:10px 4px;cursor:pointer;transition:all 0.18s;text-align:center;}
+        .ltile:hover{border-color:#33bb33;background:rgba(15,70,15,0.4);}
+        .ltile.locked{opacity:0.2;cursor:not-allowed;pointer-events:none;}
+        .ltile .tn{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#33bb33;}
+        .ltile .tname{font-size:8px;color:rgba(110,170,110,0.45);margin-top:2px;}
+        .ltile .tstars{font-size:11px;margin-top:3px;}
+        #mainMenu{display:flex;}
+        .cls-legend{display:flex;flex-direction:column;gap:3px;margin-bottom:16px;text-align:left;}
+        .cls-row{font-size:10px;color:rgba(120,185,120,0.7);padding:3px 9px;border-left:2px solid rgba(50,150,50,0.25);}
+        .cls-row span{color:#88ee88;font-weight:700;}
+        /* boost hint bar */
+        #boostHint{position:absolute;top:38px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border:1px solid rgba(200,180,40,0.4);border-radius:3px;padding:4px 12px;font-size:10px;color:rgba(200,190,60,0.85);pointer-events:none;z-index:10;opacity:0;transition:opacity 0.4s;white-space:nowrap;}
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="topHud">
+    <span>ZONE: <span class="val" id="hudZone">1</span></span>
+    <span class="sep">|</span>
+    <span>POWER: <span class="val" id="hudLimit">60</span></span>
+    <span class="sep">|</span>
+    <span class="msg" id="hudMsg">CAPTURE ALL ALIEN MICROBES</span>
+    <div class="tw"><span class="tl">TIME:</span><span class="tv" id="hudTimer">0</span></div>
+</div>
+<div id="powerBar"><div id="pbP" style="width:50%"></div><div id="pbE" style="width:50%"></div></div>
+<div id="boostHint">✂ Schneide nah an der Quelle = BOOST-Katapult!</div>
+
+<div id="transferSelector">
+    <button class="tbtn" data-pct="25">25%</button>
+    <button class="tbtn active" data-pct="50">50%</button>
+    <button class="tbtn" data-pct="100">100%</button>
+</div>
+
+<div class="overlay" id="mainMenu">
+    <div class="obox">
+        <h1>TENTACLE<br>WARS</h1>
+        <div class="sub">CELLULAR WARFARE</div>
+        <p>Ziehe Tentakel von deinen Zellen. Schneide feindliche Verbindungen durch. Übernimm alles.</p>
+        <div class="cls-legend">
+            <div class="cls-row"><span>SPORE</span> — Schnell, klein (Kap. 40), 1 Tentakel</div>
+            <div class="cls-row"><span>EMBRYO</span> — Ausgeglichen (Kap. 70), 2 Tentakel</div>
+            <div class="cls-row"><span>PULSAR</span> — Groß, langsam (Kap. 110), 3 Tentakel</div>
+            <div class="cls-row"><span>TITAN</span> — Riesig, sehr langsam (Kap. 160), 4 Tentakel</div>
+        </div>
+        <p style="font-size:10px;color:rgba(180,170,60,0.7);border:1px solid rgba(180,160,40,0.2);padding:8px;border-radius:3px;">
+            ⚡ TIPP: Schneide deinen eigenen Tentakel nahe an der angreifenden Zelle – alle Einheiten im Tentakel schießen sofort ans Ziel!
+        </p>
+        <br>
+        <button class="btn-p" onclick="UI.showLevelSelect()">SPIELEN</button>
+    </div>
+</div>
+
+<div class="overlay" id="levelSelect">
+    <div class="obox">
+        <h2>LEVEL WÄHLEN</h2>
+        <div class="lgrid" id="levelGrid"></div>
+        <button class="btn-s" onclick="UI.showMainMenu()">← Zurück</button>
+    </div>
+</div>
+
+<div class="overlay" id="levelIntro">
+    <div class="obox">
+        <div class="lvl-badge" id="introBadge">LEVEL 1</div>
+        <h2 id="introTitle">—</h2>
+        <div class="story-txt" id="introStory">—</div>
+        <div class="lstats">
+            <div class="sbox"><div class="sv" id="introZellen">—</div><div class="sk">Zellen</div></div>
+            <div class="sbox"><div class="sv" id="introLimit">—</div><div class="sk">Power Limit</div></div>
+            <div class="sbox"><div class="sv" id="introSchwier">—</div><div class="sk">Schwierigkeit</div></div>
+        </div>
+        <div class="lstats" style="font-size:10px;color:rgba(120,180,120,0.55);">
+            <span>★★★ &lt;<span id="t3">—</span>s</span>
+            <span>★★ &lt;<span id="t2">—</span>s</span>
+            <span>★ beliebig</span>
+        </div>
+        <button class="btn-p" id="startLevelBtn">ANGRIFF!</button>
+        <button class="btn-s" onclick="UI.showLevelSelect()">← Zurück</button>
+    </div>
+</div>
+
+<div class="overlay" id="gameOver">
+    <div class="obox">
+        <h2 id="goTitle">SIEG!</h2>
+        <div class="go-stars" id="goStars">★★★</div>
+        <p class="go-sub" id="goSub"></p>
+        <div class="btn-row">
+            <button class="btn-p" id="goNextBtn">WEITER →</button>
+            <button class="btn-s" onclick="UI.restartLevel()">Nochmal</button>
+            <button class="btn-s" onclick="UI.showLevelSelect()">Level wählen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// SOUND
+// ══════════════════════════════════════════
+const SFX=(() => {
+    let ac=null;
+    const ctx=()=>{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();return ac;};
+    const tone=(f,t,d,v=0.15,f2=null)=>{try{const c=ctx(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;if(f2)o.frequency.linearRampToValueAtTime(f2,c.currentTime+d);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start();o.stop(c.currentTime+d);}catch(e){}};
+    const noise=(d,v=0.12)=>{try{const c=ctx(),b=c.createBuffer(1,c.sampleRate*d,c.sampleRate),da=b.getChannelData(0);for(let i=0;i<da.length;i++)da[i]=Math.random()*2-1;const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=900;s.buffer=b;s.connect(f);f.connect(g);g.connect(c.destination);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);s.start();s.stop(c.currentTime+d);}catch(e){}};
+    return {
+        tentacle(){ tone(180,'sine',0.1,0.1,380); },
+        capture(){ tone(280,'square',0.04,0.08);setTimeout(()=>tone(440,'sine',0.12,0.12),50);setTimeout(()=>tone(660,'sine',0.18,0.1),130); },
+        cut(){ noise(0.06,0.14);tone(140,'sawtooth',0.05,0.08,90); },
+        boost(){ tone(520,'sine',0.08,0.12,780);setTimeout(()=>tone(880,'sine',0.14,0.1),60); },
+        lose(){ tone(180,'sawtooth',0.3,0.14,70); },
+        win(){ [0,160,320,520].forEach((d,i)=>setTimeout(()=>tone([380,480,600,800][i],'sine',0.22,0.12),d)); },
+    };
+})();
+
+// ══════════════════════════════════════════
+// CELL CLASSES
+// ══════════════════════════════════════════
+const CLASSES = {
+    SPORE:  {cap:40,  prod:4.2,  maxTent:1, spikes:4,  sLen:0.45},
+    EMBRYO: {cap:70,  prod:2.8,  maxTent:2, spikes:6,  sLen:0.65},
+    PULSAR: {cap:110, prod:1.75, maxTent:3, spikes:9,  sLen:0.85},
+    TITAN:  {cap:160, prod:1.0,  maxTent:4, spikes:12, sLen:1.05},
+};
+
+// ══════════════════════════════════════════
+// LEVELS  – easier early levels
+// ══════════════════════════════════════════
+const LEVELS = [
+{
+    name:"Erste Infektion", zone:1, powerLimit:60, star3:45, star2:80,
+    msg:"DRAG TO ATTACK — CUT YOUR OWN TENTACLE NEAR SOURCE FOR BOOST!",
+    difficulty:"★☆☆☆",
+    story:"Deine erste Begegnung mit dem Feind. Nur zwei Zellen stehen sich gegenüber. Lerne das System kennen – und den Boost-Schnitt.",
+    aiInterval:5.2, aiCutInterval:99, aiCutChance:0,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx-w*0.25,y:cy,       owner:'player', cls:'EMBRYO'},
+        {x:cx+w*0.25,y:cy,       owner:'enemy',  cls:'EMBRYO'},
+        {x:cx,       y:cy-h*0.18,owner:'neutral',cls:'SPORE'},
+        {x:cx,       y:cy+h*0.18,owner:'neutral',cls:'SPORE'},
+    ];}
+},
+{
+    name:"Zwei gegen Einen", zone:2, powerLimit:60, star3:60, star2:100,
+    msg:"SECURE NEUTRAL CELLS BEFORE THE ENEMY DOES",
+    difficulty:"★★☆☆",
+    story:"Zwei Feinde, aber du hast die neutralen Zellen in Reichweite. Schnell handeln lohnt sich.",
+    aiInterval:4.6, aiCutInterval:10.4, aiCutChance:0.12,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx-w*0.30,y:cy,           owner:'player', cls:'PULSAR'},
+        {x:cx+w*0.27,y:cy-h*0.20,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx+w*0.27,y:cy+h*0.20,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx,       y:cy,           owner:'neutral',cls:'EMBRYO'},
+        {x:cx-w*0.10,y:cy-h*0.22,    owner:'neutral',cls:'SPORE'},
+        {x:cx-w*0.10,y:cy+h*0.22,    owner:'neutral',cls:'SPORE'},
+    ];}
+},
+{
+    name:"Zellteilung", zone:3, powerLimit:100, star3:75, star2:130,
+    msg:"DIVIDE AND CONQUER — ISOLATE EACH ENEMY",
+    difficulty:"★★★☆",
+    story:"Drei Feinde. Sie agieren unkoordiniert – nutze das. Schneide ihre Verbindungen, sobald sie Tentakel bilden.",
+    aiInterval:3.6, aiCutInterval:7.8, aiCutChance:0.2,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx,       y:cy+h*0.30,    owner:'player', cls:'TITAN'},
+        {x:cx-w*0.28,y:cy-h*0.24,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx+w*0.28,y:cy-h*0.24,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx,       y:cy-h*0.05,    owner:'enemy',  cls:'SPORE'},
+        {x:cx-w*0.14,y:cy+h*0.08,    owner:'neutral',cls:'EMBRYO'},
+        {x:cx+w*0.14,y:cy+h*0.08,    owner:'neutral',cls:'EMBRYO'},
+        {x:cx,       y:cy-h*0.30,    owner:'neutral',cls:'PULSAR'},
+    ];}
+},
+{
+    name:"Belagerung", zone:4, powerLimit:100, star3:80, star2:140,
+    msg:"THE ENEMY HOLDS THE CENTER — STARVE HIM",
+    difficulty:"★★★☆",
+    story:"Der Feind hält die Mitte. Umzingle ihn. Schneide Verbindungen durch bevor er sich erholt.",
+    aiInterval:2.9, aiCutInterval:5.9, aiCutChance:0.3,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx-w*0.37,y:cy,            owner:'player', cls:'PULSAR'},
+        {x:cx+w*0.37,y:cy,            owner:'enemy',  cls:'PULSAR'},
+        {x:cx,       y:cy,            owner:'enemy',  cls:'TITAN'},
+        {x:cx-w*0.16,y:cy-h*0.24,    owner:'neutral',cls:'EMBRYO'},
+        {x:cx-w*0.16,y:cy+h*0.24,    owner:'neutral',cls:'EMBRYO'},
+        {x:cx+w*0.16,y:cy-h*0.24,    owner:'neutral',cls:'SPORE'},
+        {x:cx+w*0.16,y:cy+h*0.24,    owner:'neutral',cls:'SPORE'},
+    ];}
+},
+{
+    name:"Letzte Bastion", zone:5, powerLimit:80, star3:90, star2:150,
+    msg:"ONE CELL LEFT — FIGHT OR DIE",
+    difficulty:"★★★★",
+    story:"Alles verloren bis auf eine Zelle. Kein Spielraum für Fehler.",
+    aiInterval:2.3, aiCutInterval:4.6, aiCutChance:0.4,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx-w*0.34,y:cy,            owner:'player', cls:'TITAN'},
+        {x:cx+w*0.27,y:cy-h*0.27,    owner:'enemy',  cls:'PULSAR'},
+        {x:cx+w*0.27,y:cy+h*0.27,    owner:'enemy',  cls:'PULSAR'},
+        {x:cx+w*0.09,y:cy,            owner:'enemy',  cls:'EMBRYO'},
+        {x:cx-w*0.10,y:cy-h*0.22,    owner:'neutral',cls:'SPORE'},
+        {x:cx-w*0.10,y:cy+h*0.22,    owner:'neutral',cls:'SPORE'},
+        {x:cx-w*0.29,y:cy-h*0.27,    owner:'neutral',cls:'EMBRYO'},
+        {x:cx-w*0.29,y:cy+h*0.27,    owner:'neutral',cls:'EMBRYO'},
+    ];}
+},
+{
+    name:"Totalkrieg", zone:6, powerLimit:120, star3:110, star2:180,
+    msg:"TOTAL WAR — COORDINATE ALL CELLS SIMULTANEOUSLY",
+    difficulty:"★★★★",
+    story:"Endspiel. Volle KI-Aggression. Koordiniere jeden Zug. Kein Fehler erlaubt.",
+    aiInterval:1.8, aiCutInterval:3.6, aiCutChance:0.5,
+    layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+        {x:cx-w*0.34,y:cy,            owner:'player', cls:'TITAN'},
+        {x:cx-w*0.19,y:cy-h*0.27,    owner:'player', cls:'EMBRYO'},
+        {x:cx-w*0.19,y:cy+h*0.27,    owner:'player', cls:'EMBRYO'},
+        {x:cx+w*0.34,y:cy,            owner:'enemy',  cls:'TITAN'},
+        {x:cx+w*0.19,y:cy-h*0.27,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx+w*0.19,y:cy+h*0.27,    owner:'enemy',  cls:'EMBRYO'},
+        {x:cx,       y:cy,            owner:'neutral',cls:'PULSAR'},
+        {x:cx,       y:cy-h*0.27,    owner:'neutral',cls:'SPORE'},
+        {x:cx,       y:cy+h*0.27,    owner:'neutral',cls:'SPORE'},
+    ];}
+},
+];
+
+// ══════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════
+const C = {
+    DIST_COST: 0.055,
+    FLOW_RATE: 9.8,     // was 14
+    GROW_SPD: 91,       // was 130
+    CUT_THRESH: 18,
+    COL:{P:'#33dd33',E:'#dd3333',N:'#9aabb5',PG:'rgba(40,180,40,0.25)',EG:'rgba(180,30,30,0.25)',NG:'rgba(100,125,140,0.1)'},
+};
+const dist  = (x1,y1,x2,y2)=>Math.hypot(x2-x1,y2-y1);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const bez   = (p0,p1,p2,t)=>({x:(1-t)*(1-t)*p0.x+2*(1-t)*t*p1.x+t*t*p2.x,y:(1-t)*(1-t)*p0.y+2*(1-t)*t*p1.y+t*t*p2.y});
+const lerp  = (a,b,t)=>a+(b-a)*t;
+
+// ══════════════════════════════════════════
+// BACKGROUND
+// ══════════════════════════════════════════
+let bgCanvas=null;
+function buildBG(w,h){
+    bgCanvas=document.createElement('canvas');
+    bgCanvas.width=w;bgCanvas.height=h;
+    const ctx=bgCanvas.getContext('2d');
+    ctx.fillStyle='#040b04';ctx.fillRect(0,0,w,h);
+    const rng=(a,b)=>a+(b-a)*Math.random();
+    for(let i=0;i<130;i++){
+        const x=rng(0,w),y=rng(0,h),r=rng(18,70);
+        const g=ctx.createRadialGradient(x,y,0,x,y,r);
+        g.addColorStop(0,'rgba(18,46,16,0.58)');g.addColorStop(0.6,'rgba(9,28,8,0.32)');g.addColorStop(1,'transparent');
+        ctx.save();ctx.translate(x,y);
+        const pts=6+Math.floor(Math.random()*5);
+        ctx.beginPath();
+        for(let j=0;j<pts;j++){const a=(j/pts)*Math.PI*2,rr=r*(0.78+0.28*Math.random());j===0?ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+        ctx.closePath();ctx.fillStyle=g;ctx.fill();
+        ctx.strokeStyle='rgba(25,65,20,0.13)';ctx.lineWidth=1;ctx.stroke();
+        ctx.restore();
+    }
+    for(let i=0;i<16;i++){ctx.beginPath();ctx.moveTo(rng(0,w),rng(0,h));ctx.lineTo(rng(0,w),rng(0,h));ctx.strokeStyle='rgba(18,55,15,0.09)';ctx.lineWidth=rng(1,2.2);ctx.stroke();}
+}
+
+// ══════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════
+class Particles{
+    constructor(){this.ps=[];}
+    burst(x,y,col,n=14,label=null){
+        for(let i=0;i<n;i++){const a=(Math.PI*2*i/n)+Math.random()*0.4,sp=1+Math.random()*4;this.ps.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.022+Math.random()*0.025,col,sz:1.8+Math.random()*2.5,label:null});}
+        if(label) this.ps.push({x,y,vx:0,vy:-32,life:1.5,decay:0.55,col,sz:0,label});
+    }
+    update(){this.ps=this.ps.filter(p=>{p.x+=p.vx*0.016;p.y+=p.vy*0.016;p.vx*=0.96;p.vy*=0.96;p.life-=p.decay*0.016+0.01;return p.life>0;});}
+    update2(dt){this.ps=this.ps.filter(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(0.92,dt*60);p.vy*=Math.pow(0.92,dt*60);p.life-=p.decay*dt;return p.life>0;});}
+    draw(ctx){
+        this.ps.forEach(p=>{
+            if(p.label){
+                ctx.globalAlpha=Math.min(1,p.life); ctx.fillStyle=p.col;
+                ctx.font=`bold 13px 'Share Tech Mono',monospace`;
+                ctx.textAlign='center';ctx.shadowColor=p.col;ctx.shadowBlur=7;
+                ctx.fillText(p.label,p.x,p.y);ctx.shadowBlur=0;
+            } else {
+                ctx.globalAlpha=p.life*p.life;ctx.fillStyle=p.col;
+                ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2);ctx.fill();
+            }
+        });
+        ctx.globalAlpha=1;
+    }
+}
+
+// ══════════════════════════════════════════
+// CELL
+// ══════════════════════════════════════════
+class Cell{
+    constructor(x,y,owner,clsName){
+        this.x=x;this.y=y;this.owner=owner;
+        this.cls=clsName||'EMBRYO';
+        const d=CLASSES[this.cls];
+        this.capacity=d.cap; this.prodRate=d.prod; this.maxTentacles=d.maxTent;
+        this.radius=14+d.cap/12;
+        this.units=owner==='neutral'?8+Math.random()*10:5;
+        this.phase=Math.random()*Math.PI*2;
+        this.spikes=owner==='neutral'?[]:Array.from({length:d.spikes},(_,i)=>({
+            base:(i/d.spikes)*Math.PI*2+Math.random()*0.3,
+            lf:d.sLen*(0.82+Math.random()*0.35),
+            spd:0.12+Math.random()*0.22,ph:Math.random()*Math.PI*2
+        }));
+    }
+    get color(){return this.owner==='player'?C.COL.P:this.owner==='enemy'?C.COL.E:C.COL.N;}
+    get glow(){return this.owner==='player'?C.COL.PG:this.owner==='enemy'?C.COL.EG:C.COL.NG;}
+    update(dt){if(this.owner!=='neutral')this.units=Math.min(this.capacity,this.units+this.prodRate*dt);}
+    // How many units needed to form tentacle to target (distance cost)
+    tentacleCost(target){return Math.ceil(dist(this.x,this.y,target.x,target.y)*C.DIST_COST)+2;}
+    canReach(target){return this.units>this.tentacleCost(target);}
+    draw(ctx){
+        const t=performance.now()/1000,col=this.color,R=this.radius;
+        // glow
+        const g=ctx.createRadialGradient(this.x,this.y,R*0.3,this.x,this.y,R*2.3);
+        g.addColorStop(0,this.glow);g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath();ctx.arc(this.x,this.y,R*2.3,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+        // spikes
+        this.spikes.forEach(sp=>{
+            const a=sp.base+t*sp.spd,slen=R*sp.lf*(0.88+0.12*Math.sin(t*1.4+sp.ph));
+            const x1=this.x+Math.cos(a)*R,y1=this.y+Math.sin(a)*R;
+            const x2=this.x+Math.cos(a)*(R+slen),y2=this.y+Math.sin(a)*(R+slen);
+            ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=col+'88';ctx.lineWidth=1.8;ctx.stroke();
+            ctx.beginPath();ctx.arc(x2,y2,2,0,Math.PI*2);ctx.fillStyle=col+'aa';ctx.fill();
+        });
+        // outer ring
+        ctx.beginPath();ctx.arc(this.x,this.y,R+4,0,Math.PI*2);ctx.strokeStyle=col+'28';ctx.lineWidth=1.5;ctx.stroke();
+        // body
+        const bg=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,R);
+        bg.addColorStop(0,'#0c180c');bg.addColorStop(1,'#060c06');
+        ctx.beginPath();ctx.arc(this.x,this.y,R,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+        ctx.shadowColor=col;ctx.shadowBlur=9;ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.stroke();ctx.shadowBlur=0;
+        // fill arc
+        const fr=this.units/this.capacity;
+        ctx.beginPath();ctx.arc(this.x,this.y,R*0.62,0,Math.PI*2);ctx.strokeStyle=col+'28';ctx.lineWidth=1.2;ctx.stroke();
+        if(fr>0.02){ctx.beginPath();ctx.arc(this.x,this.y,R*0.62,-Math.PI/2,-Math.PI/2+fr*Math.PI*2);ctx.strokeStyle=col+'cc';ctx.lineWidth=2.8;ctx.stroke();}
+        // unit number
+        const fs=clamp(Math.floor(R*0.44),10,17);
+        ctx.fillStyle='#cceecc';ctx.font=`bold ${fs}px 'Share Tech Mono',monospace`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.shadowColor='rgba(0,0,0,0.95)';ctx.shadowBlur=4;
+        ctx.fillText(Math.floor(this.units),this.x,this.y-2);ctx.shadowBlur=0;
+        // ∞
+        ctx.fillStyle=col+'77';ctx.font=`${Math.max(8,fs-4)}px 'Share Tech Mono',monospace`;
+        ctx.fillText('∞',this.x,this.y+fs*0.72);
+    }
+    containsPoint(x,y){return dist(x,y,this.x,this.y)<this.radius+9;}
+    tooltipLines(){
+        const out=game.tentacles.filter(t=>t.sourceCell===this&&t.state!=='severed').length;
+        return[`CLASS: ${this.cls}`,`POWER: ${Math.floor(this.units)}/${this.capacity}`,`TENTACLES: ${out}/${this.maxTentacles}`];
+    }
+}
+
+// ══════════════════════════════════════════
+// TENTACLE — energy tube model
+//
+// KEY MECHANIC:
+//  - When created, costs `distCost` units from source immediately
+//  - The tentacle "tube" has a `fill` value (0→distCost) that fills
+//    as units flow in from source  →  visualised as the bead chain fill level
+//  - `unitsInTube` = total units currently inside the tube (travelling)
+//  - On cut at position `cutT`:
+//      units in tube AHEAD of cut (t > cutT)  → immediately delivered to target
+//      units in tube BEHIND cut (t <= cutT)   → returned to source
+//  - Cutting near source (cutT small) = nearly all units go to target = BOOST
+//  - Cutting near target (cutT large) = nearly all units return to source
+// ══════════════════════════════════════════
+class Tentacle{
+    constructor(src,tgt){
+        this.sourceCell=src; this.targetCell=tgt;
+        this.owner=src.owner;
+        this.length=dist(src.x,src.y,tgt.x,tgt.y);
+        this.distCost=Math.ceil(this.length*C.DIST_COST)+2;
+        this.state='growing'; // growing | active | severed
+        this.growProg=0;      // 0→1 visual grow progress
+        // The tube: units currently inside (conceptually spread along the length)
+        this.unitsInTube=0;
+        this.flowAcc=0;
+        this.wavePhase=Math.random()*Math.PI*2;
+        this.cp=this._cp();
+        this.isInternal=(tgt.owner==='player'&&src.owner==='player');
+        // Deduct initial distance cost from source
+        src.units=Math.max(0, src.units - this.distCost);
+        this.unitsInTube=this.distCost; // those units are now "in the tube"
+    }
+    _cp(){
+        const mx=(this.sourceCell.x+this.targetCell.x)/2,my=(this.sourceCell.y+this.targetCell.y)/2;
+        const px=-(this.targetCell.y-this.sourceCell.y),py=(this.targetCell.x-this.sourceCell.x);
+        const len=Math.hypot(px,py)||1,off=(Math.random()-0.5)*this.length*0.28;
+        return{x:mx+(px/len)*off,y:my+(py/len)*off};
+    }
+    ptAt(t){
+        const wave=Math.sin(t*Math.PI*5+this.wavePhase+performance.now()/650)*2.8;
+        const base=bez(this.sourceCell,this.cp,this.targetCell,t);
+        const dx=this.targetCell.x-this.sourceCell.x,dy=this.targetCell.y-this.sourceCell.y;
+        const len=Math.hypot(dx,dy)||1;
+        return{x:base.x+(-dy/len)*wave,y:base.y+(dx/len)*wave};
+    }
+    update(dt){
+        if(this.state==='severed')return;
+        // grow animation
+        if(this.state==='growing'){
+            this.growProg+=( C.GROW_SPD/this.length)*dt;
+            if(this.growProg>=1){this.growProg=1;this.state='active';}
+            return;
+        }
+        // sever if source captured by enemy
+        if(!this.isInternal&&this.sourceCell.owner!==this.owner){this.sever(null,true);return;}
+        // pump units: source → tube → target
+        // The tube drains to target at FLOW_RATE; source refills tube
+        const drain=Math.min(this.unitsInTube, C.FLOW_RATE*dt);
+        this.unitsInTube-=drain;
+        this._applyToTarget(drain);
+        // refill from source
+        if(this.sourceCell.units>0.5){
+            const pump=Math.min(this.sourceCell.units, C.FLOW_RATE*dt);
+            this.sourceCell.units-=pump;
+            this.unitsInTube+=pump;
+        }
+    }
+    _applyToTarget(amt){
+        if(amt<=0)return;
+        const tgt=this.targetCell;
+        if(this.owner===tgt.owner){
+            tgt.units=Math.min(tgt.capacity,tgt.units+amt);
+        } else {
+            tgt.units-=amt;
+            if(tgt.units<=0){
+                const col=this.owner==='player'?C.COL.P:C.COL.E;
+                tgt.owner=this.owner;
+                tgt.units=Math.min(tgt.capacity,Math.max(4,Math.abs(tgt.units)));
+                game.particles.burst(tgt.x,tgt.y,col,20);
+                SFX.capture();
+                game.tentacles=game.tentacles.filter(t=>{
+                    if(t.targetCell===tgt&&t.owner!==this.owner){t.sever(null,true);return false;}
+                    return true;
+                });
+            }
+        }
+    }
+
+    // ── THE BOOST MECHANIC ─────────────────────────────────────────
+    // cutT = fraction along tube where cut happens (0=near source, 1=near target)
+    // Units AHEAD of cut (closer to target, t > cutT) → instantly delivered to target
+    // Units BEHIND cut (closer to source, t <= cutT)  → returned to source
+    //
+    // So: cutting near source (cutT≈0) → almost all tube units go to target = BOOST!
+    //     cutting near target (cutT≈1) → almost all tube units return to source
+    // ──────────────────────────────────────────────────────────────
+    sever(cutT=null, silent=false){
+        this.state='severed';
+        if(cutT!==null&&this.unitsInTube>0){
+            // Split tube units at cut point
+            const ahead  = this.unitsInTube * (1-cutT); // fraction ahead of cut → target
+            const behind = this.unitsInTube * cutT;     // fraction behind cut → source
+
+            if(ahead>0.5){
+                this._applyToTarget(ahead);
+            }
+            if(behind>0.5){
+                // return to source
+                const src=this.sourceCell;
+                if(src.owner===this.owner){
+                    src.units=Math.min(src.capacity, src.units+behind);
+                }
+            }
+
+            if(!silent){
+                // Visual + audio feedback
+                const isBoost = this.owner==='player' && cutT<0.4 && ahead>3;
+                const isReturn= cutT>0.6 && behind>3;
+                if(isBoost){
+                    const tipPos=this.ptAt(cutT);
+                    game.particles.burst(tipPos.x,tipPos.y,'#ffdd44',0,`⚡ +${Math.round(ahead)}`);
+                    SFX.boost();
+                } else if(isReturn&&this.owner==='player'){
+                    const srcPos=this.ptAt(cutT*0.3);
+                    game.particles.burst(srcPos.x,srcPos.y,'#44ddff',0,`↩ +${Math.round(behind)}`);
+                }
+            }
+        }
+        this.unitsInTube=0;
+    }
+
+    // Visual fill fraction: how full is the tube (0→1)
+    get fillFrac(){ return clamp(this.unitsInTube / Math.max(1, this.distCost*2), 0, 1); }
+
+    draw(ctx){
+        if(this.state==='severed')return;
+        const isP=this.owner==='player';
+        const col=isP?C.COL.P:C.COL.E;
+        const endT=this.growProg;
+        const fill=this.fillFrac;
+        // bead chain
+        const beadGap=6;
+        const beadCount=Math.max(2,Math.floor(this.length*endT/beadGap));
+        for(let i=0;i<=beadCount;i++){
+            const tFrac=i/beadCount;
+            const p=this.ptAt(tFrac*endT);
+            const sz=1.7+(tFrac)*1.1;
+            // Color: near source=dim, near target=bright when full; conflict zone yellow
+            const isAttack=this.owner!==this.targetCell.owner;
+            let bc;
+            if(this.isInternal){bc='rgba(60,180,210,0.65)';}
+            else if(isAttack&&tFrac>0.55){
+                const b=(tFrac-0.55)/0.45;
+                bc=isP?`rgba(${Math.floor(lerp(50,210,b))},${Math.floor(lerp(190,170,b))},${Math.floor(lerp(50,25,b))},0.78)`
+                       :`rgba(${Math.floor(lerp(190,210,b))},${Math.floor(lerp(50,170,b))},${Math.floor(lerp(50,25,b))},0.78)`;
+            } else {
+                const alpha=0.35+fill*0.45;
+                bc=isP?`rgba(50,190,50,${alpha.toFixed(2)})`:`rgba(190,40,40,${alpha.toFixed(2)})`;
+            }
+            ctx.beginPath();ctx.arc(p.x,p.y,sz,0,Math.PI*2);ctx.fillStyle=bc;ctx.fill();
+            ctx.beginPath();ctx.arc(p.x,p.y,sz*0.36,0,Math.PI*2);ctx.fillStyle='rgba(190,255,190,0.45)';ctx.fill();
+        }
+        // growing tip flare
+        if(this.state==='growing'){
+            const tip=this.ptAt(endT);
+            ctx.beginPath();ctx.arc(tip.x,tip.y,4,0,Math.PI*2);
+            ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+        }
+    }
+    hitTest(x,y,thresh=20){
+        for(let i=0;i<=24;i++){const p=this.ptAt(i/24*this.growProg);if(Math.hypot(p.x-x,p.y-y)<thresh)return i/24;}
+        return -1;
+    }
+}
+
+// ══════════════════════════════════════════
+// ENEMY AI  — difficulty from level definition
+// ══════════════════════════════════════════
+class EnemyAI{
+    constructor(){this.t=0;this.ct=0;}
+    update(dt,lvlDef){
+        const iv=lvlDef.aiInterval, civ=lvlDef.aiCutInterval, cchance=lvlDef.aiCutChance;
+        this.ct+=dt;
+        if(this.ct>=civ){
+            this.ct=0;
+            if(Math.random()<cchance){
+                // targeted cut: prefer tentacles with lots of units near enemy cells
+                const targets=game.tentacles.filter(t=>t.owner==='player'&&t.state==='active');
+                let best=null,bs=-1;
+                targets.forEach(t=>{
+                    if(t.targetCell.owner==='enemy'){
+                        const s=t.unitsInTube*10+t.growProg;
+                        if(s>bs){bs=s;best=t;}
+                    }
+                });
+                const chosen=best||(targets.length?targets[Math.floor(Math.random()*targets.length)]:null);
+                if(chosen){
+                    chosen.sever(0.1+Math.random()*0.3,true);
+                    setTimeout(()=>{game.tentacles=game.tentacles.filter(x=>x!==chosen);},80);
+                }
+            }
+        }
+        this.t+=dt;
+        if(this.t<iv)return;
+        this.t=0;
+        const enemies=game.cells.filter(c=>c.owner==='enemy');
+        const players=game.cells.filter(c=>c.owner==='player');
+        const neutrals=game.cells.filter(c=>c.owner==='neutral');
+        enemies.forEach(cell=>{
+            if(cell.units<12)return;
+            const out=game.tentacles.filter(t=>t.sourceCell===cell&&t.state!=='severed');
+            if(out.length>=cell.maxTentacles)return;
+            let best=null,bs=-Infinity;
+            [...neutrals,...players].forEach(tc=>{
+                if(!cell.canReach(tc))return;
+                if(game.tentacles.some(t=>t.sourceCell===cell&&t.targetCell===tc&&t.state!=='severed'))return;
+                const d=dist(cell.x,cell.y,tc.x,tc.y);
+                const score=(cell.units-tc.units-cell.tentacleCost(tc))/(d/80+1)-(tc.owner==='player'?0:10);
+                if(score>bs){bs=score;best=tc;}
+            });
+            if(best&&bs>-8)game.createTentacle(cell,best);
+        });
+    }
+}
+
+// ══════════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════════
+class Input{
+    constructor(canvas){
+        this.cv=canvas;this.drag=false;this.from=null;this.dpos={x:0,y:0};
+        this.swStart=null;this.swPts=[];this.tid=null;
+        this.tooltip=null;this.ttTimer=0;this._floats=[];
+        canvas.addEventListener('touchstart',e=>{e.preventDefault();if(this.tid!==null)return;this.tid=e.touches[0].identifier;this._start(this._p(e));},{passive:false});
+        canvas.addEventListener('touchmove', e=>{e.preventDefault();if(this.tid===null)return;this._move(this._p(e));},{passive:false});
+        canvas.addEventListener('touchend',  e=>{e.preventDefault();this.tid=null;this._end(this._p(e));},{passive:false});
+        canvas.addEventListener('touchcancel',e=>{e.preventDefault();this.tid=null;this._end(this._p(e));},{passive:false});
+        canvas.addEventListener('mousedown', e=>this._start(this._p(e)));
+        canvas.addEventListener('mousemove', e=>this._move(this._p(e)));
+        canvas.addEventListener('mouseup',   e=>this._end(this._p(e)));
+    }
+    _p(e){
+        const r=this.cv.getBoundingClientRect();
+        let cx,cy;
+        if(e.touches&&e.touches.length>0){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+        else if(e.changedTouches&&e.changedTouches.length>0){cx=e.changedTouches[0].clientX;cy=e.changedTouches[0].clientY;}
+        else{cx=e.clientX;cy=e.clientY;}
+        return{x:(cx-r.left)*(this.cv.width/r.width),y:(cy-r.top)*(this.cv.height/r.height)};
+    }
+    _start(pos){
+        const cell=game.getCellAt(pos.x,pos.y);
+        this.tooltip=null;this.ttTimer=0;
+        if(cell&&cell.owner==='player'){this.drag=true;this.from=cell;this.dpos=pos;this.swStart=null;}
+        else{this.drag=false;this.from=null;this.swStart=pos;this.swPts=[pos];if(cell){this.tooltip={cell,x:pos.x,y:pos.y};this.ttTimer=2.5;}}
+    }
+    _move(pos){
+        if(this.drag){this.dpos=pos;}
+        else if(this.swStart){this.swPts.push(pos);if(this.swPts.length>14)this.swPts.shift();}
+    }
+    _end(pos){
+        if(this.drag&&this.from){
+            const tgt=game.getCellAt(pos.x,pos.y);
+            if(tgt&&tgt!==this.from){
+                if(!game.tentacles.some(t=>t.sourceCell===this.from&&t.targetCell===tgt&&t.state!=='severed')){
+                    // Check if player has enough units to form this tentacle
+                    if(this.from.canReach(tgt)){
+                        game.createTentacle(this.from,tgt);
+                    } else {
+                        // Not enough units – show feedback
+                        const cost=this.from.tentacleCost(tgt);
+                        game.particles.burst(this.from.x,this.from.y-this.from.radius-20,'#ff8844',0,`Need ${cost}`);
+                    }
+                }
+            }
+            this.drag=false;this.from=null;
+        } else if(this.swStart){
+            if(Math.hypot(pos.x-this.swStart.x,pos.y-this.swStart.y)>C.CUT_THRESH)this._cut();
+            this.swStart=null;this.swPts=[];
+        }
+    }
+    _cut(){
+        if(this.swPts.length<2)return;
+        let didCut=false;
+        game.tentacles.forEach(tent=>{
+            if(tent.state!=='active')return;
+            for(let s=0;s<this.swPts.length-1;s++){
+                const A=this.swPts[s],B=this.swPts[s+1];
+                for(let i=0;i<=26;i++){
+                    const tFrac=i/26;
+                    if(this._sd(A,B,tent.ptAt(tFrac))<C.CUT_THRESH+2){
+                        tent.sever(tFrac);didCut=true;
+                        setTimeout(()=>{game.tentacles=game.tentacles.filter(x=>x!==tent);},80);
+                        return;
+                    }
+                }
+            }
+        });
+        if(didCut)SFX.cut();
+    }
+    _sd(A,B,P){const dx=B.x-A.x,dy=B.y-A.y,l2=dx*dx+dy*dy;if(l2===0)return Math.hypot(P.x-A.x,P.y-A.y);const t=clamp(((P.x-A.x)*dx+(P.y-A.y)*dy)/l2,0,1);return Math.hypot(P.x-A.x-t*dx,P.y-A.y-t*dy);}
+    update(dt){
+        if(this.ttTimer>0){this.ttTimer-=dt;if(this.ttTimer<=0)this.tooltip=null;}
+        this._floats=this._floats.filter(f=>{f.y-=40*dt;f.life-=dt*1.1;return f.life>0;});
+    }
+    draw(ctx){
+        // range ring
+        if(this.from){
+            ctx.beginPath();ctx.arc(this.from.x,this.from.y,180,0,Math.PI*2);
+            ctx.strokeStyle='rgba(50,170,50,0.12)';ctx.lineWidth=1.5;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);
+        }
+        // drag line + target preview
+        if(this.drag&&this.from){
+            // check if reachable
+            const tgt=game.getCellAt(this.dpos.x,this.dpos.y);
+            const reachable=!tgt||tgt===this.from||this.from.canReach(tgt);
+            ctx.beginPath();ctx.moveTo(this.from.x,this.from.y);ctx.lineTo(this.dpos.x,this.dpos.y);
+            ctx.strokeStyle=reachable?'rgba(70,200,70,0.55)':'rgba(200,80,40,0.55)';
+            ctx.lineWidth=2;ctx.setLineDash([8,7]);ctx.stroke();ctx.setLineDash([]);
+            if(tgt&&tgt!==this.from){
+                const col=tgt.owner==='player'?'rgba(60,200,220,0.8)':C.COL.P;
+                ctx.beginPath();ctx.arc(tgt.x,tgt.y,tgt.radius+11,0,Math.PI*2);ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
+                if(!this.from.canReach(tgt)){
+                    // show cost warning
+                    const cost=this.from.tentacleCost(tgt);
+                    ctx.fillStyle='#ff8844';ctx.font=`bold 12px 'Share Tech Mono',monospace`;ctx.textAlign='center';
+                    ctx.fillText(`${Math.floor(this.from.units)}/${cost} units`,tgt.x,tgt.y-tgt.radius-14);
+                } else if(tgt.owner==='player'){
+                    ctx.fillStyle='rgba(60,200,220,0.85)';ctx.font=`bold 11px 'Share Tech Mono',monospace`;ctx.textAlign='center';
+                    ctx.fillText('TRANSFER',tgt.x,tgt.y-tgt.radius-14);
+                } else {
+                    const ratio=this.from.units/(tgt.units+1);
+                    const rc=ratio>1.5?'#44ee44':ratio>1?'#eeee44':'#ee4444';
+                    ctx.fillStyle=rc;ctx.font=`bold 12px 'Share Tech Mono',monospace`;ctx.textAlign='center';
+                    ctx.fillText(ratio.toFixed(1)+'x',tgt.x,tgt.y-tgt.radius-14);
+                }
+            }
+        }
+        // swipe trail (golden)
+        if(this.swPts.length>1){
+            ctx.beginPath();ctx.moveTo(this.swPts[0].x,this.swPts[0].y);
+            this.swPts.forEach(p=>ctx.lineTo(p.x,p.y));
+            ctx.strokeStyle='rgba(210,190,55,0.78)';ctx.lineWidth=2.8;ctx.lineCap='round';ctx.stroke();
+        }
+        // tooltip
+        if(this.tooltip&&this.ttTimer>0){
+            const {cell,x,y}=this.tooltip;
+            const lines=cell.tooltipLines();
+            const bw=148,bh=14+lines.length*16,pad=8;
+            let bx=x+14,by=y-bh/2;
+            if(bx+bw>ctx.canvas.width-8)bx=x-bw-14;
+            if(by<38)by=38;if(by+bh>ctx.canvas.height-18)by=ctx.canvas.height-bh-18;
+            ctx.fillStyle='rgba(3,12,3,0.93)';ctx.strokeStyle='rgba(70,150,70,0.45)';ctx.lineWidth=1;
+            ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.fill();ctx.stroke();
+            ctx.font=`10px 'Share Tech Mono',monospace`;ctx.textAlign='left';
+            lines.forEach((l,i)=>{
+                ctx.fillStyle=i===0?(cell.owner==='player'?'#55ff55':cell.owner==='enemy'?'#ff5555':'#aabbcc'):'rgba(130,190,130,0.8)';
+                ctx.fillText(l,bx+pad,by+pad+13+i*16);
+            });
+        }
+    }
+}
+
+// ══════════════════════════════════════════
+// GAME
+// ══════════════════════════════════════════
+class Game{
+    constructor(){
+        this.canvas=document.getElementById('gameCanvas');
+        this.ctx=this.canvas.getContext('2d');
+        this.cells=[];this.tentacles=[];
+        this.input=new Input(this.canvas);
+        this.ai=new EnemyAI();
+        this.particles=new Particles();
+        this.lastTime=0;this.state='menu';this.currentLevel=0;this.timer=0;
+        this.lvlDef=LEVELS[0];
+        this.resize();buildBG(this.canvas.width,this.canvas.height);
+        this._loop();
+        window.addEventListener('resize',()=>{this.resize();buildBG(this.canvas.width,this.canvas.height);});
+        document.addEventListener('gesturestart',e=>e.preventDefault());
+        document.addEventListener('gesturechange',e=>e.preventDefault());
+    }
+    resize(){this.canvas.width=window.innerWidth;this.canvas.height=window.innerHeight;this.canvas.style.width=window.innerWidth+'px';this.canvas.style.height=window.innerHeight+'px';}
+    loadLevel(idx){
+        this.currentLevel=idx;this.timer=0;
+        this.lvlDef=LEVELS[idx];
+        this.cells=[];this.tentacles=[];
+        const w=this.canvas.width,h=this.canvas.height;
+        this.lvlDef.layout(w,h).forEach(d=>this.cells.push(new Cell(d.x,d.y,d.owner,d.cls)));
+        this.state='playing';
+        document.getElementById('hudZone').textContent=this.lvlDef.zone;
+        document.getElementById('hudLimit').textContent=this.lvlDef.powerLimit;
+        document.getElementById('hudMsg').textContent=this.lvlDef.msg;
+        document.getElementById('hudTimer').textContent='0';
+        // Show boost hint on level 1
+        if(idx===0){const h=document.getElementById('boostHint');h.style.opacity='1';setTimeout(()=>h.style.opacity='0',5000);}
+    }
+    createTentacle(src,tgt){
+        const out=this.tentacles.filter(t=>t.sourceCell===src&&t.state!=='severed');
+        if(out.length>=src.maxTentacles){
+            const old=out[0];old.sever(null,true);
+            setTimeout(()=>{this.tentacles=this.tentacles.filter(t=>t!==old);},120);
+        }
+        const tent=new Tentacle(src,tgt);
+        this.tentacles.push(tent);
+        if(src.owner==='player') SFX.tentacle();
+    }
+    getCellAt(x,y){return this.cells.find(c=>c.containsPoint(x,y));}
+    update(dt){
+        if(this.state!=='playing')return;
+        this.timer+=dt;
+        this.cells.forEach(c=>c.update(dt));
+        this.tentacles.forEach(t=>t.update(dt));
+        this.tentacles=this.tentacles.filter(t=>t.state!=='severed');
+        this.ai.update(dt,this.lvlDef);
+        this.particles.update2(dt);
+        this.input.update(dt);
+        const pC=this.cells.filter(c=>c.owner==='player');
+        const eC=this.cells.filter(c=>c.owner==='enemy');
+        const tot=this.cells.length||1;
+        document.getElementById('hudTimer').textContent=Math.floor(this.timer);
+        document.getElementById('pbP').style.width=(pC.length/tot*100)+'%';
+        document.getElementById('pbE').style.width=(eC.length/tot*100)+'%';
+        if(eC.length===0&&pC.length>0){this.state='won';SFX.win();UI.showGameOver(true,this.currentLevel,Math.floor(this.timer));}
+        else if(pC.length===0){this.state='lost';SFX.lose();UI.showGameOver(false,this.currentLevel,Math.floor(this.timer));}
+    }
+    draw(){
+        const ctx=this.ctx;
+        if(bgCanvas)ctx.drawImage(bgCanvas,0,0);else{ctx.fillStyle='#040b04';ctx.fillRect(0,0,this.canvas.width,this.canvas.height);}
+        this.tentacles.forEach(t=>t.draw(ctx));
+        this.cells.forEach(c=>c.draw(ctx));
+        this.particles.draw(ctx);
+        this.input.draw(ctx);
+    }
+    _loop(){const now=performance.now();const dt=Math.min((now-this.lastTime)/1000,0.1);this.lastTime=now;this.update(dt);this.draw();requestAnimationFrame(()=>this._loop());}
+}
+
+// ══════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════
+const UI={
+    unlocked:1,_cur:0,
+    init(){
+        this.unlocked=parseInt(localStorage.getItem('tw5_ul')||'1');
+        document.querySelectorAll('.tbtn').forEach(b=>{
+            b.addEventListener('click',()=>{
+                document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                // Transfer % affects flow multiplier
+                const pct=parseInt(b.dataset.pct);
+                C.FLOW_RATE=pct===100?15:pct===50?9.8:5.6;
+            });
+        });
+    },
+    showMainMenu(){this._hide();document.getElementById('mainMenu').style.display='flex';},
+    showLevelSelect(){
+        this._hide();document.getElementById('levelSelect').style.display='flex';
+        const grid=document.getElementById('levelGrid');grid.innerHTML='';
+        LEVELS.forEach((lvl,i)=>{
+            const t=document.createElement('div');
+            t.className='ltile'+(i>=this.unlocked?' locked':'');
+            const st=localStorage.getItem('tw5_s'+i)||'';
+            t.innerHTML=`<div class="tn">${i+1}</div><div class="tname">${lvl.name}</div><div class="tstars">${st||'○○○'}</div>`;
+            t.addEventListener('click',()=>this.showIntro(i));
+            grid.appendChild(t);
+        });
+    },
+    showIntro(idx){
+        this._hide();this._cur=idx;
+        const lvl=LEVELS[idx];
+        document.getElementById('levelIntro').style.display='flex';
+        document.getElementById('introBadge').textContent='ZONE '+lvl.zone+' — LEVEL '+(idx+1);
+        document.getElementById('introTitle').textContent=lvl.name;
+        document.getElementById('introStory').textContent=lvl.story;
+        document.getElementById('introZellen').textContent=lvl.layout(800,600).length;
+        document.getElementById('introLimit').textContent=lvl.powerLimit;
+        document.getElementById('introSchwier').textContent=lvl.difficulty;
+        document.getElementById('t3').textContent=lvl.star3;
+        document.getElementById('t2').textContent=lvl.star2;
+    },
+    startLevel(){this._hide();game.loadLevel(this._cur);},
+    showGameOver(won,idx,secs){
+        document.getElementById('gameOver').style.display='flex';
+        const ttl=document.getElementById('goTitle'),se=document.getElementById('goStars'),sb=document.getElementById('goSub'),nb=document.getElementById('goNextBtn');
+        if(won){
+            ttl.textContent='MISSION COMPLETE';ttl.style.color='#33ee33';
+            const lvl=LEVELS[idx],stars=secs<=lvl.star3?3:secs<=lvl.star2?2:1;
+            se.textContent='★'.repeat(stars)+'☆'.repeat(3-stars);
+            se.style.color=stars===3?'#ffdd33':stars===2?'#aabb44':'#667744';
+            sb.textContent=`Zeit: ${secs}s — Zone ${lvl.zone} gesichert.`;
+            const best=parseInt(localStorage.getItem('tw5_s'+idx)||'0');
+            if(stars>best)localStorage.setItem('tw5_s'+idx,stars);
+            const next=idx+1;
+            if(next<LEVELS.length){this.unlocked=Math.max(this.unlocked,next+1);localStorage.setItem('tw5_ul',this.unlocked);nb.textContent='NÄCHSTE MISSION →';nb.onclick=()=>this.showIntro(next);}
+            else{nb.textContent='ALLE ZONEN BEFREIT!';nb.onclick=()=>this.showLevelSelect();}
+        } else {
+            ttl.textContent='VERNICHTET';ttl.style.color='#dd3333';
+            se.textContent='☆☆☆';se.style.color='#664444';
+            sb.textContent='Alle deine Zellen wurden übernommen.';
+            nb.textContent='NOCHMAL KÄMPFEN';nb.onclick=()=>this.restartLevel();
+        }
+    },
+    restartLevel(){this._hide();game.loadLevel(game.currentLevel);},
+    _hide(){['mainMenu','levelSelect','levelIntro','gameOver'].forEach(id=>document.getElementById(id).style.display='none');}
+};
+
+const game=new Game();
+UI.init();
+UI.showMainMenu();
+document.getElementById('startLevelBtn').addEventListener('click',()=>UI.startLevel());
+</script>
+</body>
+</html>

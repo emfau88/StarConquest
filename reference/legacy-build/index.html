@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Star Conquest</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
+html,body{width:100%;height:100%;background:#02040f;overflow:hidden;font-family:'Share Tech Mono',monospace;position:fixed;}
+#gameCanvas{display:block;width:100%;height:100%;}
+#topHud{position:absolute;top:0;left:0;right:0;height:36px;background:rgba(2,6,20,0.9);border-bottom:1px solid rgba(80,140,255,0.18);display:flex;align-items:center;padding:0 10px;gap:10px;pointer-events:none;z-index:10;font-size:11px;color:rgba(180,210,255,0.85);}
+#topHud .sep{color:rgba(80,120,220,0.3);}
+#topHud .val{color:#88bbff;font-weight:700;}
+#topHud .msg{flex:1;text-align:center;color:rgba(130,170,230,0.6);font-size:9px;overflow:hidden;white-space:nowrap;letter-spacing:.5px;}
+#topHud .tw{display:flex;align-items:center;gap:4px;margin-left:auto;}
+#topHud .tl{color:rgba(120,160,220,0.55);font-size:9px;}
+#topHud .tv{color:#aaccff;font-size:12px;font-weight:700;min-width:28px;text-align:right;}
+#powerBar{position:absolute;top:4px;right:10px;width:76px;height:9px;border:1px solid rgba(80,130,255,0.3);border-radius:2px;overflow:hidden;pointer-events:none;z-index:11;display:flex;background:rgba(2,6,20,.5);}
+#pbP{height:100%;background:linear-gradient(90deg,#2255cc,#44aaff);transition:width .5s;}
+#pbE{height:100%;background:linear-gradient(90deg,#cc2233,#ff5566);transition:width .5s;}
+#transferSelector{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;pointer-events:all;}
+.tbtn{background:rgba(5,10,35,.92);border:1px solid rgba(80,130,220,.35);color:#7799cc;border-radius:14px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Share Tech Mono',monospace;transition:all .15s;letter-spacing:.5px;}
+.tbtn.active{background:rgba(20,50,140,.6);border-color:#4488ee;color:#aaccff;box-shadow:0 0 10px rgba(60,120,255,.35);}
+.tbtn:active{transform:scale(.91);}
+#boostHint{position:absolute;top:40px;left:50%;transform:translateX(-50%);background:rgba(5,8,30,.92);border:1px solid rgba(220,180,60,.55);border-radius:4px;padding:6px 16px;font-size:10px;color:rgba(235,205,75,.95);pointer-events:none;z-index:10;opacity:0;transition:opacity .5s;white-space:nowrap;box-shadow:0 2px 16px rgba(180,140,30,.25);}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;background:rgba(1,3,15,.85);backdrop-filter:blur(6px);}
+.obox{text-align:center;max-width:390px;padding:28px 24px;width:92%;max-height:92vh;overflow-y:auto;}
+.obox h1{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;letter-spacing:5px;margin-bottom:4px;background:linear-gradient(135deg,#88bbff,#fff,#aaddff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 18px rgba(100,160,255,.5));}
+.obox .sub{font-size:9px;color:rgba(130,170,230,.55);letter-spacing:6px;margin-bottom:20px;font-family:'Orbitron',sans-serif;text-transform:uppercase;}
+.obox p{color:#c0d8f0;font-size:12px;line-height:1.9;margin-bottom:14px;}
+.btn-p{background:linear-gradient(145deg,#1a4acc,#0d2a88);color:#ddeeff;border:1px solid rgba(100,160,255,.5);padding:13px 36px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;transition:all .22s;box-shadow:0 4px 20px rgba(30,80,220,.45),0 1px 0 rgba(255,255,255,.08) inset;}
+.btn-p:hover{transform:scale(1.04);box-shadow:0 5px 28px rgba(50,120,255,.6);border-color:rgba(140,200,255,.7);}
+.btn-p:active{transform:scale(.96);}
+.btn-s{background:rgba(5,12,40,.65);color:#99bbdd;border:1px solid rgba(70,120,200,.32);padding:8px 20px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'Share Tech Mono',monospace;margin-top:9px;transition:all .2s;display:block;width:fit-content;margin-left:auto;margin-right:auto;}
+.btn-s:hover{border-color:rgba(100,170,255,.55);color:#cce4ff;background:rgba(10,25,70,.7);}
+#levelIntro{display:none;}
+.lvl-badge{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(120,170,255,.6);letter-spacing:5px;margin-bottom:6px;text-transform:uppercase;}
+#levelIntro h2{font-family:'Orbitron',sans-serif;font-size:19px;font-weight:900;color:#c8e4ff;margin-bottom:10px;letter-spacing:2px;}
+.story-txt{color:#b0cce8;font-size:12px;line-height:1.85;margin-bottom:14px;text-align:left;border-left:2px solid rgba(80,140,255,.4);padding-left:12px;}
+.lstats{display:flex;gap:10px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;}
+.sbox{background:rgba(5,15,50,.75);border:1px solid rgba(80,140,220,.35);border-radius:5px;padding:7px 14px;}
+.sbox .sv{font-family:'Orbitron',sans-serif;font-size:16px;color:#88ccff;font-weight:700;}
+.sbox .sk{font-size:9px;color:rgba(140,185,230,.6);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+#gameOver{display:none;}
+#gameOver h2{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;margin-bottom:6px;letter-spacing:3px;}
+.go-stars{font-size:28px;margin-bottom:8px;letter-spacing:5px;}
+.go-sub{font-size:12px;color:#99bbdd;margin-bottom:22px;}
+.btn-row{display:flex;flex-direction:column;align-items:center;gap:8px;}
+#levelSelect{display:none;}
+#levelSelect h2{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#88bbff;margin-bottom:16px;letter-spacing:4px;}
+.lgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px;max-width:320px;}
+.ltile{background:rgba(5,12,45,.8);border:1px solid rgba(70,120,210,.35);border-radius:6px;padding:10px 4px;cursor:pointer;transition:all .18s;text-align:center;}
+.ltile:hover{border-color:#4488ff;background:rgba(15,40,110,.7);box-shadow:0 0 12px rgba(60,120,255,.22);}
+.ltile.locked{opacity:.16;cursor:not-allowed;pointer-events:none;}
+.ltile .tn{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:#5599ff;}
+.ltile .tname{font-size:7px;color:rgba(140,185,230,.5);margin-top:2px;line-height:1.3;}
+.ltile .tstars{font-size:11px;margin-top:3px;}
+#mainMenu{display:flex;}
+.cls-legend{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;text-align:left;}
+.cls-row{font-size:10px;color:#b0cce8;padding:4px 10px;border-left:2px solid rgba(80,140,255,.4);background:rgba(5,15,50,.5);border-radius:0 4px 4px 0;}
+.cls-row span{color:#88ccff;font-weight:700;}
+.tip-box{font-size:10px;color:rgba(220,195,70,.88);border:1px solid rgba(200,165,50,.3);padding:9px 12px;border-radius:5px;background:rgba(15,12,4,.6);line-height:1.75;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="topHud">
+  <span>SEKTOR: <span class="val" id="hudZone">1</span></span>
+  <span class="sep">|</span>
+  <span>ENERGIE: <span class="val" id="hudLimit">—</span></span>
+  <span class="sep">|</span>
+  <span class="msg" id="hudMsg">EROBERE ALLE STERNENSYSTEME</span>
+  <div class="tw"><span class="tl">ZEIT:</span><span class="tv" id="hudTimer">0</span></div>
+</div>
+<div id="powerBar"><div id="pbP" style="width:50%"></div><div id="pbE" style="width:50%"></div></div>
+<div id="boostHint">⚡ Eigenen Strahl nahe am Ursprung schneiden = sofortiger Vollangriff!</div>
+<div id="transferSelector">
+  <button class="tbtn" data-pct="25">25%</button>
+  <button class="tbtn active" data-pct="50">50%</button>
+  <button class="tbtn" data-pct="100">100%</button>
+</div>
+
+<!-- MAIN MENU -->
+<div class="overlay" id="mainMenu">
+  <div class="obox">
+    <h1>STAR<br>CONQUEST</h1>
+    <div class="sub">Galaktische Strategie</div>
+    <p>Verbinde deine Sternensysteme mit Energiestrahlen. Übernimm neutrale und feindliche Systeme. Koordiniere deine Flotte.</p>
+    <div class="cls-legend">
+      <div class="cls-row"><span>PULSAR</span> — Klein, schnell (Kap. 65), 1 Strahl</div>
+      <div class="cls-row"><span>GIANT</span> — Ausgeglichen (Kap. 110), 2 Strahlen</div>
+      <div class="cls-row"><span>QUASAR</span> — Groß, langsam (Kap. 175), 3 Strahlen</div>
+      <div class="cls-row"><span>NEXUS</span> — Riesig, sehr langsam (Kap. 255), 4 Strahlen</div>
+    </div>
+    <div class="tip-box">
+      ⚡ <strong>BOOST-ANGRIFF:</strong> Sende einen Energiestrahl zum Ziel, schneide ihn dann dicht an deinem System durch — die gesamte Energie schießt sofort ans Ziel!<br><br>
+      ✂ Nur <strong>eigene</strong> Strahlen können durchschnitten werden. Feindliche Strahlen sind unberührbar — übernimm stattdessen ihre Quelle.
+    </div>
+    <button class="btn-p" onclick="UI.showLevelSelect()">MISSION STARTEN</button>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="overlay" id="levelSelect">
+  <div class="obox">
+    <h2>SEKTOR WÄHLEN</h2>
+    <div class="lgrid" id="levelGrid"></div>
+    <button class="btn-s" onclick="UI.showMainMenu()">← Zurück</button>
+  </div>
+</div>
+
+<!-- LEVEL INTRO -->
+<div class="overlay" id="levelIntro">
+  <div class="obox">
+    <div class="lvl-badge" id="introBadge">SEKTOR 1 — MISSION 1</div>
+    <h2 id="introTitle">—</h2>
+    <div class="story-txt" id="introStory">—</div>
+    <div class="lstats">
+      <div class="sbox"><div class="sv" id="introZellen">—</div><div class="sk">Systeme</div></div>
+      <div class="sbox"><div class="sv" id="introLimit">—</div><div class="sk">Max Energie</div></div>
+      <div class="sbox"><div class="sv" id="introSchwier">—</div><div class="sk">Schwierigkeit</div></div>
+    </div>
+    <div class="lstats" style="font-size:10px;color:rgba(130,175,230,.55);">
+      <span>★★★ &lt;<span id="t3">—</span>s</span>
+      <span>★★ &lt;<span id="t2">—</span>s</span>
+      <span>★ beliebig</span>
+    </div>
+    <button class="btn-p" id="startLevelBtn">ANGRIFF!</button>
+    <button class="btn-s" onclick="UI.showLevelSelect()">← Zurück</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay" id="gameOver">
+  <div class="obox">
+    <h2 id="goTitle">SIEG!</h2>
+    <div class="go-stars" id="goStars">★★★</div>
+    <p class="go-sub" id="goSub"></p>
+    <div class="btn-row">
+      <button class="btn-p" id="goNextBtn">WEITER →</button>
+      <button class="btn-s" onclick="UI.restartLevel()">Nochmal</button>
+      <button class="btn-s" onclick="UI.showLevelSelect()">Sektor wählen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ SOUND ════════════════════════════════════════════════
+const SFX = (() => {
+  let ac = null;
+  const ctx = () => { if (!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); return ac; };
+  const tone = (f,tp,d,v=0.12,f2=null) => { try {
+    const c=ctx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);o.type=tp;o.frequency.value=f;
+    if(f2)o.frequency.linearRampToValueAtTime(f2,c.currentTime+d);
+    g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
+    o.start();o.stop(c.currentTime+d);
+  } catch(e){} };
+  const noise = (d,v=0.09) => { try {
+    const c=ctx(),buf=c.createBuffer(1,c.sampleRate*d,c.sampleRate),da=buf.getChannelData(0);
+    for(let i=0;i<da.length;i++)da[i]=Math.random()*2-1;
+    const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();
+    f.type='bandpass';f.frequency.value=1200;s.buffer=buf;s.connect(f);f.connect(g);g.connect(c.destination);
+    g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
+    s.start();s.stop(c.currentTime+d);
+  } catch(e){} };
+  return {
+    beam()    { tone(240,'sine',0.14,0.09,480); },
+    capture() { tone(320,'sine',0.05,0.08);setTimeout(()=>tone(480,'sine',0.12,0.09),70);setTimeout(()=>tone(680,'sine',0.2,0.08),155); },
+    cut()     { noise(0.07,0.11);tone(140,'sawtooth',0.06,0.07,90); },
+    boost()   { tone(420,'sine',0.08,0.09,860);setTimeout(()=>tone(1080,'sine',0.18,0.07),70); },
+    lose()    { tone(190,'sawtooth',0.38,0.12,55); },
+    win()     { [0,190,380,580].forEach((d,i)=>setTimeout(()=>tone([340,440,580,780][i],'sine',0.26,0.1),d)); },
+  };
+})();
+
+// ═══ CLASSES ══════════════════════════════════════════════
+const CLASSES = {
+  PULSAR: { cap:65,  prod:2.85, maxBeams:1, rings:2, size:1.0 },
+  GIANT:  { cap:110, prod:1.80, maxBeams:2, rings:3, size:1.3 },
+  QUASAR: { cap:175, prod:1.13, maxBeams:3, rings:4, size:1.6 },
+  NEXUS:  { cap:255, prod:0.66, maxBeams:4, rings:5, size:2.0 },
+};
+
+// ═══ LEVELS (8) ═══════════════════════════════════════════
+// AI factions: 'enemy' = rot, 'enemy2' = orange (kämpft gegen beide)
+// enemy2 systems appear in levels 6-8 for 3-faction chaos
+const LEVELS = [
+
+// ── LEVEL 1 ─────────────────────────────────────────────
+// Reine Tutorial: 1 Feind, gleich stark, KI rührt sich kaum
+// Spieler hat Vorteil durch QUASAR vs GIANT des Feindes
+{
+  name:"Erstkontakt", zone:1, powerLimit:60, star3:90, star2:150,
+  msg:"ZIEHE STRAHL ZUM ANGRIFF — EIGENEN STRAHL SCHNEIDEN = BOOST",
+  difficulty:"★☆☆☆",
+  story:"Dein erstes Gefecht. Ein einziger Feind. Lerne Energiestrahlen zu ziehen – und übe den Boost-Schnitt: Schneide deinen eigenen Strahl nah am Ursprung, um die gesamte Energie sofort ans Ziel zu katapultieren.",
+  noCost:true, // Keine Distanzkosten in Level 1
+  aiInterval:12, aiCutInterval:999, aiCutChance:0,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.22,y:cy,        owner:'player', cls:'QUASAR', startUnits:30},
+    {x:cx+w*.26,y:cy,        owner:'enemy',  cls:'GIANT',  startUnits:12},
+    {x:cx,      y:cy-h*.20,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx,      y:cy+h*.20,  owner:'neutral',cls:'PULSAR', startUnits:5},
+  ]; }
+},
+
+// ── LEVEL 2 ─────────────────────────────────────────────
+// Zwei Feinde aber beide schwach. Spieler hat starkes Quasar + Zeit
+{
+  name:"Vorposten", zone:2, powerLimit:80, star3:110, star2:190,
+  msg:"SICHERE DIE NEUTRALEN SYSTEME BEVOR DER FEIND SIE ERREICHT",
+  difficulty:"★☆☆☆",
+  story:"Zwei schwache feindliche Vorposten an den Flanken. Sichere zuerst die neutralen Systeme – dann bist du in der Übermacht. Die KI ist noch unkoordiniert.",
+  aiInterval:9, aiCutInterval:999, aiCutChance:0,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.30,y:cy,        owner:'player', cls:'QUASAR', startUnits:28},
+    {x:cx+w*.30,y:cy-h*.22,  owner:'enemy',  cls:'PULSAR', startUnits:10},
+    {x:cx+w*.30,y:cy+h*.22,  owner:'enemy',  cls:'PULSAR', startUnits:10},
+    {x:cx,      y:cy,        owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx-w*.10,y:cy-h*.22,  owner:'neutral',cls:'PULSAR', startUnits:4},
+    {x:cx-w*.10,y:cy+h*.22,  owner:'neutral',cls:'PULSAR', startUnits:4},
+  ]; }
+},
+
+// ── LEVEL 3 ─────────────────────────────────────────────
+// 1 Feind, aber stärker. Spieler hat NEXUS als starke Basis + Außenposten
+{
+  name:"Gegenoffensive", zone:3, powerLimit:100, star3:130, star2:220,
+  msg:"EIN STARKER FEIND — NUTZE DEIN NEXUS ALS BOLLWERK",
+  difficulty:"★★☆☆",
+  story:"Ein einziger Feind, aber gut ausgerüstet. Dein Nexus-System ist deine Festung – baue von dort aus. Die neutralen Systeme am Rand geben dir den entscheidenden Vorteil.",
+  aiInterval:7, aiCutInterval:18, aiCutChance:0.10,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.30,y:cy,        owner:'player', cls:'NEXUS',  startUnits:25},
+    {x:cx-w*.17,y:cy-h*.28,  owner:'player', cls:'PULSAR', startUnits:15},
+    {x:cx-w*.17,y:cy+h*.28,  owner:'player', cls:'PULSAR', startUnits:15},
+    {x:cx+w*.28,y:cy,        owner:'enemy',  cls:'QUASAR', startUnits:14},
+    {x:cx+w*.14,y:cy-h*.22,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx+w*.14,y:cy+h*.22,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx,      y:cy,        owner:'neutral',cls:'PULSAR', startUnits:4},
+  ]; }
+},
+
+// ── LEVEL 4 ─────────────────────────────────────────────
+// Dominoeffekt: neutrale Kette, Boost ist der Schlüssel – 1 Feind, moderat
+{
+  name:"Dominoeffekt", zone:4, powerLimit:100, star3:140, star2:240,
+  msg:"BOOST-SCHNITTE DURCH DIE NEUTRALE KETTE — SCHNELL ENTSCHEIDEN",
+  difficulty:"★★☆☆",
+  story:"Eine Kette neutraler Systeme liegt zwischen euch. Mit gezielten Boost-Schnitten kannst du in Sekunden mehrere Systeme gleichzeitig übernehmen. Der Feind ist eine Bedrohung – aber noch moderat.",
+  aiInterval:6.5, aiCutInterval:14, aiCutChance:0.12,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.36,y:cy,        owner:'player', cls:'QUASAR', startUnits:28},
+    {x:cx+w*.36,y:cy,        owner:'enemy',  cls:'QUASAR', startUnits:14},
+    {x:cx-w*.18,y:cy,        owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx-w*.06,y:cy-h*.11,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx+w*.06,y:cy+h*.11,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx+w*.18,y:cy,        owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx-w*.28,y:cy-h*.26,  owner:'neutral',cls:'GIANT',  startUnits:7},
+    {x:cx+w*.28,y:cy+h*.26,  owner:'neutral',cls:'GIANT',  startUnits:7},
+  ]; }
+},
+
+// ── LEVEL 5 ─────────────────────────────────────────────
+// Zwei Feinde: koordinieren sich ein wenig, aber Spieler hat Gesamtvorteil
+{
+  name:"Zweifrontenkrieg", zone:5, powerLimit:120, star3:160, star2:270,
+  msg:"ZWEI FEINDE — GREIFE EINEN AN, WÄHREND DU DEN ANDEREN ABWEHRST",
+  difficulty:"★★★☆",
+  story:"Zwei feindliche Kommandeure operieren unabhängig. Sie koordinieren sich kaum – das ist deine Chance. Konzentriere dich zuerst auf den schwächeren, dann auf den stärkeren.",
+  aiInterval:6, aiCutInterval:12, aiCutChance:0.15,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.32,y:cy,        owner:'player', cls:'NEXUS',  startUnits:28},
+    {x:cx-w*.18,y:cy-h*.28,  owner:'player', cls:'GIANT',  startUnits:18},
+    {x:cx+w*.28,y:cy-h*.20,  owner:'enemy',  cls:'GIANT',  startUnits:14},
+    {x:cx+w*.28,y:cy+h*.20,  owner:'enemy',  cls:'PULSAR', startUnits:10},
+    {x:cx,      y:cy-h*.10,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx,      y:cy+h*.20,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx-w*.16,y:cy+h*.28,  owner:'neutral',cls:'PULSAR', startUnits:4},
+  ]; }
+},
+
+// ── LEVEL 6 ─────────────────────────────────────────────
+// DREI FRAKTIONEN: Rot und Orange bekriegen sich auch gegenseitig!
+// Spieler kann abwarten und die Kriegsparteien schwächen lassen
+{
+  name:"Dreieckskrieg", zone:6, powerLimit:130, star3:180, star2:300,
+  msg:"DREI FRAKTIONEN — LASS ROT UND ORANGE SICH GEGENSEITIG SCHWÄCHEN",
+  difficulty:"★★★☆",
+  story:"Zwei feindliche Imperien bekämpfen sich und dich gleichzeitig. Beobachte das Chaos – dann schlage zu wenn beide geschwächt sind. Geduld kann hier mehr wert sein als Aggression.",
+  aiInterval:5.5, aiCutInterval:11, aiCutChance:0.20,
+  hasFaction2:true,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.34,y:cy+h*.22,  owner:'player', cls:'QUASAR', startUnits:26},
+    {x:cx-w*.20,y:cy-h*.28,  owner:'player', cls:'GIANT',  startUnits:16},
+    {x:cx+w*.34,y:cy-h*.22,  owner:'enemy',  cls:'QUASAR', startUnits:14},
+    {x:cx+w*.20,y:cy+h*.18,  owner:'enemy',  cls:'GIANT',  startUnits:12},
+    {x:cx-w*.05,y:cy-h*.08,  owner:'enemy2', cls:'QUASAR', startUnits:14},
+    {x:cx+w*.10,y:cy+h*.28,  owner:'enemy2', cls:'PULSAR', startUnits:10},
+    {x:cx,      y:cy-h*.28,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx-w*.18,y:cy+h*.08,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx+w*.18,y:cy-h*.08,  owner:'neutral',cls:'PULSAR', startUnits:5},
+  ]; }
+},
+
+// ── LEVEL 7 ─────────────────────────────────────────────
+// Belagerungsring: Feind hält Zentrum, DREI FRAKTIONEN
+// Orange sitzt oben, Rot sitzt rechts, Spieler links
+{
+  name:"Belagerungsring", zone:7, powerLimit:140, star3:210, star2:360,
+  msg:"FEIND IM ZENTRUM — DER RING GEHÖRT WEM IHN ZUERST SICHERT",
+  difficulty:"★★★★",
+  story:"Ein mächtiges feindliches Nexus hält das Zentrum. Zwei rivalisierende Fraktionen kämpfen auch um den Ring neutraler Systeme. Sichre den Ring – dann bist du unschlagbar.",
+  aiInterval:5.0, aiCutInterval:10, aiCutChance:0.25,
+  hasFaction2:true,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.36,y:cy,        owner:'player', cls:'QUASAR', startUnits:26},
+    {x:cx-w*.22,y:cy-h*.28,  owner:'player', cls:'GIANT',  startUnits:16},
+    {x:cx+w*.20,y:cy,        owner:'enemy',  cls:'NEXUS',  startUnits:16},
+    {x:cx+w*.34,y:cy-h*.20,  owner:'enemy2', cls:'GIANT',  startUnits:14},
+    {x:cx+w*.34,y:cy+h*.20,  owner:'enemy2', cls:'PULSAR', startUnits:10},
+    {x:cx,      y:cy-h*.30,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx+w*.10,y:cy-h*.20,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx,      y:cy+h*.30,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx-w*.22,y:cy+h*.28,  owner:'neutral',cls:'PULSAR', startUnits:5},
+  ]; }
+},
+
+// ── LEVEL 8 ─────────────────────────────────────────────
+// Endschlacht: DREI FRAKTIONEN, volle Aggression, echtes Chaos
+{
+  name:"Endschlacht", zone:8, powerLimit:160, star3:240, star2:400,
+  msg:"TOTALER KRIEG — DREI FRAKTIONEN, JEDER GEGEN JEDEN",
+  difficulty:"★★★★",
+  story:"Das galaktische Endgefecht. Drei Imperien kämpfen gleichzeitig. Nutze alles was du gelernt hast – Boost-Schnitte, Timing, Koordination. Die Galaxis gehört nur einem.",
+  aiInterval:4.2, aiCutInterval:8.5, aiCutChance:0.32,
+  hasFaction2:true,
+  layout:(w,h)=>{ const cx=w/2,cy=h/2; return [
+    {x:cx-w*.36,y:cy,        owner:'player', cls:'NEXUS',  startUnits:28},
+    {x:cx-w*.22,y:cy-h*.28,  owner:'player', cls:'GIANT',  startUnits:18},
+    {x:cx-w*.22,y:cy+h*.28,  owner:'player', cls:'GIANT',  startUnits:18},
+    {x:cx+w*.36,y:cy,        owner:'enemy',  cls:'NEXUS',  startUnits:16},
+    {x:cx+w*.22,y:cy-h*.28,  owner:'enemy',  cls:'GIANT',  startUnits:14},
+    {x:cx+w*.02,y:cy-h*.15,  owner:'enemy2', cls:'QUASAR', startUnits:14},
+    {x:cx+w*.02,y:cy+h*.15,  owner:'enemy2', cls:'GIANT',  startUnits:12},
+    {x:cx+w*.22,y:cy+h*.28,  owner:'neutral',cls:'PULSAR', startUnits:5},
+    {x:cx,      y:cy-h*.30,  owner:'neutral',cls:'GIANT',  startUnits:6},
+    {x:cx,      y:cy+h*.30,  owner:'neutral',cls:'PULSAR', startUnits:5},
+  ]; }
+},
+];
+
+// ═══ HELPERS ══════════════════════════════════════════════
+const dist  = (x1,y1,x2,y2) => Math.hypot(x2-x1,y2-y1);
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const lerp  = (a,b,t) => a+(b-a)*t;
+const bez   = (p0,p1,p2,t) => ({
+  x:(1-t)*(1-t)*p0.x+2*(1-t)*t*p1.x+t*t*p2.x,
+  y:(1-t)*(1-t)*p0.y+2*(1-t)*t*p1.y+t*t*p2.y
+});
+
+// ═══ GAME CONSTANTS ═══════════════════════════════════════
+const G = {
+  DIST_COST: 0.04,  // units/px for beam formation
+  FLOW_RATE: 6.5,   // base units/sec (was 9, now -28%)
+  GROW_SPD:  62,    // px/sec grow animation (was 85, now -27%)
+  CUT_DIST:  22,
+  P_COL:'#4488ff',  P_DIM:'rgba(40,100,220,0.2)',
+  E_COL:'#ff4455',  E_DIM:'rgba(220,40,60,0.2)',
+  E2_COL:'#ff9922', E2_DIM:'rgba(220,140,20,0.2)',
+  N_COL:'#88aacc',  N_DIM:'rgba(100,130,170,0.08)',
+};
+
+// ═══ STARFIELD ════════════════════════════════════════════
+let bgCanvas = null;
+function buildBG(w,h) {
+  bgCanvas = document.createElement('canvas');
+  bgCanvas.width=w; bgCanvas.height=h;
+  const ctx = bgCanvas.getContext('2d');
+  const grad = ctx.createRadialGradient(w*.4,h*.4,0,w*.4,h*.4,Math.max(w,h)*.9);
+  grad.addColorStop(0,'#05091e'); grad.addColorStop(.5,'#020615'); grad.addColorStop(1,'#010310');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+  const rng=(a,b)=>a+(b-a)*Math.random();
+  // Nebulae
+  for(let i=0;i<6;i++){
+    const nx=rng(0,w),ny=rng(0,h),nr=rng(80,220),hue=[230,210,260,200,240,220][i];
+    const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+    ng.addColorStop(0,`hsla(${hue},60%,25%,0.16)`); ng.addColorStop(.5,`hsla(${hue},50%,18%,0.07)`); ng.addColorStop(1,'transparent');
+    ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(nx,ny,nr,0,Math.PI*2); ctx.fill();
+  }
+  // Stars
+  for(let i=0;i<340;i++){
+    const x=rng(0,w),y=rng(0,h);
+    const r=Math.random()<.04?rng(1.5,2.5):Math.random()<.15?rng(.8,1.4):rng(.2,.7);
+    const bright=rng(.3,1),hue=rng(200,260);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${hue},60%,${Math.floor(70+bright*30)}%,${(.4+bright*.6).toFixed(2)})`;
+    ctx.fill();
+    if(r>1.2){
+      const sg=ctx.createRadialGradient(x,y,0,x,y,r*4);
+      sg.addColorStop(0,`hsla(${hue},80%,90%,0.22)`); sg.addColorStop(1,'transparent');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(x,y,r*4,0,Math.PI*2); ctx.fill();
+    }
+  }
+  // Distant galaxies
+  for(let i=0;i<8;i++){
+    const gx=rng(0,w),gy=rng(0,h),gr=rng(12,35),ga=rng(0,Math.PI);
+    ctx.save(); ctx.translate(gx,gy); ctx.rotate(ga); ctx.scale(1,.35);
+    const gg=ctx.createRadialGradient(0,0,0,0,0,gr);
+    gg.addColorStop(0,'rgba(180,200,255,0.1)'); gg.addColorStop(1,'transparent');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(0,0,gr,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+}
+
+// ═══ PARTICLES ════════════════════════════════════════════
+class Particles {
+  constructor() { this.ps=[]; }
+  clear() { this.ps=[]; }  // FIX: clear on level load
+  burst(x,y,col,n=16) {
+    for(let i=0;i<n;i++){
+      const a=(Math.PI*2*i/n)+Math.random()*.5, sp=.8+Math.random()*3.5;
+      this.ps.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:.016+Math.random()*.02,col,sz:1.5+Math.random()*2.8,label:null});
+    }
+  }
+  // Capture pulse ring
+  ring(x,y,col) {
+    this.ps.push({x,y,vx:0,vy:0,life:1,decay:.9,col,sz:0,label:null,ring:true,r:0});
+  }
+  label(x,y,text,col) {
+    this.ps.push({x,y,vx:0,vy:-.9,life:1.8,decay:.48,col,sz:0,label:text});
+  }
+  update(dt) {
+    this.ps=this.ps.filter(p=>{
+      if(p.ring){ p.r+=80*dt; p.life-=p.decay*dt; return p.life>0; }
+      p.x+=p.vx*dt*55*.016; p.y+=p.vy*dt*55*.016;
+      p.vx*=Math.pow(.92,dt*60*.016); p.vy*=Math.pow(.92,dt*60*.016);
+      p.life-=p.decay*dt; return p.life>0;
+    });
+  }
+  draw(ctx) {
+    this.ps.forEach(p=>{
+      ctx.globalAlpha=clamp(p.life,0,1);
+      if(p.ring){
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.strokeStyle=p.col; ctx.lineWidth=3*p.life; ctx.stroke();
+      } else if(p.label){
+        ctx.fillStyle=p.col; ctx.font=`bold 13px 'Share Tech Mono',monospace`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.shadowColor=p.col; ctx.shadowBlur=10;
+        ctx.fillText(p.label,p.x,p.y); ctx.shadowBlur=0;
+      } else {
+        ctx.fillStyle=p.col;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2); ctx.fill();
+      }
+    });
+    ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
+  }
+}
+
+// ═══ STAR SYSTEM ══════════════════════════════════════════
+class StarSystem {
+  constructor(x,y,owner,clsName,startUnits) {
+    this.x=x; this.y=y; this.owner=owner;
+    this.cls=clsName||'GIANT';
+    const d=CLASSES[this.cls];
+    this.capacity=d.cap; this.prodRate=d.prod;
+    this.maxBeams=d.maxBeams; this.rings=d.rings;
+    this.radius=13+d.size*8;
+    this.units = startUnits !== undefined ? startUnits
+               : owner==='neutral' ? 5+Math.random()*6
+               : owner==='player'  ? 22+Math.random()*8
+               : 14+Math.random()*6;
+    this.phase=Math.random()*Math.PI*2;
+    this.rotSpeed=(0.025+Math.random()*.035)*(Math.random()<.5?1:-1);
+    this.ringPhases=Array.from({length:d.rings},()=>Math.random()*Math.PI*2);
+    this.captureFlash=0;
+  }
+
+  get col() {
+    if(this.owner==='player') return G.P_COL;
+    if(this.owner==='enemy')  return G.E_COL;
+    if(this.owner==='enemy2') return G.E2_COL;
+    return G.N_COL;
+  }
+  get dim() {
+    if(this.owner==='player') return G.P_DIM;
+    if(this.owner==='enemy')  return G.E_DIM;
+    if(this.owner==='enemy2') return G.E2_DIM;
+    return G.N_DIM;
+  }
+  get pressure() { return clamp(this.units/this.capacity,0,1); }
+
+  update(dt) {
+    if(this.owner!=='neutral') this.units=Math.min(this.capacity,this.units+this.prodRate*dt);
+    this.phase+=this.rotSpeed*dt;
+    this.ringPhases=this.ringPhases.map((p,i)=>p+(0.018+i*.008)*dt);
+    if(this.captureFlash>0) this.captureFlash-=dt;
+  }
+
+  beamCost(target, noCost=false) {
+    if(noCost) return 2;
+    return Math.ceil(dist(this.x,this.y,target.x,target.y)*G.DIST_COST)+2;
+  }
+  canReach(target, noCost=false) { return this.units>this.beamCost(target,noCost)+1; }
+
+  draw(ctx) {
+    const t=performance.now()/1000;
+    const col=this.col, R=this.radius;
+    const flashScale = this.captureFlash>0 ? 1+this.captureFlash*.35 : 1;
+
+    // Outer glow
+    const glow=ctx.createRadialGradient(this.x,this.y,R*.3,this.x,this.y,R*2.8*flashScale);
+    glow.addColorStop(0,this.dim); glow.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(this.x,this.y,R*2.8*flashScale,0,Math.PI*2);
+    ctx.fillStyle=glow; ctx.fill();
+
+    // Territory connection lines to allied systems (very faint)
+    if(this.owner==='player') {
+      game.systems.filter(s=>s!==this&&s.owner==='player').forEach(s=>{
+        const d=dist(this.x,this.y,s.x,s.y);
+        if(d<280){
+          ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(s.x,s.y);
+          ctx.strokeStyle=`rgba(68,136,255,${(.06*(1-d/280)).toFixed(3)})`;
+          ctx.lineWidth=1; ctx.setLineDash([4,10]); ctx.stroke(); ctx.setLineDash([]);
+        }
+      });
+    }
+
+    // Orbital rings
+    const ringCount=this.owner==='neutral'?1:this.rings;
+    for(let r=0;r<ringCount;r++){
+      const rr=R*(0.7+r*.22);
+      if(r===0&&this.owner!=='neutral'){
+        const fill=this.pressure;
+        ctx.beginPath(); ctx.arc(this.x,this.y,rr,-Math.PI/2,-Math.PI/2+fill*Math.PI*2);
+        ctx.strokeStyle=col+'bb'; ctx.lineWidth=2.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x,this.y,rr,-Math.PI/2+fill*Math.PI*2,-Math.PI/2+Math.PI*2);
+        ctx.strokeStyle=col+'22'; ctx.lineWidth=2.5; ctx.stroke();
+      } else {
+        ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.ringPhases[r]);
+        ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2);
+        const dash=(r+1)*.35;
+        ctx.strokeStyle=col+'33'; ctx.lineWidth=1.2;
+        ctx.setLineDash([dash*6,dash*4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.restore();
+      }
+    }
+
+    // Star body
+    const body=ctx.createRadialGradient(this.x-R*.2,this.y-R*.2,0,this.x,this.y,R);
+    if(this.owner==='player'){body.addColorStop(0,'#1a3a80');body.addColorStop(.6,'#0a1a50');body.addColorStop(1,'#050e30');}
+    else if(this.owner==='enemy'){body.addColorStop(0,'#801828');body.addColorStop(.6,'#500a14');body.addColorStop(1,'#300508');}
+    else if(this.owner==='enemy2'){body.addColorStop(0,'#804010');body.addColorStop(.6,'#502508');body.addColorStop(1,'#301504');}
+    else{body.addColorStop(0,'#2a3550');body.addColorStop(.6,'#18223a');body.addColorStop(1,'#0e1525');}
+    ctx.beginPath(); ctx.arc(this.x,this.y,R,0,Math.PI*2);
+    ctx.fillStyle=body; ctx.fill();
+
+    // Capture flash ring
+    if(this.captureFlash>0){
+      ctx.beginPath(); ctx.arc(this.x,this.y,R+this.captureFlash*30,0,Math.PI*2);
+      ctx.strokeStyle=col+Math.floor(this.captureFlash*200).toString(16).padStart(2,'0');
+      ctx.lineWidth=3; ctx.stroke();
+    }
+
+    // Border + glow
+    ctx.shadowColor=col; ctx.shadowBlur=12;
+    ctx.strokeStyle=col; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(this.x,this.y,R,0,Math.PI*2); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // Pressure corona
+    if(this.pressure>.78&&this.owner!=='neutral'){
+      const pulse=.5+.5*Math.sin(t*2.2+this.phase);
+      ctx.beginPath(); ctx.arc(this.x,this.y,R+3+pulse*4,0,Math.PI*2);
+      ctx.strokeStyle=col+Math.floor(pulse*75+18).toString(16).padStart(2,'0');
+      ctx.lineWidth=1.5; ctx.stroke();
+    }
+
+    // Unit count
+    const fs=clamp(Math.floor(R*.45),10,17);
+    ctx.fillStyle='#ddeeff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`bold ${fs}px 'Share Tech Mono',monospace`;
+    ctx.shadowColor='rgba(0,0,0,.95)'; ctx.shadowBlur=5;
+    ctx.fillText(Math.floor(this.units),this.x,this.y-1);
+    ctx.shadowBlur=0; ctx.textBaseline='alphabetic';
+    ctx.fillStyle=col+'66';
+    ctx.font=`${Math.max(7,fs-5)}px 'Share Tech Mono',monospace`;
+    ctx.fillText(this.cls,this.x,this.y+fs*.82);
+  }
+
+  containsPoint(x,y){ return dist(x,y,this.x,this.y)<this.radius+10; }
+
+  tooltipLines(){
+    const beams=game.beams.filter(b=>b.src===this&&b.state!=='dead').length;
+    return [`${this.cls}`,`ENERGIE: ${Math.floor(this.units)}/${this.capacity}`,`STRAHLEN: ${beams}/${this.maxBeams}`];
+  }
+}
+
+// ═══ ENERGY BEAM ══════════════════════════════════════════
+// Tube mechanic:
+//  - Beam costs units immediately (= initial tube fill)
+//  - Source pumps more in; tube drains to target
+//  - PRESSURE: fuller source → faster flow
+//  - CUT at tFrac: ahead (>tFrac) → target instantly, behind → returned
+//  - ONLY player beams are cuttable
+class EnergyBeam {
+  constructor(src,tgt,noCost=false) {
+    this.src=src; this.tgt=tgt; this.owner=src.owner;
+    this.len=dist(src.x,src.y,tgt.x,tgt.y);
+    this.cost=noCost?2:Math.ceil(this.len*G.DIST_COST)+2;
+    this.state='growing'; this.growProg=0; this.unitsInTube=0;
+    this.wavePhase=Math.random()*Math.PI*2;
+    this.cp=this._cp();
+    this.isInternal=(src.owner===tgt.owner);
+    src.units=Math.max(0,src.units-this.cost);
+    this.unitsInTube=this.cost;
+  }
+  _cp(){
+    const mx=(this.src.x+this.tgt.x)/2,my=(this.src.y+this.tgt.y)/2;
+    const px=-(this.tgt.y-this.src.y),py=(this.tgt.x-this.src.x);
+    const l=Math.hypot(px,py)||1,off=(Math.random()-.5)*this.len*.22;
+    return {x:mx+(px/l)*off,y:my+(py/l)*off};
+  }
+  ptAt(t){
+    const wave=Math.sin(t*Math.PI*4+this.wavePhase+performance.now()/1800)*2.2;
+    const b=bez(this.src,this.cp,this.tgt,t);
+    const dx=this.tgt.x-this.src.x,dy=this.tgt.y-this.src.y,l=Math.hypot(dx,dy)||1;
+    return {x:b.x+(-dy/l)*wave,y:b.y+(dx/l)*wave};
+  }
+  update(dt){
+    if(this.state==='dead')return;
+    if(this.state==='growing'){
+      this.growProg+=( G.GROW_SPD/this.len)*dt;
+      if(this.growProg>=1){this.growProg=1;this.state='active';}
+      return;
+    }
+    if(!this.isInternal&&this.src.owner!==this.owner){this.sever(null,true);return;}
+    const pressure=this.src.pressure;
+    const flow=G.FLOW_RATE*(0.38+pressure*.95);
+    const drain=Math.min(this.unitsInTube,flow*dt);
+    this.unitsInTube-=drain;
+    this._apply(drain);
+    if(this.src.units>.5){
+      const pump=Math.min(this.src.units,flow*dt);
+      this.src.units-=pump;
+      this.unitsInTube+=pump;
+    }
+  }
+  _apply(amt){
+    if(amt<=0)return;
+    const tgt=this.tgt;
+    // Same faction = reinforce, else = attack
+    if(this.owner===tgt.owner){
+      tgt.units=Math.min(tgt.capacity,tgt.units+amt);
+    } else {
+      tgt.units-=amt;
+      if(tgt.units<=0){
+        const col = this.owner==='player'?G.P_COL:this.owner==='enemy2'?G.E2_COL:G.E_COL;
+        tgt.owner=this.owner;
+        tgt.units=Math.min(tgt.capacity,Math.max(5,Math.abs(tgt.units)));
+        tgt.captureFlash=1;
+        game.particles.burst(tgt.x,tgt.y,col,20);
+        game.particles.ring(tgt.x,tgt.y,col);
+        SFX.capture();
+        // Kill opposing beams targeting this system
+        game.beams.forEach(b=>{if(b.tgt===tgt&&b.owner!==this.owner)b.sever(null,true);});
+        game.beams=game.beams.filter(b=>b.state!=='dead');
+      }
+    }
+  }
+  sever(cutT=null,silent=false){
+    this.state='dead';
+    if(cutT!==null&&this.unitsInTube>.5){
+      const ahead=this.unitsInTube*(1-cutT);
+      const behind=this.unitsInTube*cutT;
+      if(ahead>.5) this._apply(ahead);
+      if(behind>.5&&this.src.owner===this.owner)
+        this.src.units=Math.min(this.src.capacity,this.src.units+behind);
+      if(!silent){
+        if(cutT<0.38&&ahead>3){
+          // BIG visual boost label + golden flash
+          const tip=this.ptAt(cutT);
+          game.particles.label(tip.x,tip.y-18,`⚡ +${Math.round(ahead)}`,`#ffdd44`);
+          game.particles.burst(tip.x,tip.y,'#ffcc00',10);
+          SFX.boost();
+        } else if(cutT>.62&&behind>3&&this.owner==='player'){
+          game.particles.label(this.src.x,this.src.y-this.src.radius-16,`↩ +${Math.round(behind)}`,'#88ccff');
+        }
+      }
+    }
+    this.unitsInTube=0;
+  }
+  get fillFrac(){ return clamp(this.unitsInTube/Math.max(1,this.cost*2),0,1); }
+  draw(ctx){
+    if(this.state==='dead')return;
+    const col=this.owner==='player'?G.P_COL:G.E_COL;
+    const endT=this.growProg, fill=this.fillFrac, pres=this.src.pressure;
+    // Glow line
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){const p=this.ptAt((i/20)*endT);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
+    ctx.strokeStyle=col+'15'; ctx.lineWidth=5+fill*4; ctx.stroke();
+    // Beads
+    const beadGap=5, beadCount=Math.max(3,Math.floor(this.len*endT/beadGap));
+    for(let i=0;i<=beadCount;i++){
+      const tFrac=i/beadCount, p=this.ptAt(tFrac*endT);
+      const isAtk=this.owner!==this.tgt.owner;
+      let bc;
+      if(this.isInternal){
+        const ic=this.owner==='player'?'100,180,255':this.owner==='enemy2'?'255,160,60':'255,100,100';
+        bc=`rgba(${ic},${(.38+fill*.42).toFixed(2)})`;
+      } else if(isAtk&&tFrac>.58){
+        const mix=(tFrac-.58)/.42;
+        if(this.owner==='player')
+          bc=`rgba(${Math.floor(lerp(68,255,mix))},${Math.floor(lerp(136,200,mix))},${Math.floor(lerp(255,55,mix))},0.82)`;
+        else if(this.owner==='enemy2')
+          bc=`rgba(255,${Math.floor(lerp(153,60,mix))},${Math.floor(lerp(34,20,mix))},0.82)`;
+        else
+          bc=`rgba(255,${Math.floor(lerp(68,140,mix))},${Math.floor(lerp(85,28,mix))},0.82)`;
+      } else {
+        const alpha=(.28+fill*.48+pres*.18).toFixed(2);
+        bc=this.owner==='player'?`rgba(68,136,255,${alpha})`:this.owner==='enemy2'?`rgba(255,153,34,${alpha})`:`rgba(255,68,85,${alpha})`;
+      }
+      const sz=1.5+tFrac*.9+pres*.38;
+      ctx.beginPath(); ctx.arc(p.x,p.y,sz,0,Math.PI*2); ctx.fillStyle=bc; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x,p.y,sz*.34,0,Math.PI*2); ctx.fillStyle='rgba(200,230,255,.45)'; ctx.fill();
+    }
+    // Growing tip
+    if(this.state==='growing'){
+      const tip=this.ptAt(endT);
+      ctx.beginPath(); ctx.arc(tip.x,tip.y,5,0,Math.PI*2);
+      ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=16; ctx.fill(); ctx.shadowBlur=0;
+    }
+  }
+  hitTest(x,y){
+    for(let i=0;i<=30;i++){
+      const p=this.ptAt((i/30)*this.growProg);
+      if(Math.hypot(p.x-x,p.y-y)<G.CUT_DIST)return i/30;
+    }
+    return -1;
+  }
+}
+
+// ═══ ENEMY AI ════════════════════════════════════════════
+class EnemyAI {
+  constructor(){this.t=0;this.ct=0;}
+  update(dt,lvl){
+    // Both enemy factions cut player beams
+    this.ct+=dt;
+    if(this.ct>=lvl.aiCutInterval){
+      this.ct=0;
+      if(Math.random()<lvl.aiCutChance){
+        const threats=game.beams.filter(b=>b.owner==='player'&&b.state==='active'&&(b.tgt.owner==='enemy'||b.tgt.owner==='enemy2'));
+        if(threats.length){
+          threats.sort((a,b)=>b.unitsInTube-a.unitsInTube);
+          const chosen=threats[0];
+          chosen.sever(.05+Math.random()*.25,true);
+          setTimeout(()=>{game.beams=game.beams.filter(b=>b!==chosen);},60);
+        }
+      }
+    }
+    this.t+=dt;
+    if(this.t<lvl.aiInterval)return;
+    this.t=0;
+    // Run AI for both enemy factions; enemy2 attacks enemy too (and vice versa)
+    const factions = ['enemy'];
+    if(lvl.hasFaction2) factions.push('enemy2');
+    factions.forEach(faction => {
+      const eSys=game.systems.filter(s=>s.owner===faction);
+      const otherEnemies=factions.filter(f=>f!==faction);
+      const hostile=[
+        ...game.systems.filter(s=>s.owner==='player'),
+        ...game.systems.filter(s=>s.owner==='neutral'),
+        // enemy2 also attacks enemy and vice versa
+        ...game.systems.filter(s=>otherEnemies.includes(s.owner)),
+      ];
+      eSys.forEach(sys=>{
+        if(sys.units<12)return;
+        const out=game.beams.filter(b=>b.src===sys&&b.state!=='dead');
+        if(out.length>=sys.maxBeams)return;
+        let best=null,bScore=-Infinity;
+        hostile.forEach(tgt=>{
+          if(!sys.canReach(tgt))return;
+          if(game.beams.some(b=>b.src===sys&&b.tgt===tgt&&b.state!=='dead'))return;
+          const d=dist(sys.x,sys.y,tgt.x,tgt.y);
+          const isPlayer=tgt.owner==='player';
+          const score=(sys.units-tgt.units-sys.beamCost(tgt))/(d/75+1)+(isPlayer?4:0);
+          if(score>bScore){bScore=score;best=tgt;}
+        });
+        if(best&&bScore>-6)game.createBeam(sys,best);
+      });
+    });
+  }
+}
+
+// ═══ INPUT ════════════════════════════════════════════════
+class Input {
+  constructor(canvas){
+    this.cv=canvas; this.drag=false; this.from=null; this.dpos={x:0,y:0};
+    this.swStart=null; this.swPts=[]; this.tid=null;
+    this.tooltip=null; this.ttTimer=0;
+    const on=(ev,fn)=>canvas.addEventListener(ev,fn,{passive:false});
+    on('touchstart', e=>{e.preventDefault();if(this.tid!==null)return;this.tid=e.touches[0].identifier;this._start(this._p(e));});
+    on('touchmove',  e=>{e.preventDefault();if(this.tid===null)return;this._move(this._p(e));});
+    on('touchend',   e=>{e.preventDefault();this.tid=null;this._end(this._p(e));});
+    on('touchcancel',e=>{e.preventDefault();this.tid=null;this._end(this._p(e));});
+    canvas.addEventListener('mousedown',e=>this._start(this._p(e)));
+    canvas.addEventListener('mousemove',e=>this._move(this._p(e)));
+    canvas.addEventListener('mouseup',  e=>this._end(this._p(e)));
+  }
+  _p(e){
+    const r=this.cv.getBoundingClientRect();
+    let cx,cy;
+    if(e.touches?.length){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+    else if(e.changedTouches?.length){cx=e.changedTouches[0].clientX;cy=e.changedTouches[0].clientY;}
+    else{cx=e.clientX;cy=e.clientY;}
+    return{x:(cx-r.left)*(this.cv.width/r.width),y:(cy-r.top)*(this.cv.height/r.height)};
+  }
+  _start(pos){
+    this.tooltip=null;this.ttTimer=0;
+    const sys=game.getSystemAt(pos.x,pos.y);
+    if(sys&&sys.owner==='player'){this.drag=true;this.from=sys;this.dpos=pos;this.swStart=null;}
+    else{this.drag=false;this.from=null;this.swStart=pos;this.swPts=[pos];
+      if(sys){this.tooltip={sys,x:pos.x,y:pos.y};this.ttTimer=2.5;}}
+  }
+  _move(pos){
+    if(this.drag)this.dpos=pos;
+    else if(this.swStart){this.swPts.push(pos);if(this.swPts.length>18)this.swPts.shift();}
+  }
+  _end(pos){
+    if(this.drag&&this.from){
+      const tgt=game.getSystemAt(pos.x,pos.y);
+      if(tgt&&tgt!==this.from){
+        if(!game.beams.some(b=>b.src===this.from&&b.tgt===tgt&&b.state!=='dead')){
+          const noCost=game.lvlDef.noCost||false;
+          if(this.from.canReach(tgt,noCost)){
+            game.createBeam(this.from,tgt,noCost);
+          } else {
+            const cost=this.from.beamCost(tgt,noCost);
+            game.particles.label(this.from.x,this.from.y-this.from.radius-18,`Benötigt ${cost}`,'#ff8844');
+          }
+        }
+      }
+      this.drag=false;this.from=null;
+    } else if(this.swStart){
+      if(Math.hypot(pos.x-this.swStart.x,pos.y-this.swStart.y)>8)this._cut();
+      this.swStart=null;this.swPts=[];
+    }
+  }
+  _cut(){
+    if(this.swPts.length<2)return;
+    let didCut=false;
+    // ONLY player beams!
+    const cuttable=game.beams.filter(b=>b.owner==='player'&&b.state==='active');
+    for(const beam of cuttable){
+      let found=false;
+      outer: for(let s=0;s<this.swPts.length-1;s++){
+        const A=this.swPts[s],B=this.swPts[s+1];
+        for(let i=0;i<=32;i++){
+          const tFrac=i/32, p=beam.ptAt(tFrac);
+          if(this._sd(A,B,p)<G.CUT_DIST){
+            beam.sever(tFrac);didCut=true;found=true;
+            setTimeout(()=>{game.beams=game.beams.filter(b=>b!==beam);},80);
+            break outer;
+          }
+        }
+      }
+      if(found)break;
+    }
+    if(didCut)SFX.cut();
+  }
+  _sd(A,B,P){
+    const dx=B.x-A.x,dy=B.y-A.y,l2=dx*dx+dy*dy;
+    if(l2===0)return Math.hypot(P.x-A.x,P.y-A.y);
+    const t=clamp(((P.x-A.x)*dx+(P.y-A.y)*dy)/l2,0,1);
+    return Math.hypot(P.x-A.x-t*dx,P.y-A.y-t*dy);
+  }
+  update(dt){if(this.ttTimer>0){this.ttTimer-=dt;if(this.ttTimer<=0)this.tooltip=null;}}
+  draw(ctx){
+    // Range indicator
+    if(this.from){
+      ctx.beginPath();ctx.arc(this.from.x,this.from.y,200,0,Math.PI*2);
+      ctx.strokeStyle='rgba(70,130,255,0.08)';ctx.lineWidth=1.5;
+      ctx.setLineDash([5,9]);ctx.stroke();ctx.setLineDash([]);
+    }
+    // Drag line
+    if(this.drag&&this.from){
+      const tgt=game.getSystemAt(this.dpos.x,this.dpos.y);
+      const noCost=game.lvlDef.noCost||false;
+      const ok=!tgt||tgt===this.from||this.from.canReach(tgt,noCost);
+      ctx.beginPath();ctx.moveTo(this.from.x,this.from.y);ctx.lineTo(this.dpos.x,this.dpos.y);
+      ctx.strokeStyle=ok?'rgba(80,150,255,0.5)':'rgba(255,100,60,0.5)';
+      ctx.lineWidth=2;ctx.setLineDash([8,7]);ctx.stroke();ctx.setLineDash([]);
+      if(tgt&&tgt!==this.from){
+        ctx.beginPath();ctx.arc(tgt.x,tgt.y,tgt.radius+12,0,Math.PI*2);
+        ctx.strokeStyle=tgt.owner==='player'?'rgba(100,200,255,0.8)':G.P_COL;
+        ctx.lineWidth=2.5;ctx.stroke();
+        ctx.textAlign='center';ctx.font=`bold 11px 'Share Tech Mono',monospace`;
+        if(!this.from.canReach(tgt,noCost)){
+          ctx.fillStyle='#ff8844';
+          ctx.fillText(`${Math.floor(this.from.units)}/${this.from.beamCost(tgt,noCost)} nötig`,tgt.x,tgt.y-tgt.radius-15);
+        } else if(tgt.owner==='player'){
+          ctx.fillStyle='rgba(100,200,255,0.88)';ctx.fillText('TRANSFER',tgt.x,tgt.y-tgt.radius-15);
+        } else {
+          const ratio=this.from.units/(tgt.units+1);
+          ctx.fillStyle=ratio>1.5?'#55ff77':ratio>1?'#ffee55':'#ff5566';
+          ctx.fillText(ratio.toFixed(1)+'×',tgt.x,tgt.y-tgt.radius-15);
+        }
+      }
+    }
+    // Swipe trail
+    if(this.swPts.length>1){
+      ctx.beginPath();ctx.moveTo(this.swPts[0].x,this.swPts[0].y);
+      this.swPts.forEach(p=>ctx.lineTo(p.x,p.y));
+      ctx.strokeStyle='rgba(240,215,75,0.85)';ctx.lineWidth=2.8;
+      ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+    }
+    // Tooltip
+    if(this.tooltip&&this.ttTimer>0){
+      const{sys,x,y}=this.tooltip,lines=sys.tooltipLines();
+      const bw=158,bh=12+lines.length*17,pad=9;
+      let bx=x+15,by=y-bh/2;
+      const cw=ctx.canvas.width,ch=ctx.canvas.height;
+      if(bx+bw>cw-8)bx=x-bw-15;
+      if(by<40)by=40;if(by+bh>ch-20)by=ch-bh-20;
+      ctx.fillStyle='rgba(2,6,22,0.94)';ctx.strokeStyle='rgba(80,140,255,0.45)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.fill();ctx.stroke();
+      ctx.font=`10px 'Share Tech Mono',monospace`;ctx.textAlign='left';
+      lines.forEach((l,i)=>{
+        ctx.fillStyle=i===0?(sys.owner==='player'?'#77aaff':sys.owner==='enemy'?'#ff7788':'#99bbcc'):'rgba(170,210,255,0.82)';
+        ctx.fillText(l,bx+pad,by+pad+13+i*17);
+      });
+    }
+  }
+}
+
+// ═══ GAME ════════════════════════════════════════════════
+class Game {
+  constructor(){
+    this.canvas=document.getElementById('gameCanvas');
+    this.ctx=this.canvas.getContext('2d');
+    this.systems=[];this.beams=[];
+    this.input=new Input(this.canvas);
+    this.ai=new EnemyAI();
+    this.particles=new Particles();
+    this.lastTime=0;this.state='menu';this.currentLevel=0;this.timer=0;
+    this.lvlDef=LEVELS[0];
+    this.resize();buildBG(this.canvas.width,this.canvas.height);
+    this._loop();
+    window.addEventListener('resize',()=>{this.resize();buildBG(this.canvas.width,this.canvas.height);});
+    document.addEventListener('gesturestart',e=>e.preventDefault());
+    document.addEventListener('gesturechange',e=>e.preventDefault());
+  }
+  resize(){this.canvas.width=window.innerWidth;this.canvas.height=window.innerHeight;}
+  loadLevel(idx){
+    this.currentLevel=idx;this.timer=0;
+    this.lvlDef=LEVELS[idx];
+    this.systems=[];this.beams=[];
+    this.particles.clear();  // FIX: clear particles on load
+    const w=this.canvas.width,h=this.canvas.height;
+    this.lvlDef.layout(w,h).forEach(d=>this.systems.push(new StarSystem(d.x,d.y,d.owner,d.cls,d.startUnits)));
+    this.state='playing';
+    document.getElementById('hudZone').textContent=this.lvlDef.zone;
+    document.getElementById('hudLimit').textContent=this.lvlDef.powerLimit;
+    document.getElementById('hudMsg').textContent=this.lvlDef.msg;
+    document.getElementById('hudTimer').textContent='0';
+    if(idx===0){
+      const h=document.getElementById('boostHint');
+      h.style.opacity='1';setTimeout(()=>h.style.opacity='0',7000);
+    }
+  }
+  createBeam(src,tgt,noCost=false){
+    const existing=this.beams.filter(b=>b.src===src&&b.state!=='dead');
+    if(existing.length>=src.maxBeams){
+      const old=existing[0];old.sever(null,true);
+      setTimeout(()=>{this.beams=this.beams.filter(b=>b!==old);},100);
+    }
+    const beam=new EnergyBeam(src,tgt,noCost);
+    this.beams.push(beam);
+    if(src.owner==='player')SFX.beam();
+  }
+  getSystemAt(x,y){return this.systems.find(s=>s.containsPoint(x,y));}
+  update(dt){
+    if(this.state!=='playing')return;
+    this.timer+=dt;
+    this.systems.forEach(s=>s.update(dt));
+    this.beams.forEach(b=>b.update(dt));
+    this.beams=this.beams.filter(b=>b.state!=='dead');
+    this.ai.update(dt,this.lvlDef);
+    this.particles.update(dt);
+    this.input.update(dt);
+    const pS=this.systems.filter(s=>s.owner==='player');
+    const eS=this.systems.filter(s=>s.owner==='enemy'||s.owner==='enemy2');
+    const tot=this.systems.length||1;
+    document.getElementById('hudTimer').textContent=Math.floor(this.timer);
+    document.getElementById('pbP').style.width=(pS.length/tot*100)+'%';
+    document.getElementById('pbE').style.width=(eS.length/tot*100)+'%';
+    if(eS.length===0&&pS.length>0){this.state='won';SFX.win();UI.showGameOver(true,this.currentLevel,Math.floor(this.timer));}
+    else if(pS.length===0){this.state='lost';SFX.lose();UI.showGameOver(false,this.currentLevel,Math.floor(this.timer));}
+  }
+  draw(){
+    const ctx=this.ctx;
+    if(bgCanvas)ctx.drawImage(bgCanvas,0,0);
+    else{ctx.fillStyle='#02040f';ctx.fillRect(0,0,this.canvas.width,this.canvas.height);}
+    this.beams.forEach(b=>b.draw(ctx));
+    this.systems.forEach(s=>s.draw(ctx));
+    this.particles.draw(ctx);
+    this.input.draw(ctx);
+  }
+  _loop(){
+    const now=performance.now();
+    const dt=Math.min((now-this.lastTime)/1000,0.1);
+    this.lastTime=now;
+    this.update(dt);this.draw();
+    requestAnimationFrame(()=>this._loop());
+  }
+}
+
+// ═══ UI ══════════════════════════════════════════════════
+const UI = {
+  unlocked:1,_cur:0,
+  init(){
+    this.unlocked=parseInt(localStorage.getItem('sc2_ul')||'1');
+    document.querySelectorAll('.tbtn').forEach(b=>{
+      b.addEventListener('click',()=>{
+        document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        const pct=parseInt(b.dataset.pct);
+        G.FLOW_RATE=pct===100?11:pct===50?6.5:3.8;
+      });
+    });
+  },
+  showMainMenu(){ this._hide();document.getElementById('mainMenu').style.display='flex'; },
+  showLevelSelect(){
+    this._hide();document.getElementById('levelSelect').style.display='flex';
+    const grid=document.getElementById('levelGrid');grid.innerHTML='';
+    LEVELS.forEach((lvl,i)=>{
+      const t=document.createElement('div');
+      t.className='ltile'+(i>=this.unlocked?' locked':'');
+      const st=localStorage.getItem('sc2_s'+i)||'';
+      t.innerHTML=`<div class="tn">${i+1}</div><div class="tname">${lvl.name}</div><div class="tstars">${st||'○○○'}</div>`;
+      t.addEventListener('click',()=>this.showIntro(i));
+      grid.appendChild(t);
+    });
+  },
+  showIntro(idx){
+    this._hide();this._cur=idx;
+    const lvl=LEVELS[idx];
+    document.getElementById('levelIntro').style.display='flex';
+    document.getElementById('introBadge').textContent='SEKTOR '+lvl.zone+' — MISSION '+(idx+1);
+    document.getElementById('introTitle').textContent=lvl.name;
+    document.getElementById('introStory').textContent=lvl.story;
+    document.getElementById('introZellen').textContent=lvl.layout(800,600).length;
+    document.getElementById('introLimit').textContent=lvl.powerLimit;
+    document.getElementById('introSchwier').textContent=lvl.difficulty;
+    document.getElementById('t3').textContent=lvl.star3;
+    document.getElementById('t2').textContent=lvl.star2;
+  },
+  startLevel(){ this._hide();game.loadLevel(this._cur); },
+  showGameOver(won,idx,secs){
+    document.getElementById('gameOver').style.display='flex';
+    const ttl=document.getElementById('goTitle'),se=document.getElementById('goStars'),
+          sb=document.getElementById('goSub'),nb=document.getElementById('goNextBtn');
+    if(won){
+      ttl.textContent='SEKTOR GESICHERT!';ttl.style.color='#88ccff';
+      const lvl=LEVELS[idx],stars=secs<=lvl.star3?3:secs<=lvl.star2?2:1;
+      se.textContent='★'.repeat(stars)+'☆'.repeat(3-stars);
+      se.style.color=stars===3?'#ffdd44':stars===2?'#aabb55':'#556677';
+      sb.textContent=`Zeit: ${secs}s — Zone ${lvl.zone} befreit.`;
+      const best=parseInt(localStorage.getItem('sc2_s'+idx)||'0');
+      if(stars>best)localStorage.setItem('sc2_s'+idx,stars);
+      const next=idx+1;
+      if(next<LEVELS.length){
+        this.unlocked=Math.max(this.unlocked,next+1);
+        localStorage.setItem('sc2_ul',this.unlocked);
+        nb.textContent='NÄCHSTE MISSION →';nb.onclick=()=>this.showIntro(next);
+      } else {
+        nb.textContent='GALAXIS BEFREIT! ★';nb.onclick=()=>this.showLevelSelect();
+      }
+    } else {
+      ttl.textContent='VERNICHTET';ttl.style.color='#ff5566';
+      se.textContent='☆☆☆';se.style.color='#553344';
+      sb.textContent='Alle deine Systeme wurden eingenommen.';
+      nb.textContent='NOCHMAL KÄMPFEN';nb.onclick=()=>this.restartLevel();
+    }
+  },
+  restartLevel(){ this._hide();game.loadLevel(game.currentLevel); },
+  _hide(){ ['mainMenu','levelSelect','levelIntro','gameOver'].forEach(id=>document.getElementById(id).style.display='none'); }
+};
+
+// ═══ BOOT ════════════════════════════════════════════════
+const game=new Game();
+UI.init();
+UI.showMainMenu();
+document.getElementById('startLevelBtn').addEventListener('click',()=>UI.startLevel());
+</script>
+</body>
+</html>

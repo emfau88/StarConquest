@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tentacle Wars</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
+        html,body{width:100%;height:100%;background:#050c05;overflow:hidden;font-family:'Share Tech Mono',monospace;position:fixed;}
+        #gameCanvas{display:block;width:100%;height:100%;}
+
+        /* TOP HUD */
+        #topHud{position:absolute;top:0;left:0;right:0;height:34px;background:rgba(0,0,0,0.8);border-bottom:1px solid rgba(60,140,60,0.2);display:flex;align-items:center;padding:0 8px;gap:12px;pointer-events:none;z-index:10;font-size:11px;color:rgba(170,215,170,0.85);}
+        #topHud .sep{color:rgba(60,140,60,0.35);}
+        #topHud .val{color:#88ee88;font-weight:700;}
+        #topHud .msg{flex:1;text-align:center;color:rgba(130,190,130,0.65);font-size:10px;overflow:hidden;white-space:nowrap;}
+        #topHud .tw{display:flex;align-items:center;gap:5px;margin-left:auto;}
+        #topHud .tl{color:rgba(120,170,120,0.6);font-size:10px;}
+        #topHud .tv{color:#aaff88;font-size:12px;font-weight:700;min-width:24px;text-align:right;}
+
+        /* power bar */
+        #powerBar{position:absolute;top:3px;right:8px;width:75px;height:9px;border:1px solid rgba(60,140,60,0.35);border-radius:1px;overflow:hidden;pointer-events:none;z-index:11;display:flex;}
+        #pbP{height:100%;background:#33bb33;transition:width 0.4s;}
+        #pbE{height:100%;background:#bb2233;transition:width 0.4s;}
+
+        /* transfer btns */
+        #transferSelector{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10;pointer-events:all;}
+        .tbtn{background:rgba(0,18,0,0.85);border:1px solid rgba(70,160,70,0.35);color:#77bb77;border-radius:12px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Share Tech Mono',monospace;transition:all 0.15s;}
+        .tbtn.active{background:rgba(30,120,30,0.4);border-color:#55bb55;color:#99ee99;box-shadow:0 0 7px rgba(60,180,60,0.3);}
+        .tbtn:active{transform:scale(0.91);}
+
+        /* overlays */
+        .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;background:rgba(2,7,2,0.94);backdrop-filter:blur(5px);}
+        .obox{text-align:center;max-width:390px;padding:34px 26px;width:92%;}
+        .obox h1{font-family:'Orbitron',sans-serif;font-size:34px;font-weight:900;color:#33dd33;text-shadow:0 0 22px rgba(50,190,50,0.5);letter-spacing:4px;margin-bottom:5px;}
+        .obox .sub{font-size:10px;color:rgba(70,150,70,0.6);letter-spacing:5px;margin-bottom:26px;font-family:'Orbitron',sans-serif;}
+        .obox p{color:rgba(150,205,150,0.8);font-size:13px;line-height:1.75;margin-bottom:20px;}
+        .btn-p{background:linear-gradient(135deg,#28bb44,#168832);color:#000;border:none;padding:12px 34px;border-radius:3px;cursor:pointer;font-weight:700;font-size:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;transition:all 0.2s;box-shadow:0 0 14px rgba(30,160,30,0.4);}
+        .btn-p:hover{transform:scale(1.04);box-shadow:0 0 22px rgba(30,180,30,0.6);}
+        .btn-p:active{transform:scale(0.95);}
+        .btn-s{background:transparent;color:rgba(110,170,110,0.7);border:1px solid rgba(70,150,70,0.22);padding:8px 20px;border-radius:3px;cursor:pointer;font-size:12px;font-family:'Share Tech Mono',monospace;margin-top:9px;transition:all 0.2s;display:block;width:fit-content;margin-left:auto;margin-right:auto;}
+        .btn-s:hover{border-color:rgba(70,190,70,0.5);color:#99ee99;}
+
+        #levelIntro{display:none;}
+        .lvl-badge{font-family:'Orbitron',sans-serif;font-size:10px;color:rgba(50,170,50,0.6);letter-spacing:4px;margin-bottom:7px;}
+        #levelIntro h2{font-family:'Orbitron',sans-serif;font-size:21px;font-weight:900;color:#99ffaa;margin-bottom:13px;}
+        .story-txt{color:rgba(130,195,130,0.8);font-size:12px;line-height:1.85;margin-bottom:20px;text-align:left;border-left:2px solid rgba(50,150,50,0.3);padding-left:13px;font-family:'Share Tech Mono',monospace;}
+        .lstats{display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+        .sbox{background:rgba(0,35,0,0.55);border:1px solid rgba(50,150,50,0.22);border-radius:3px;padding:7px 13px;}
+        .sbox .sv{font-family:'Orbitron',sans-serif;font-size:16px;color:#55ee55;font-weight:700;}
+        .sbox .sk{font-size:9px;color:rgba(110,170,110,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+        #gameOver{display:none;}
+        #gameOver h2{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;margin-bottom:7px;}
+        .go-stars{font-size:28px;margin-bottom:10px;letter-spacing:4px;}
+        .go-sub{font-size:12px;color:rgba(150,200,150,0.6);margin-bottom:22px;}
+        .btn-row{display:flex;flex-direction:column;align-items:center;gap:7px;}
+
+        #levelSelect{display:none;}
+        #levelSelect h2{font-family:'Orbitron',sans-serif;font-size:19px;font-weight:900;color:#33dd33;margin-bottom:18px;letter-spacing:3px;}
+        .lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:18px;max-width:290px;}
+        .ltile{background:rgba(0,18,0,0.65);border:1px solid rgba(50,150,50,0.22);border-radius:3px;padding:11px 5px;cursor:pointer;transition:all 0.18s;text-align:center;}
+        .ltile:hover{border-color:#33bb33;background:rgba(15,70,15,0.4);}
+        .ltile.locked{opacity:0.22;cursor:not-allowed;pointer-events:none;}
+        .ltile .tn{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;color:#33bb33;}
+        .ltile .tname{font-size:8px;color:rgba(110,170,110,0.5);margin-top:2px;}
+        .ltile .tstars{font-size:12px;margin-top:3px;}
+        #mainMenu{display:flex;}
+
+        /* cell class legend */
+        .cls-legend{display:flex;flex-direction:column;gap:4px;margin-bottom:18px;text-align:left;}
+        .cls-row{font-size:10px;color:rgba(130,190,130,0.7);padding:4px 10px;border-left:2px solid rgba(50,150,50,0.3);}
+        .cls-row span{color:#88ee88;font-weight:700;}
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<div id="topHud">
+    <span>ZONE: <span class="val" id="hudZone">1</span></span>
+    <span class="sep">|</span>
+    <span>POWER: <span class="val" id="hudLimit">60</span></span>
+    <span class="sep">|</span>
+    <span class="msg" id="hudMsg">CAPTURE ALL ALIEN MICROBES</span>
+    <div class="tw"><span class="tl">TIME:</span><span class="tv" id="hudTimer">0</span></div>
+</div>
+<div id="powerBar"><div id="pbP" style="width:50%"></div><div id="pbE" style="width:50%"></div></div>
+
+<div id="transferSelector">
+    <button class="tbtn" data-pct="25">25%</button>
+    <button class="tbtn active" data-pct="50">50%</button>
+    <button class="tbtn" data-pct="100">100%</button>
+</div>
+
+<!-- MAIN MENU -->
+<div class="overlay" id="mainMenu">
+    <div class="obox">
+        <h1>TENTACLE<br>WARS</h1>
+        <div class="sub">CELLULAR WARFARE</div>
+        <p>Übernimm feindliche Mikroben. Schneide ihre Verbindungen durch. Überlebe.</p>
+        <div class="cls-legend">
+            <div class="cls-row"><span>SPORE</span> — Schnelle Produktion, kleine Kapazität, 1 Tentakel</div>
+            <div class="cls-row"><span>EMBRYO</span> — Ausgeglichen, 2 Tentakel</div>
+            <div class="cls-row"><span>PULSAR</span> — Hohe Kapazität, langsame Produktion, 3 Tentakel</div>
+            <div class="cls-row"><span>TITAN</span> — Maximale Kapazität, sehr langsam, 4 Tentakel</div>
+        </div>
+        <button class="btn-p" onclick="UI.showLevelSelect()">SPIELEN</button>
+    </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="overlay" id="levelSelect">
+    <div class="obox">
+        <h2>LEVEL WÄHLEN</h2>
+        <div class="lgrid" id="levelGrid"></div>
+        <button class="btn-s" onclick="UI.showMainMenu()">← Zurück</button>
+    </div>
+</div>
+
+<!-- LEVEL INTRO -->
+<div class="overlay" id="levelIntro">
+    <div class="obox">
+        <div class="lvl-badge" id="introBadge">LEVEL 1</div>
+        <h2 id="introTitle">—</h2>
+        <div class="story-txt" id="introStory">—</div>
+        <div class="lstats">
+            <div class="sbox"><div class="sv" id="introZellen">—</div><div class="sk">Zellen</div></div>
+            <div class="sbox"><div class="sv" id="introLimit">—</div><div class="sk">Power Limit</div></div>
+            <div class="sbox"><div class="sv" id="introSchwier">—</div><div class="sk">Schwierigkeit</div></div>
+        </div>
+        <div class="lstats" style="font-size:10px;color:rgba(120,180,120,0.6);">
+            <span>★★★ &lt; <span id="t3">—</span>s</span>
+            <span>★★ &lt; <span id="t2">—</span>s</span>
+            <span>★ beliebig</span>
+        </div>
+        <button class="btn-p" id="startLevelBtn">ANGRIFF!</button>
+        <button class="btn-s" onclick="UI.showLevelSelect()">← Zurück</button>
+    </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay" id="gameOver">
+    <div class="obox">
+        <h2 id="goTitle">SIEG!</h2>
+        <div class="go-stars" id="goStars">★★★</div>
+        <p class="go-sub" id="goSub">Alle Feinde vernichtet.</p>
+        <div class="btn-row">
+            <button class="btn-p" id="goNextBtn">WEITER →</button>
+            <button class="btn-s" onclick="UI.restartLevel()">Nochmal</button>
+            <button class="btn-s" onclick="UI.showLevelSelect()">Level wählen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// SOUND ENGINE  (Web Audio API – no files needed)
+// ══════════════════════════════════════════════════════
+const SFX = (() => {
+    let ctx = null;
+    function _ctx() {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        return ctx;
+    }
+    function _play(freq, type, dur, vol=0.18, freqEnd=null) {
+        try {
+            const ac = _ctx();
+            const o = ac.createOscillator();
+            const g = ac.createGain();
+            o.connect(g); g.connect(ac.destination);
+            o.type = type; o.frequency.value = freq;
+            if (freqEnd) o.frequency.linearRampToValueAtTime(freqEnd, ac.currentTime + dur);
+            g.gain.setValueAtTime(vol, ac.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+            o.start(); o.stop(ac.currentTime + dur);
+        } catch(e) {}
+    }
+    function _noise(dur, vol=0.12) {
+        try {
+            const ac = _ctx();
+            const buf = ac.createBuffer(1, ac.sampleRate*dur, ac.sampleRate);
+            const d = buf.getChannelData(0);
+            for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+            const src = ac.createBufferSource();
+            src.buffer = buf;
+            const g = ac.createGain();
+            const f = ac.createBiquadFilter();
+            f.type='bandpass'; f.frequency.value=800;
+            src.connect(f); f.connect(g); g.connect(ac.destination);
+            g.gain.setValueAtTime(vol, ac.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+            src.start(); src.stop(ac.currentTime+dur);
+        } catch(e) {}
+    }
+    return {
+        tentacle()  { _play(220, 'sine',   0.12, 0.12, 440); },
+        capture()   { _play(330, 'square', 0.05, 0.10); _play(440, 'square', 0.08, 0.10); setTimeout(()=>_play(660,'sine',0.15,0.14),80); },
+        lose()      { _play(200, 'sawtooth',0.25, 0.15, 80); },
+        cut()       { _noise(0.07, 0.15); _play(180,'sawtooth',0.06,0.10,100); },
+        internal()  { _play(350, 'sine',   0.08, 0.08, 380); },
+        win()       { [0,150,300,500].forEach((d,i)=>setTimeout(()=>_play([440,550,660,880][i],'sine',0.25,0.14),d)); },
+    };
+})();
+
+// ══════════════════════════════════════════════════════
+// CELL CLASS DEFINITIONS
+// ══════════════════════════════════════════════════════
+const CELL_CLASSES = {
+    SPORE:  { cap:40,  prod:5.5, maxTent:1, spikes:4,  spikeLen:0.5, label:'SPORE'  },
+    EMBRYO: { cap:70,  prod:3.8, maxTent:2, spikes:6,  spikeLen:0.7, label:'EMBRYO' },
+    PULSAR: { cap:110, prod:2.2, maxTent:3, spikes:9,  spikeLen:0.9, label:'PULSAR' },
+    TITAN:  { cap:160, prod:1.2, maxTent:4, spikes:12, spikeLen:1.1, label:'TITAN'  },
+};
+
+// ══════════════════════════════════════════════════════
+// LEVEL DEFINITIONS
+// ══════════════════════════════════════════════════════
+const LEVELS = [
+    {
+        name:"Erste Infektion", zone:1, powerLimit:60, star3:30, star2:60,
+        msg:"TO SURVIVE IN THIS WORLD - CAPTURE ALL ALIEN MICROBES",
+        difficulty:"★☆☆☆",
+        story:"Das Virus breitet sich aus. Ein einzelner Eindringling hat deine Heimatzelle entdeckt. Zeige ihm, wer hier das Territorium beherrscht.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx-w*0.26,y:cy,       owner:'player', cls:'EMBRYO'},
+            {x:cx+w*0.26,y:cy,       owner:'enemy',  cls:'EMBRYO'},
+            {x:cx,       y:cy-h*0.2, owner:'neutral',cls:'SPORE'},
+            {x:cx,       y:cy+h*0.2, owner:'neutral',cls:'SPORE'},
+        ];}
+    },
+    {
+        name:"Flankenangriff", zone:2, powerLimit:60, star3:45, star2:80,
+        msg:"FLANK ATTACK - SECURE THE CENTER FIRST",
+        difficulty:"★★☆☆",
+        story:"Zwei Angreifer kommen von rechts. Nutze die neutralen Zellen als Brückenköpfe – wer sie zuerst sichert, gewinnt.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx-w*0.32,y:cy,           owner:'player', cls:'PULSAR'},
+            {x:cx+w*0.28,y:cy-h*0.22,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx+w*0.28,y:cy+h*0.22,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx,       y:cy,           owner:'neutral',cls:'EMBRYO'},
+            {x:cx-w*0.12,y:cy-h*0.24,    owner:'neutral',cls:'SPORE'},
+            {x:cx-w*0.12,y:cy+h*0.24,    owner:'neutral',cls:'SPORE'},
+        ];}
+    },
+    {
+        name:"Zellteilung", zone:3, powerLimit:100, star3:55, star2:100,
+        msg:"DIVIDE AND CONQUER - ISOLATE EACH ENEMY",
+        difficulty:"★★★☆",
+        story:"Der Parasit hat sich geteilt. Drei Zonen, drei Feinde – doch sie handeln unkoordiniert. Divide et impera.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx,       y:cy+h*0.32,    owner:'player', cls:'TITAN'},
+            {x:cx-w*0.30,y:cy-h*0.26,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx+w*0.30,y:cy-h*0.26,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx,       y:cy-h*0.06,    owner:'enemy',  cls:'SPORE'},
+            {x:cx-w*0.15,y:cy+h*0.09,    owner:'neutral',cls:'EMBRYO'},
+            {x:cx+w*0.15,y:cy+h*0.09,    owner:'neutral',cls:'EMBRYO'},
+            {x:cx,       y:cy-h*0.32,    owner:'neutral',cls:'PULSAR'},
+        ];}
+    },
+    {
+        name:"Belagerung", zone:4, powerLimit:100, star3:60, star2:110,
+        msg:"THE ENEMY HOLDS THE CENTER - ENCIRCLE AND STARVE HIM",
+        difficulty:"★★★☆",
+        story:"Der Feind hält die Mitte. Eine mächtige Zentralzelle. Umzingle sie. Schneide seine Verbindungen durch.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx-w*0.38,y:cy,            owner:'player', cls:'PULSAR'},
+            {x:cx+w*0.38,y:cy,            owner:'enemy',  cls:'PULSAR'},
+            {x:cx,       y:cy,            owner:'enemy',  cls:'TITAN'},
+            {x:cx-w*0.17,y:cy-h*0.25,    owner:'neutral',cls:'EMBRYO'},
+            {x:cx-w*0.17,y:cy+h*0.25,    owner:'neutral',cls:'EMBRYO'},
+            {x:cx+w*0.17,y:cy-h*0.25,    owner:'neutral',cls:'SPORE'},
+            {x:cx+w*0.17,y:cy+h*0.25,    owner:'neutral',cls:'SPORE'},
+        ];}
+    },
+    {
+        name:"Letzte Bastion", zone:5, powerLimit:80, star3:70, star2:120,
+        msg:"WARNING! PURPLE MICROBES HAVE BETTER INSTINCTS",
+        difficulty:"★★★★",
+        story:"Der Eindringling hat fast alles übernommen. Du hast noch eine einzige Zelle. Kämpfe.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx-w*0.35,y:cy,            owner:'player', cls:'TITAN'},
+            {x:cx+w*0.28,y:cy-h*0.28,    owner:'enemy',  cls:'PULSAR'},
+            {x:cx+w*0.28,y:cy+h*0.28,    owner:'enemy',  cls:'PULSAR'},
+            {x:cx+w*0.10,y:cy,            owner:'enemy',  cls:'EMBRYO'},
+            {x:cx-w*0.10,y:cy-h*0.23,    owner:'neutral',cls:'SPORE'},
+            {x:cx-w*0.10,y:cy+h*0.23,    owner:'neutral',cls:'SPORE'},
+            {x:cx-w*0.30,y:cy-h*0.28,    owner:'neutral',cls:'EMBRYO'},
+            {x:cx-w*0.30,y:cy+h*0.28,    owner:'neutral',cls:'EMBRYO'},
+        ];}
+    },
+    {
+        name:"Totalkrieg", zone:6, powerLimit:120, star3:90, star2:150,
+        msg:"TOTAL WAR - COORDINATE ALL CELLS SIMULTANEOUSLY",
+        difficulty:"★★★★",
+        story:"Endspiel. Überall Tentakel, überall Bedrohungen. Koordiniere alle Zellen gleichzeitig. Kein Fehler erlaubt.",
+        layout:(w,h)=>{const cx=w/2,cy=h/2;return[
+            {x:cx-w*0.35,y:cy,            owner:'player', cls:'TITAN'},
+            {x:cx-w*0.20,y:cy-h*0.28,    owner:'player', cls:'EMBRYO'},
+            {x:cx-w*0.20,y:cy+h*0.28,    owner:'player', cls:'EMBRYO'},
+            {x:cx+w*0.35,y:cy,            owner:'enemy',  cls:'TITAN'},
+            {x:cx+w*0.20,y:cy-h*0.28,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx+w*0.20,y:cy+h*0.28,    owner:'enemy',  cls:'EMBRYO'},
+            {x:cx,       y:cy,            owner:'neutral',cls:'PULSAR'},
+            {x:cx,       y:cy-h*0.28,    owner:'neutral',cls:'SPORE'},
+            {x:cx,       y:cy+h*0.28,    owner:'neutral',cls:'SPORE'},
+        ];}
+    },
+];
+
+// ══════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════
+const C = {
+    THROUGHPUT: 6, PKT_SIZE: 3, TRAVEL_SPD: 95, GROW_SPD: 130, CUT_THRESH: 10,
+    COL: {
+        P:'#33dd33', E:'#dd3333', N:'#9aabb5',
+        PG:'rgba(40,180,40,0.28)', EG:'rgba(180,30,30,0.28)', NG:'rgba(100,125,140,0.12)',
+    }
+};
+const dist  = (x1,y1,x2,y2) => Math.hypot(x2-x1, y2-y1);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const bez   = (p0,p1,p2,t)  => ({
+    x:(1-t)*(1-t)*p0.x+2*(1-t)*t*p1.x+t*t*p2.x,
+    y:(1-t)*(1-t)*p0.y+2*(1-t)*t*p1.y+t*t*p2.y
+});
+
+// ══════════════════════════════════════════════════════
+// BACKGROUND
+// ══════════════════════════════════════════════════════
+let bgCanvas = null;
+function buildBG(w, h) {
+    bgCanvas = document.createElement('canvas');
+    bgCanvas.width = w; bgCanvas.height = h;
+    const ctx = bgCanvas.getContext('2d');
+    ctx.fillStyle = '#040b04'; ctx.fillRect(0,0,w,h);
+    const rng = (a,b) => a+(b-a)*Math.random();
+    // organic cell blobs
+    for (let i=0; i<130; i++) {
+        const x=rng(0,w), y=rng(0,h), r=rng(18,72);
+        const g = ctx.createRadialGradient(x,y,0,x,y,r);
+        g.addColorStop(0,'rgba(18,46,16,0.6)');
+        g.addColorStop(0.6,'rgba(9,28,8,0.35)');
+        g.addColorStop(1,'rgba(3,8,3,0)');
+        ctx.save(); ctx.translate(x,y);
+        const pts = 6+Math.floor(Math.random()*5);
+        ctx.beginPath();
+        for (let j=0;j<pts;j++) {
+            const a=(j/pts)*Math.PI*2;
+            const rr=r*(0.78+0.28*Math.random());
+            j===0?ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);
+        }
+        ctx.closePath();
+        ctx.fillStyle=g; ctx.fill();
+        ctx.strokeStyle='rgba(25,65,20,0.15)'; ctx.lineWidth=1; ctx.stroke();
+        ctx.restore();
+    }
+    // vein lines
+    for (let i=0;i<18;i++) {
+        ctx.beginPath();
+        ctx.moveTo(rng(0,w),rng(0,h)); ctx.lineTo(rng(0,w),rng(0,h));
+        ctx.strokeStyle='rgba(18,55,15,0.1)'; ctx.lineWidth=rng(1,2.5); ctx.stroke();
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════════════════
+class Particles {
+    constructor() { this.ps=[]; }
+    burst(x,y,col,n=16) {
+        for(let i=0;i<n;i++){
+            const a=(Math.PI*2*i/n)+Math.random()*0.4, sp=1+Math.random()*4.5;
+            this.ps.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.02+Math.random()*0.025,col,sz:1.8+Math.random()*2.8});
+        }
+    }
+    update(){this.ps=this.ps.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=0.96;p.vy*=0.96;p.life-=p.decay;return p.life>0;});}
+    draw(ctx){this.ps.forEach(p=>{ctx.globalAlpha=p.life*p.life;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+}
+
+// ══════════════════════════════════════════════════════
+// CELL  — double-ring with spikes, ∞ symbol, class-based stats
+// ══════════════════════════════════════════════════════
+class Cell {
+    constructor(x, y, owner, clsName) {
+        this.x=x; this.y=y; this.owner=owner;
+        this.clsName = clsName || 'EMBRYO';
+        const def = CELL_CLASSES[this.clsName];
+        this.capacity   = def.cap;
+        this.prodRate   = def.prod;
+        this.maxTentacles = def.maxTent;
+        this.radius     = 14 + def.cap / 12;
+        this.units      = owner==='neutral' ? 8+Math.random()*10 : 5;
+        this.phase      = Math.random()*Math.PI*2;
+        // generate fixed spike angles
+        this.spikes = owner==='neutral' ? [] : Array.from({length:def.spikes},(_,i)=>({
+            base:(i/def.spikes)*Math.PI*2+Math.random()*0.25,
+            lenFrac: def.spikeLen*(0.85+Math.random()*0.3),
+            spd: 0.15+Math.random()*0.25,
+            ph:  Math.random()*Math.PI*2,
+        }));
+    }
+    get color(){ return this.owner==='player'?C.COL.P:this.owner==='enemy'?C.COL.E:C.COL.N; }
+    get glow() { return this.owner==='player'?C.COL.PG:this.owner==='enemy'?C.COL.EG:C.COL.NG; }
+
+    update(dt){
+        if(this.owner!=='neutral') this.units=Math.min(this.capacity, this.units+this.prodRate*dt);
+    }
+
+    draw(ctx){
+        const t=performance.now()/1000;
+        const col=this.color, R=this.radius;
+
+        // glow halo
+        const g=ctx.createRadialGradient(this.x,this.y,R*0.4,this.x,this.y,R*2.4);
+        g.addColorStop(0,this.glow); g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath(); ctx.arc(this.x,this.y,R*2.4,0,Math.PI*2);
+        ctx.fillStyle=g; ctx.fill();
+
+        // spikes (only non-neutral)
+        this.spikes.forEach(sp=>{
+            const a = sp.base + t*sp.spd;
+            const slen = R * sp.lenFrac * (0.88+0.12*Math.sin(t*1.5+sp.ph));
+            const x1=this.x+Math.cos(a)*R, y1=this.y+Math.sin(a)*R;
+            const x2=this.x+Math.cos(a)*(R+slen), y2=this.y+Math.sin(a)*(R+slen);
+            ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+            ctx.strokeStyle=col+'88'; ctx.lineWidth=1.8; ctx.stroke();
+            ctx.beginPath(); ctx.arc(x2,y2,2,0,Math.PI*2);
+            ctx.fillStyle=col+'bb'; ctx.fill();
+        });
+
+        // outer ring
+        ctx.beginPath(); ctx.arc(this.x,this.y,R+4,0,Math.PI*2);
+        ctx.strokeStyle=col+'33'; ctx.lineWidth=1.5; ctx.stroke();
+
+        // body
+        const bg=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,R);
+        bg.addColorStop(0,'#0c180c'); bg.addColorStop(1,'#060c06');
+        ctx.beginPath(); ctx.arc(this.x,this.y,R,0,Math.PI*2);
+        ctx.fillStyle=bg; ctx.fill();
+        ctx.shadowColor=col; ctx.shadowBlur=9;
+        ctx.strokeStyle=col; ctx.lineWidth=2.2; ctx.stroke();
+        ctx.shadowBlur=0;
+
+        // inner ring (fill ratio arc)
+        const fr=this.units/this.capacity;
+        ctx.beginPath(); ctx.arc(this.x,this.y,R*0.62,0,Math.PI*2);
+        ctx.strokeStyle=col+'30'; ctx.lineWidth=1.2; ctx.stroke();
+        if(fr>0.02){
+            ctx.beginPath(); ctx.arc(this.x,this.y,R*0.62,-Math.PI/2,-Math.PI/2+fr*Math.PI*2);
+            ctx.strokeStyle=col+'cc'; ctx.lineWidth=2.8; ctx.stroke();
+        }
+
+        // unit count
+        const fs=clamp(Math.floor(R*0.44),10,17);
+        ctx.fillStyle='#cceecc'; ctx.font=`bold ${fs}px 'Share Tech Mono',monospace`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.shadowColor='rgba(0,0,0,0.95)'; ctx.shadowBlur=4;
+        ctx.fillText(Math.floor(this.units), this.x, this.y-2);
+        ctx.shadowBlur=0;
+
+        // ∞ symbol below count
+        ctx.fillStyle=col+'88'; ctx.font=`${Math.max(8,fs-4)}px 'Share Tech Mono',monospace`;
+        ctx.fillText('∞', this.x, this.y+fs*0.7);
+    }
+
+    containsPoint(x,y){ return dist(x,y,this.x,this.y)<this.radius+9; }
+
+    tooltipLines(game){
+        const out=game.tentacles.filter(t=>t.sourceCell===this&&t.state!=='severed').length;
+        return[
+            `CLASS: ${this.clsName}`,
+            `POWER: ${Math.floor(this.units)}/${this.capacity}`,
+            `TENTACLES: ${out}/${this.maxTentacles}`,
+        ];
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// PACKET
+// ══════════════════════════════════════════════════════
+class Packet {
+    constructor(tent,amt,owner){
+        this.tent=tent; this.amt=amt; this.owner=owner;
+        this.t=0; this.speed=C.TRAVEL_SPD/tent.length; this.active=true;
+    }
+    update(dt){
+        if(!this.active)return;
+        this.t=Math.min(1,this.t+this.speed*dt);
+        if(this.t>=1) this.arrive();
+    }
+    arrive(){
+        this.active=false;
+        const tgt=this.tent.targetCell;
+        if(this.owner===tgt.owner){
+            tgt.units=Math.min(tgt.capacity,tgt.units+this.amt);
+        } else {
+            tgt.units-=this.amt;
+            if(tgt.units<=0){
+                const col=this.owner==='player'?C.COL.P:C.COL.E;
+                tgt.owner=this.owner;
+                tgt.units=Math.min(tgt.capacity,Math.max(5,Math.abs(tgt.units)));
+                game.particles.burst(tgt.x,tgt.y,col,20);
+                SFX.capture();
+                game.tentacles=game.tentacles.filter(t=>{
+                    if(t.targetCell===tgt&&t.owner!==this.owner){t.sever();return false;}
+                    return true;
+                });
+            }
+        }
+    }
+    pos(){ return this.tent.ptAt(this.t); }
+}
+
+// ══════════════════════════════════════════════════════
+// TENTACLE — bead chain, color transition on conflict
+// ══════════════════════════════════════════════════════
+class Tentacle {
+    constructor(src,tgt){
+        this.sourceCell=src; this.targetCell=tgt;
+        this.owner=src.owner; this.state='growing';
+        this.packets=[]; this.flowAcc=0;
+        this.length=dist(src.x,src.y,tgt.x,tgt.y);
+        this.growProg=0;
+        this.wavePhase=Math.random()*Math.PI*2;
+        this.cp=this._cp();
+        this.isInternal=(src.owner===tgt.owner); // player→player transfer
+    }
+    _cp(){
+        const mx=(this.sourceCell.x+this.targetCell.x)/2,my=(this.sourceCell.y+this.targetCell.y)/2;
+        const px=-(this.targetCell.y-this.sourceCell.y),py=(this.targetCell.x-this.sourceCell.x);
+        const len=Math.hypot(px,py)||1;
+        const off=(Math.random()-0.5)*this.length*0.3;
+        return{x:mx+(px/len)*off,y:my+(py/len)*off};
+    }
+    ptAt(t){
+        const wave=Math.sin(t*Math.PI*5+this.wavePhase+performance.now()/650)*3;
+        const base=bez(this.sourceCell,this.cp,this.targetCell,t);
+        const dx=this.targetCell.x-this.sourceCell.x,dy=this.targetCell.y-this.sourceCell.y;
+        const len=Math.hypot(dx,dy)||1;
+        return{x:base.x+(-dy/len)*wave,y:base.y+(dx/len)*wave};
+    }
+    update(dt){
+        if(this.state==='severed')return;
+        if(this.state==='growing'){
+            this.growProg+=( C.GROW_SPD/this.length)*dt;
+            if(this.growProg>=1){this.growProg=1;this.state='active';}
+            return;
+        }
+        // internal transfer: never sever due to owner change, just move units
+        if(!this.isInternal && this.sourceCell.owner!==this.owner){this.sever();return;}
+        if(this.sourceCell.units>1){
+            this.flowAcc+=C.THROUGHPUT*dt;
+            while(this.flowAcc>=C.PKT_SIZE&&this.sourceCell.units>=C.PKT_SIZE){
+                this.packets.push(new Packet(this,C.PKT_SIZE,this.owner));
+                this.sourceCell.units-=C.PKT_SIZE;
+                this.flowAcc-=C.PKT_SIZE;
+            }
+        }
+        this.packets=this.packets.filter(p=>p.active);
+        this.packets.forEach(p=>p.update(dt));
+    }
+    sever(cutT=null){
+        this.state='severed';
+        if(cutT!==null){
+            let rem=0;
+            this.packets.forEach(p=>{if(p.t>=cutT){rem+=p.amt;p.active=false;}});
+            if(rem>0){
+                const tgt=this.targetCell;
+                if(this.owner===tgt.owner) tgt.units=Math.min(tgt.capacity,tgt.units+rem);
+                else{tgt.units-=rem;if(tgt.units<=0){tgt.owner=this.owner;tgt.units=Math.max(5,Math.abs(tgt.units));}}
+            }
+        }
+        this.packets=[];
+    }
+
+    // bead color: green=friendly, red=enemy, yellow=conflict zone
+    _beadColor(t){
+        const tgt=this.targetCell;
+        const isAttacking = this.owner!==tgt.owner;
+        // near the target and attacking → conflict → yellowish
+        if(isAttacking&&t>0.6){
+            const blend=(t-0.6)/0.4;
+            return this.owner==='player'
+                ? `rgba(${Math.floor(lerp(60,220,blend))},${Math.floor(lerp(200,180,blend))},${Math.floor(lerp(60,30,blend))},0.75)`
+                : `rgba(${Math.floor(lerp(200,220,blend))},${Math.floor(lerp(60,180,blend))},${Math.floor(lerp(60,30,blend))},0.75)`;
+        }
+        if(this.isInternal) return 'rgba(60,180,200,0.65)'; // cyan for internal
+        return this.owner==='player'
+            ? 'rgba(50,190,50,0.72)'
+            : 'rgba(190,40,40,0.72)';
+    }
+
+    draw(ctx){
+        if(this.state==='severed')return;
+        const col=this.owner==='player'?C.COL.P:C.COL.E;
+        const endT=this.growProg;
+        const beadGap=6;
+        const beadCount=Math.max(2,Math.floor(this.length*endT/beadGap));
+
+        for(let i=0;i<=beadCount;i++){
+            const t=(i/beadCount)*endT;
+            const p=this.ptAt(t);
+            const sz=1.8+(i/beadCount)*1.0;
+            const bc=this._beadColor(i/beadCount);
+            ctx.beginPath(); ctx.arc(p.x,p.y,sz,0,Math.PI*2);
+            ctx.fillStyle=bc; ctx.fill();
+            // bright center dot
+            ctx.beginPath(); ctx.arc(p.x,p.y,sz*0.38,0,Math.PI*2);
+            ctx.fillStyle='rgba(190,255,190,0.55)'; ctx.fill();
+        }
+
+        // growing tip flare
+        if(this.state==='growing'){
+            const tip=this.ptAt(endT);
+            ctx.beginPath(); ctx.arc(tip.x,tip.y,4,0,Math.PI*2);
+            ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+        }
+
+        // packets (larger, glowing)
+        this.packets.forEach(pk=>{
+            const p=pk.pos();
+            ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
+            ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+            ctx.beginPath(); ctx.arc(p.x,p.y,2.2,0,Math.PI*2);
+            ctx.fillStyle='#ccffcc'; ctx.fill();
+        });
+    }
+
+    hitTest(x,y,thresh=20){
+        for(let i=0;i<=22;i++){
+            const p=this.ptAt((i/22)*this.growProg);
+            if(Math.hypot(p.x-x,p.y-y)<thresh) return i/22;
+        }
+        return -1;
+    }
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// ══════════════════════════════════════════════════════
+// ENEMY AI — targeted cutting
+// ══════════════════════════════════════════════════════
+class EnemyAI {
+    constructor(){ this.t=0; this.iv=1.5; this.ct=0; this.civ=2.5; }
+    update(dt){
+        // targeted cutting: sever player tentacles that are close to capturing enemy cells
+        this.ct+=dt;
+        if(this.ct>=this.civ){
+            this.ct=0;
+            const targets=game.tentacles.filter(t=>t.owner==='player'&&t.state==='active');
+            // sort by danger: packets close to enemy cells
+            let mostDangerous=null, bestScore=-1;
+            targets.forEach(tent=>{
+                const tgt=tent.targetCell;
+                if(tgt.owner==='enemy'){
+                    // how many packets are near the end?
+                    const score=tent.packets.reduce((s,p)=>s+(p.t>0.6?p.amt:0),0)*10 + tent.growProg;
+                    if(score>bestScore){bestScore=score;mostDangerous=tent;}
+                }
+            });
+            if(mostDangerous&&Math.random()<0.55){
+                const cutT=0.3+Math.random()*0.4;
+                mostDangerous.sever(cutT);
+                setTimeout(()=>{game.tentacles=game.tentacles.filter(x=>x!==mostDangerous);},80);
+            } else if(targets.length>0&&Math.random()<0.18){
+                // random cut as fallback
+                const t=targets[Math.floor(Math.random()*targets.length)];
+                t.sever(0.4);
+                setTimeout(()=>{game.tentacles=game.tentacles.filter(x=>x!==t);},80);
+            }
+        }
+
+        this.t+=dt;
+        if(this.t<this.iv)return;
+        this.t=0;
+        const enemies  =game.cells.filter(c=>c.owner==='enemy');
+        const players  =game.cells.filter(c=>c.owner==='player');
+        const neutrals =game.cells.filter(c=>c.owner==='neutral');
+        enemies.forEach(cell=>{
+            if(cell.units<15)return;
+            const out=game.tentacles.filter(t=>t.sourceCell===cell&&t.state!=='severed');
+            if(out.length>=cell.maxTentacles)return;
+            let best=null,bs=-Infinity;
+            [...neutrals,...players].forEach(tc=>{
+                const d=dist(cell.x,cell.y,tc.x,tc.y);
+                if(d>540)return;
+                if(game.tentacles.some(t=>t.sourceCell===cell&&t.targetCell===tc&&t.state!=='severed'))return;
+                const score=(cell.units-tc.units)/(d/85+1)-(tc.owner==='player'?0:12);
+                if(score>bs){bs=score;best=tc;}
+            });
+            if(best&&bs>-10) game.createTentacle(cell,best);
+
+            // internal AI transfers: move units from low-threat cells to front-line
+            if(enemies.length>1&&Math.random()<0.3){
+                const safe=enemies.filter(e=>e!==cell&&e.units>30&&out.length<e.maxTentacles-1);
+                if(safe.length&&cell.units<20){
+                    const donor=safe[0];
+                    if(!game.tentacles.some(t=>t.sourceCell===donor&&t.targetCell===cell&&t.state!=='severed'))
+                        game.createTentacle(donor,cell);
+                }
+            }
+        });
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// INPUT — internal transfers + scissor cut
+// ══════════════════════════════════════════════════════
+class Input {
+    constructor(canvas){
+        this.cv=canvas;
+        this.drag=false; this.from=null; this.dpos={x:0,y:0};
+        this.swStart=null; this.swPts=[]; this.tid=null;
+        this.tooltip=null; this.tooltipTimer=0;
+        canvas.addEventListener('touchstart',e=>{e.preventDefault();if(this.tid!==null)return;this.tid=e.touches[0].identifier;this._start(this._p(e));},{passive:false});
+        canvas.addEventListener('touchmove', e=>{e.preventDefault();if(this.tid===null)return;this._move(this._p(e));},{passive:false});
+        canvas.addEventListener('touchend',  e=>{e.preventDefault();this.tid=null;this._end(this._p(e));},{passive:false});
+        canvas.addEventListener('touchcancel',e=>{e.preventDefault();this.tid=null;this._end(this._p(e));},{passive:false});
+        canvas.addEventListener('mousedown', e=>this._start(this._p(e)));
+        canvas.addEventListener('mousemove', e=>this._move(this._p(e)));
+        canvas.addEventListener('mouseup',   e=>this._end(this._p(e)));
+    }
+    _p(e){
+        const r=this.cv.getBoundingClientRect();
+        let cx,cy;
+        if(e.touches&&e.touches.length>0){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+        else if(e.changedTouches&&e.changedTouches.length>0){cx=e.changedTouches[0].clientX;cy=e.changedTouches[0].clientY;}
+        else{cx=e.clientX;cy=e.clientY;}
+        return{x:(cx-r.left)*(this.cv.width/r.width),y:(cy-r.top)*(this.cv.height/r.height)};
+    }
+    _start(pos){
+        const cell=game.getCellAt(pos.x,pos.y);
+        this.tooltip=null; this.tooltipTimer=0;
+        if(cell&&cell.owner==='player'){
+            this.drag=true; this.from=cell; this.dpos=pos; this.swStart=null;
+        } else {
+            this.drag=false; this.from=null;
+            this.swStart=pos; this.swPts=[pos];
+            if(cell){ this.tooltip={cell,x:pos.x,y:pos.y}; this.tooltipTimer=2.5; }
+        }
+    }
+    _move(pos){
+        if(this.drag){this.dpos=pos;}
+        else if(this.swStart){this.swPts.push(pos);if(this.swPts.length>14)this.swPts.shift();}
+    }
+    _end(pos){
+        if(this.drag&&this.from){
+            const tgt=game.getCellAt(pos.x,pos.y);
+            if(tgt&&tgt!==this.from){
+                const already=game.tentacles.some(t=>t.sourceCell===this.from&&t.targetCell===tgt&&t.state!=='severed');
+                if(!already) game.createTentacle(this.from,tgt);
+            }
+            this.drag=false; this.from=null;
+        } else if(this.swStart){
+            if(Math.hypot(pos.x-this.swStart.x,pos.y-this.swStart.y)>C.CUT_THRESH) this._cut();
+            this.swStart=null; this.swPts=[];
+        }
+    }
+    _cut(){
+        if(this.swPts.length<2)return;
+        let cut=false;
+        game.tentacles.forEach(tent=>{
+            if(tent.state!=='active')return;
+            for(let s=0;s<this.swPts.length-1;s++){
+                const A=this.swPts[s],B=this.swPts[s+1];
+                for(let i=0;i<=26;i++){
+                    const tp=tent.ptAt(i/26);
+                    if(this._sd(A,B,tp)<18){
+                        tent.sever(i/26); cut=true;
+                        setTimeout(()=>{game.tentacles=game.tentacles.filter(x=>x!==tent);},90);
+                        return;
+                    }
+                }
+            }
+        });
+        if(cut) SFX.cut();
+    }
+    _sd(A,B,P){
+        const dx=B.x-A.x,dy=B.y-A.y,l2=dx*dx+dy*dy;
+        if(l2===0)return Math.hypot(P.x-A.x,P.y-A.y);
+        const t=clamp(((P.x-A.x)*dx+(P.y-A.y)*dy)/l2,0,1);
+        return Math.hypot(P.x-A.x-t*dx,P.y-A.y-t*dy);
+    }
+    update(dt){ if(this.tooltipTimer>0){this.tooltipTimer-=dt;if(this.tooltipTimer<=0)this.tooltip=null;} }
+    draw(ctx){
+        // range ring
+        if(this.from){
+            ctx.beginPath(); ctx.arc(this.from.x,this.from.y,175,0,Math.PI*2);
+            ctx.strokeStyle='rgba(50,170,50,0.13)'; ctx.lineWidth=1.5;
+            ctx.setLineDash([5,7]); ctx.stroke(); ctx.setLineDash([]);
+        }
+        // drag line
+        if(this.drag&&this.from){
+            ctx.beginPath(); ctx.moveTo(this.from.x,this.from.y);
+            ctx.lineTo(this.dpos.x,this.dpos.y);
+            ctx.strokeStyle='rgba(70,200,70,0.6)'; ctx.lineWidth=2;
+            ctx.setLineDash([8,7]); ctx.stroke(); ctx.setLineDash([]);
+            const tgt=game.getCellAt(this.dpos.x,this.dpos.y);
+            if(tgt&&tgt!==this.from){
+                // highlight target
+                ctx.beginPath(); ctx.arc(tgt.x,tgt.y,tgt.radius+11,0,Math.PI*2);
+                ctx.strokeStyle=tgt.owner==='player'?'rgba(60,200,200,0.8)':C.COL.P; ctx.lineWidth=2.5; ctx.stroke();
+                // if same owner: show transfer label, else strength ratio
+                if(tgt.owner==='player'){
+                    ctx.fillStyle='rgba(60,200,220,0.9)'; ctx.font=`bold 11px 'Share Tech Mono',monospace`;
+                    ctx.textAlign='center'; ctx.fillText('TRANSFER',tgt.x,tgt.y-tgt.radius-13);
+                } else {
+                    const ratio=this.from.units/(tgt.units+1);
+                    const rcol=ratio>1.5?'#44ee44':ratio>1?'#eeee44':'#ee4444';
+                    ctx.fillStyle=rcol; ctx.font=`bold 12px 'Share Tech Mono',monospace`;
+                    ctx.textAlign='center'; ctx.fillText(ratio.toFixed(1)+'x',tgt.x,tgt.y-tgt.radius-13);
+                }
+            }
+        }
+        // scissor swipe — golden V-lines
+        if(this.swPts.length>1){
+            ctx.beginPath();
+            ctx.moveTo(this.swPts[0].x,this.swPts[0].y);
+            this.swPts.forEach(p=>ctx.lineTo(p.x,p.y));
+            ctx.strokeStyle='rgba(210,190,60,0.8)'; ctx.lineWidth=2.8;
+            ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+        }
+        // tooltip
+        if(this.tooltip&&this.tooltipTimer>0){
+            const {cell,x,y}=this.tooltip;
+            const lines=cell.tooltipLines(game);
+            const bw=150,bh=14+lines.length*16,pad=8;
+            let bx=x+14,by=y-bh/2;
+            const cw=ctx.canvas.width,ch=ctx.canvas.height;
+            if(bx+bw>cw-8)bx=x-bw-14;
+            if(by<38)by=38; if(by+bh>ch-18)by=ch-bh-18;
+            ctx.fillStyle='rgba(3,12,3,0.92)';
+            ctx.strokeStyle='rgba(70,150,70,0.5)'; ctx.lineWidth=1;
+            ctx.beginPath(); ctx.rect(bx,by,bw,bh); ctx.fill(); ctx.stroke();
+            ctx.font=`10px 'Share Tech Mono',monospace`; ctx.textAlign='left';
+            lines.forEach((l,i)=>{
+                // class name is colored per owner
+                if(i===0){const oc=cell.owner==='player'?'#55ff55':cell.owner==='enemy'?'#ff5555':'#aabbcc';ctx.fillStyle=oc;}
+                else ctx.fillStyle='rgba(130,190,130,0.85)';
+                ctx.fillText(l,bx+pad,by+pad+13+i*16);
+            });
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// GAME
+// ══════════════════════════════════════════════════════
+class Game {
+    constructor(){
+        this.canvas=document.getElementById('gameCanvas');
+        this.ctx=this.canvas.getContext('2d');
+        this.cells=[]; this.tentacles=[];
+        this.input=new Input(this.canvas);
+        this.ai=new EnemyAI();
+        this.particles=new Particles();
+        this.lastTime=0; this.state='menu'; this.currentLevel=0; this.timer=0;
+        this.resize();
+        buildBG(this.canvas.width,this.canvas.height);
+        this._loop();
+        window.addEventListener('resize',()=>{this.resize();buildBG(this.canvas.width,this.canvas.height);});
+        document.addEventListener('gesturestart',e=>e.preventDefault());
+        document.addEventListener('gesturechange',e=>e.preventDefault());
+    }
+    resize(){
+        this.canvas.width=window.innerWidth; this.canvas.height=window.innerHeight;
+        this.canvas.style.width=window.innerWidth+'px'; this.canvas.style.height=window.innerHeight+'px';
+    }
+    loadLevel(idx){
+        this.currentLevel=idx; this.timer=0;
+        const def=LEVELS[idx];
+        this.cells=[]; this.tentacles=[];
+        const w=this.canvas.width,h=this.canvas.height;
+        def.layout(w,h).forEach(d=>this.cells.push(new Cell(d.x,d.y,d.owner,d.cls)));
+        this.state='playing';
+        document.getElementById('hudZone').textContent=def.zone;
+        document.getElementById('hudLimit').textContent=def.powerLimit;
+        document.getElementById('hudMsg').textContent=def.msg;
+        document.getElementById('hudTimer').textContent='0';
+    }
+    createTentacle(src,tgt){
+        const out=this.tentacles.filter(t=>t.sourceCell===src&&t.state!=='severed');
+        if(out.length>=src.maxTentacles){
+            const old=out[0]; old.sever();
+            setTimeout(()=>{this.tentacles=this.tentacles.filter(t=>t!==old);},140);
+        }
+        const tent=new Tentacle(src,tgt);
+        this.tentacles.push(tent);
+        if(src.owner==='player'){
+            if(tgt.owner==='player') SFX.internal(); else SFX.tentacle();
+        }
+    }
+    getCellAt(x,y){ return this.cells.find(c=>c.containsPoint(x,y)); }
+    update(dt){
+        if(this.state!=='playing')return;
+        this.timer+=dt;
+        this.cells.forEach(c=>c.update(dt));
+        this.tentacles.forEach(t=>t.update(dt));
+        this.tentacles=this.tentacles.filter(t=>t.state!=='severed');
+        this.ai.update(dt);
+        this.particles.update();
+        this.input.update(dt);
+        const pC=this.cells.filter(c=>c.owner==='player');
+        const eC=this.cells.filter(c=>c.owner==='enemy');
+        const tot=this.cells.length||1;
+        document.getElementById('hudTimer').textContent=Math.floor(this.timer);
+        document.getElementById('pbP').style.width=(pC.length/tot*100)+'%';
+        document.getElementById('pbE').style.width=(eC.length/tot*100)+'%';
+        if(eC.length===0&&pC.length>0){this.state='won'; SFX.win(); UI.showGameOver(true,this.currentLevel,Math.floor(this.timer));}
+        else if(pC.length===0){this.state='lost'; SFX.lose(); UI.showGameOver(false,this.currentLevel,Math.floor(this.timer));}
+    }
+    draw(){
+        const ctx=this.ctx;
+        if(bgCanvas) ctx.drawImage(bgCanvas,0,0);
+        else{ctx.fillStyle='#040b04';ctx.fillRect(0,0,this.canvas.width,this.canvas.height);}
+        this.tentacles.forEach(t=>t.draw(ctx));
+        this.cells.forEach(c=>c.draw(ctx));
+        this.particles.draw(ctx);
+        this.input.draw(ctx);
+    }
+    _loop(){
+        const now=performance.now();
+        const dt=Math.min((now-this.lastTime)/1000,0.1);
+        this.lastTime=now;
+        this.update(dt);
+        this.draw();
+        requestAnimationFrame(()=>this._loop());
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════════════════
+const UI = {
+    unlocked:1, _cur:0,
+    init(){
+        this.unlocked=parseInt(localStorage.getItem('tw3_ul')||'1');
+        document.querySelectorAll('.tbtn').forEach(b=>{
+            b.addEventListener('click',()=>{
+                const pct=parseInt(b.dataset.pct);
+                document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                C.THROUGHPUT=pct===100?9:pct===50?6:3;
+            });
+        });
+    },
+    showMainMenu(){ this._hide(); document.getElementById('mainMenu').style.display='flex'; },
+    showLevelSelect(){
+        this._hide(); document.getElementById('levelSelect').style.display='flex';
+        const grid=document.getElementById('levelGrid'); grid.innerHTML='';
+        LEVELS.forEach((lvl,i)=>{
+            const t=document.createElement('div');
+            t.className='ltile'+(i>=this.unlocked?' locked':'');
+            const st=localStorage.getItem('tw3_s'+i)||'';
+            t.innerHTML=`<div class="tn">${i+1}</div><div class="tname">${lvl.name}</div><div class="tstars">${st||'○○○'}</div>`;
+            t.addEventListener('click',()=>this.showIntro(i));
+            grid.appendChild(t);
+        });
+    },
+    showIntro(idx){
+        this._hide(); this._cur=idx;
+        const lvl=LEVELS[idx];
+        document.getElementById('levelIntro').style.display='flex';
+        document.getElementById('introBadge').textContent='ZONE '+lvl.zone+' — LEVEL '+(idx+1);
+        document.getElementById('introTitle').textContent=lvl.name;
+        document.getElementById('introStory').textContent=lvl.story;
+        document.getElementById('introZellen').textContent=lvl.layout(800,600).length;
+        document.getElementById('introLimit').textContent=lvl.powerLimit;
+        document.getElementById('introSchwier').textContent=lvl.difficulty;
+        document.getElementById('t3').textContent=lvl.star3;
+        document.getElementById('t2').textContent=lvl.star2;
+    },
+    startLevel(){ this._hide(); game.loadLevel(this._cur); },
+    showGameOver(won, idx, seconds){
+        document.getElementById('gameOver').style.display='flex';
+        const ttl=document.getElementById('goTitle');
+        const starEl=document.getElementById('goStars');
+        const sub=document.getElementById('goSub');
+        const nb=document.getElementById('goNextBtn');
+        if(won){
+            ttl.textContent='MISSION COMPLETE'; ttl.style.color='#33ee33';
+            const lvl=LEVELS[idx];
+            const stars = seconds<=lvl.star3?3:seconds<=lvl.star2?2:1;
+            starEl.textContent='★'.repeat(stars)+'☆'.repeat(3-stars);
+            starEl.style.color=stars===3?'#ffdd33':stars===2?'#aabb44':'#667744';
+            sub.textContent=`Zeit: ${seconds}s — Zone ${lvl.zone} gesichert.`;
+            const best=parseInt(localStorage.getItem('tw3_s'+idx)||'0');
+            if(stars>best){ localStorage.setItem('tw3_s'+idx,stars); }
+            const next=idx+1;
+            if(next<LEVELS.length){
+                this.unlocked=Math.max(this.unlocked,next+1);
+                localStorage.setItem('tw3_ul',this.unlocked);
+                nb.textContent='NÄCHSTE MISSION →'; nb.onclick=()=>this.showIntro(next);
+            } else { nb.textContent='ALLE ZONEN BEFREIT!'; nb.onclick=()=>this.showLevelSelect(); }
+        } else {
+            ttl.textContent='VERNICHTET'; ttl.style.color='#dd3333';
+            starEl.textContent='☆☆☆'; starEl.style.color='#664444';
+            sub.textContent='Alle deine Zellen wurden übernommen.';
+            nb.textContent='NOCHMAL KÄMPFEN'; nb.onclick=()=>this.restartLevel();
+        }
+    },
+    restartLevel(){ this._hide(); game.loadLevel(game.currentLevel); },
+    _hide(){ ['mainMenu','levelSelect','levelIntro','gameOver'].forEach(id=>document.getElementById(id).style.display='none'); }
+};
+
+// ══════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════
+const game = new Game();
+UI.init();
+UI.showMainMenu();
+document.getElementById('startLevelBtn').addEventListener('click',()=>UI.startLevel());
+</script>
+</body>
+</html>
