@@ -1,4 +1,5 @@
 import type { GameStatus } from "../core/types";
+import type { LevelDefinition } from "../data/levels";
 import {
   translate,
   type Locale,
@@ -15,6 +16,7 @@ export interface HudActions {
   onAudioToggle: () => void;
   onFullscreenToggle: () => void;
   onRetry: () => void;
+  onNext: () => void;
 }
 
 export class HudController {
@@ -36,7 +38,11 @@ export class HudController {
     this.bindings.abort();
     this.bindings = new AbortController();
     this.controls.bind(actions, this.bindings.signal);
-    this.result.bind(actions.onRetry, this.bindings.signal);
+    this.result.bind(
+      actions.onRetry,
+      actions.onNext,
+      this.bindings.signal,
+    );
   }
 
   dispose(): void {
@@ -45,6 +51,10 @@ export class HudController {
 
   setElapsedSeconds(elapsedSeconds: number): void {
     this.topBar.setElapsedSeconds(elapsedSeconds);
+  }
+
+  setLevel(level: LevelDefinition): void {
+    this.topBar.setLevel(level);
   }
 
   setPaused(paused: boolean): void {
@@ -82,8 +92,16 @@ export class HudController {
     status: Exclude<GameStatus, "playing">,
     elapsedSeconds: number,
     stars: number,
+    level: LevelDefinition,
+    hasNextLevel: boolean,
   ): void {
-    this.result.show(status, elapsedSeconds, stars);
+    this.result.show(
+      status,
+      elapsedSeconds,
+      stars,
+      level,
+      hasNextLevel,
+    );
   }
 
   hideResult(): void {

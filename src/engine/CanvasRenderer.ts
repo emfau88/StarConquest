@@ -16,6 +16,10 @@ import {
   getLinkCurve,
   pointOnLink,
 } from "./link-geometry";
+import {
+  createTransportShipArt,
+  isShipArtReady,
+} from "./ShipArt";
 import { SYSTEM_RADII } from "./system-geometry";
 import {
   createSystemArt,
@@ -59,6 +63,7 @@ const buildStars = (): Star[] => {
 export class CanvasRenderer {
   private readonly stars = buildStars();
   private readonly backdropImage = new Image();
+  private readonly transportShipArt = createTransportShipArt();
   private readonly systemArt = createSystemArt();
 
   constructor(private readonly viewport: CanvasViewport) {
@@ -326,6 +331,15 @@ export class CanvasRenderer {
     context.lineTo(-7, 3.2);
     context.closePath();
     context.fill();
+
+    const artwork = this.transportShipArt[owner];
+    if (isShipArtReady(artwork)) {
+      context.shadowColor = color;
+      context.shadowBlur = 9;
+      context.drawImage(artwork, -29, -17, 58, 34);
+      context.restore();
+      return;
+    }
 
     context.shadowBlur = 8;
     context.fillStyle = color;
@@ -598,7 +612,7 @@ export class CanvasRenderer {
     const pulse =
       1 + Math.sin(elapsedSeconds * 2.1 + phaseOffset) * 0.035;
     const drawRadius = radius * pulse;
-    const artwork = this.systemArt[system.owner];
+    const artwork = this.systemArt[system.owner][system.className];
     const hasArtwork = isSystemArtReady(artwork);
     const energyRatio = Math.max(
       0,

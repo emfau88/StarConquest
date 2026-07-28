@@ -1,4 +1,8 @@
 import type { GameStatus } from "../../core/types";
+import {
+  localizeLevelText,
+  type LevelDefinition,
+} from "../../data/levels";
 import { translate, type Locale } from "../../i18n/strings";
 import { formatTime, requireElement } from "./dom";
 
@@ -18,19 +22,31 @@ export class ResultOverlay {
     "#retry-button",
     HTMLButtonElement,
   );
+  private readonly nextButton = requireElement(
+    "#next-button",
+    HTMLButtonElement,
+  );
 
   constructor(private readonly locale: Locale) {
     this.retryButton.textContent = translate(locale, "retry");
+    this.nextButton.textContent = translate(locale, "nextSector");
   }
 
-  bind(onRetry: () => void, signal: AbortSignal): void {
+  bind(
+    onRetry: () => void,
+    onNext: () => void,
+    signal: AbortSignal,
+  ): void {
     this.retryButton.addEventListener("click", onRetry, { signal });
+    this.nextButton.addEventListener("click", onNext, { signal });
   }
 
   show(
     status: Exclude<GameStatus, "playing">,
     elapsedSeconds: number,
     stars: number,
+    level: LevelDefinition,
+    hasNextLevel: boolean,
   ): void {
     const won = status === "won";
     this.eyebrow.textContent = translate(
@@ -49,8 +65,10 @@ export class ResultOverlay {
       `${won ? stars : 0} ${won && stars === 1 ? "star" : "stars"}`,
     );
     this.summary.textContent = won
-      ? `${translate(this.locale, "resultSummary")} ${formatTime(elapsedSeconds)}`
+      ? `${localizeLevelText(level.title, this.locale)} ` +
+        `${translate(this.locale, "resultSummary")} ${formatTime(elapsedSeconds)}`
       : translate(this.locale, "battleHint");
+    this.nextButton.hidden = !won || !hasNextLevel;
     this.overlay.hidden = false;
   }
 

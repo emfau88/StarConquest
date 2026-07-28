@@ -419,6 +419,23 @@ button {
   font-weight: 800;
 }
 
+.result-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.result-card__actions button[hidden] {
+  display: none;
+}
+
+.result-card__actions button:first-child:not(:only-child) {
+  border-color: rgba(142, 230, 255, 0.3);
+  background: rgba(17, 68, 124, 0.76);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 @keyframes status-pulse {
   50% {
     box-shadow: 0 0 0 8px rgba(103, 240, 164, 0);

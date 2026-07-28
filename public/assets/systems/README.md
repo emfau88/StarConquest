@@ -6,11 +6,21 @@ tier pips, focus, capture state and visual effects remain code-native.
 This keeps the game state readable and animated without requiring a raster
 asset for every possible state.
 
-## Control batch
+## Complete three-size family
 
-- `system-player-medium.png`: blue player relay, triangular three-fin profile.
-- `system-enemy-medium.png`: red enemy citadel, angular command profile.
-- `system-neutral-medium.png`: neutral civilian relay, calm circular profile.
+- Player: `system-player-small.png`, `system-player-medium.png`,
+  `system-player-large.png`.
+- Enemy: `system-enemy-small.png`, `system-enemy-medium.png`,
+  `system-enemy-large.png`.
+- Neutral: `system-neutral-small.png`, `system-neutral-medium.png`,
+  `system-neutral-large.png`.
+
+Runtime class mapping:
+
+- `PULSAR`: small;
+- `GIANT`: medium;
+- `QUASAR`: large;
+- `NEXUS`: large, rendered at the larger Nexus gameplay radius.
 
 The three source generations used the built-in ImageGen workflow. Each asset
 was generated front-on on a flat chroma-key background, then converted locally
@@ -25,8 +35,10 @@ All three prompts specify:
 - restrained core bloom;
 - no text, UI, routes, ships, outer ownership rings or shadows.
 
-This is the medium reference tier. Small and large tier variants should only
-be generated after this batch has passed in-game readability review.
+The medium control batch established faction identity. The small variants use
+fewer rings and modules, while the large variants use broader silhouettes and
+additional outer structures. Runtime scaling remains controlled by the system
+class radius.
 
 The exact reproducible prompt set is stored in
 `assets/source/systems/PROMPTS.md`.

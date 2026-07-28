@@ -1,7 +1,7 @@
 import {
   LEVEL_ONE,
   type LevelDefinition,
-} from "../data/level-one";
+} from "../data/levels";
 import {
   GAME_RULES,
   SYSTEM_CLASS_SPECS,

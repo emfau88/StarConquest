@@ -51,3 +51,92 @@ Scene/backdrop: perfectly flat solid #ff00ff chroma-key background for removal; 
 Constraints: opaque solid station body with clean crisp outer edges; core may glow but keep glow tight; no ownership/status ring outside the station because ownership will be animated in code; visually quieter and more circular than both faction systems, while retaining exactly the same production family
 Avoid: text, letters, numbers, logos, UI, routes, beams, spaceships, planets, asteroids, particles, lens flare, watermark, weapons, wings, spikes, realistic NASA aesthetic, dark horror mood, excessive tiny detail, cast shadow, contact shadow
 ```
+
+## Small and large production variants
+
+The six variants were generated with the matching medium faction image as a
+strict reference for faction identity, rendering style, orthographic camera,
+materials, upper-left lighting, normalized object scale and equal padding.
+
+Shared prompt:
+
+```text
+Use case: stylized-concept
+Asset type: square game sprite for a polished casual mobile space strategy game
+Style/medium: match the approved medium reference exactly in polished casual
+3D rendering, clean bevels, crisp hand-crafted shapes and premium mobile
+strategy quality.
+Composition/framing: exactly one object, orthographic/front-on, centered,
+fully visible, same normalized object scale and generous equal padding as the
+reference, square canvas, no tilt and no crop.
+Constraints: opaque station body with crisp outer edges; restrained core bloom
+contained close to the object; no external ownership/status ring because game
+state is drawn in code.
+Avoid: text, numbers, logos, UI, routes, beams, ships, planets, asteroids,
+particles, lens flare, watermark, cast shadow and contact shadow.
+```
+
+### Player small
+
+```text
+Primary request: small-tier blue player star system, a compact scout relay.
+Subject: luminous cyan-blue core; simplified navy and cool-silver armor; one
+main ring; three short triangular fins; three cyan status lights; visibly
+lighter and less developed than medium; readable at 64 px.
+Backdrop: uniform #ff00ff chroma key. Do not use magenta in the subject.
+```
+
+### Player large
+
+```text
+Primary request: large-tier blue player star system, an advanced nexus command
+relay.
+Subject: powerful cyan-blue core; layered navy and bright-silver armor; two
+concentric mechanical rings; six clearly separated stabilizer modules; broader
+authoritative silhouette and additional energy conduits; friendly rather than
+weapon-like; readable at 128 px.
+Backdrop: uniform #ff00ff chroma key. Do not use magenta in the subject.
+```
+
+### Enemy small
+
+```text
+Primary request: small-tier red enemy star system, a compact forward outpost.
+Subject: coral-red core; simplified charcoal and warm-silver armor; one angular
+hexagonal ring; two short swept side blades and one top power cell; assertive
+but not sinister; readable at 64 px.
+Backdrop: uniform #00ff00 chroma key. Do not use green in the subject.
+```
+
+### Enemy large
+
+```text
+Primary request: large-tier red enemy star system, a formidable command
+citadel.
+Subject: powerful coral-red core; layered charcoal gunmetal and warm-silver
+armor; reinforced hexagonal body; six broad angular bastion modules; restrained
+red conduits; more advanced than medium but readable rather than cluttered.
+Backdrop: uniform #00ff00 chroma key. Do not use green in the subject.
+```
+
+### Neutral small
+
+```text
+Primary request: small-tier neutral unclaimed star system, a compact civilian
+navigation beacon.
+Subject: pearl-white core; simplified cool-gray and silver armor; one segmented
+ring; three docking tabs with tiny amber maintenance lights; visibly basic,
+inactive and readable at 64 px.
+Backdrop: uniform #ff00ff chroma key. Do not use magenta in the subject.
+```
+
+### Neutral large
+
+```text
+Primary request: large-tier neutral unclaimed star system, a major civilian
+exchange and relay nexus.
+Subject: bright pearl-white core; layered graphite, pale steel-blue and silver
+armor; two concentric segmented rings; eight peaceful docking modules; amber
+maintenance lights and cool-white conduits; advanced but non-military.
+Backdrop: uniform #ff00ff chroma key. Do not use magenta in the subject.
+```

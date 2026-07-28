@@ -1,3 +1,7 @@
+import {
+  localizeLevelText,
+  type LevelDefinition,
+} from "../../data/levels";
 import { translate, type Locale } from "../../i18n/strings";
 import { formatTime, requireElement } from "./dom";
 
@@ -10,10 +14,20 @@ export class TopBarHud {
   );
   private readonly time = requireElement("#hud-time", HTMLTimeElement);
 
-  constructor(locale: Locale) {
-    this.sector.textContent = translate(locale, "sector");
-    this.title.textContent = translate(locale, "title");
-    this.objective.textContent = translate(locale, "objective");
+  constructor(private readonly locale: Locale) {}
+
+  setLevel(level: LevelDefinition): void {
+    const difficulty =
+      `${"\u2605".repeat(level.difficulty)}` +
+      `${"\u2606".repeat(5 - level.difficulty)}`;
+    this.sector.textContent =
+      `${translate(this.locale, "sectorLabel")} ` +
+      `${String(level.sector).padStart(2, "0")} · ${difficulty}`;
+    this.title.textContent = localizeLevelText(level.title, this.locale);
+    this.objective.textContent = localizeLevelText(
+      level.objective,
+      this.locale,
+    );
   }
 
   setElapsedSeconds(elapsedSeconds: number): void {

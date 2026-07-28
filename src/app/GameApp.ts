@@ -11,7 +11,11 @@ import type {
   VisualEffect,
   VisualEffectKind,
 } from "../core/types";
-import { LEVEL_ONE } from "../data/level-one";
+import {
+  LEVELS,
+  localizeLevelText,
+  type LevelDefinition,
+} from "../data/levels";
 import { CanvasRenderer } from "../engine/CanvasRenderer";
 import { CanvasViewport } from "../engine/CanvasViewport";
 import {
@@ -63,7 +67,9 @@ export class GameApp {
   private readonly viewport: CanvasViewport;
   private readonly renderer: CanvasRenderer;
   private readonly input: PointerInput;
-  private readonly simulation = new GameSimulation(LEVEL_ONE);
+  private currentLevelIndex = 0;
+  private currentLevel: LevelDefinition = LEVELS[0];
+  private simulation = new GameSimulation(this.currentLevel);
   private readonly storage = new SafeStorage();
   private readonly audio = new AudioController(this.storage);
   private readonly platform: PlatformAdapter = createPlatformAdapter();
@@ -103,6 +109,7 @@ export class GameApp {
         });
       },
       onRetry: () => this.restart(),
+      onNext: () => this.nextLevel(),
     });
     this.fullscreen.subscribe((active) => {
       this.hud.setFullscreen(active);
@@ -112,7 +119,8 @@ export class GameApp {
     this.hud.setFullscreen(this.fullscreen.isFullscreen());
     this.hud.setAudioEnabled(this.audio.isEnabled());
     this.hud.setElapsedSeconds(0);
-    this.hud.setStatusKey("connectHint");
+    this.hud.setLevel(this.currentLevel);
+    this.showOpeningHint();
 
     this.resizeObserver.observe(this.canvas);
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
@@ -365,22 +373,30 @@ export class GameApp {
           "won",
           event.elapsedSeconds,
           this.starRating(event.elapsedSeconds),
+          this.currentLevel,
+          this.currentLevelIndex < LEVELS.length - 1,
         );
         break;
       }
       case "lost":
         this.audio.play("lose");
         this.platform.gameplayStop();
-        this.hud.showResult("lost", event.elapsedSeconds, 0);
+        this.hud.showResult(
+          "lost",
+          event.elapsedSeconds,
+          0,
+          this.currentLevel,
+          false,
+        );
         break;
     }
   }
 
   private starRating(elapsedSeconds: number): number {
-    if (elapsedSeconds <= LEVEL_ONE.threeStarSeconds) {
+    if (elapsedSeconds <= this.currentLevel.threeStarSeconds) {
       return 3;
     }
-    if (elapsedSeconds <= LEVEL_ONE.twoStarSeconds) {
+    if (elapsedSeconds <= this.currentLevel.twoStarSeconds) {
       return 2;
     }
     return 1;
@@ -440,17 +456,48 @@ export class GameApp {
     this.hud.setElapsedSeconds(0);
     this.hud.setPaused(false);
     this.hud.hideResult();
-    this.hud.setStatusKey("connectHint");
+    this.showOpeningHint();
+    this.platform.gameplayStart();
+  }
+
+  private nextLevel(): void {
+    if (
+      this.simulation.status !== "won" ||
+      this.currentLevelIndex >= LEVELS.length - 1
+    ) {
+      return;
+    }
+
+    this.currentLevelIndex += 1;
+    this.currentLevel = LEVELS[this.currentLevelIndex];
+    this.simulation = new GameSimulation(this.currentLevel);
+    this.effects = [];
+    this.gesture = null;
+    this.focusedSystemId = null;
+    this.tutorialStage = 0;
+    this.paused = false;
+    this.lastFrameTime = performance.now();
+    this.hud.setLevel(this.currentLevel);
+    this.hud.setElapsedSeconds(0);
+    this.hud.setPaused(false);
+    this.hud.hideResult();
+    this.showOpeningHint();
     this.platform.gameplayStart();
   }
 
   private restoreTutorialHint(): void {
+    if (this.tutorialStage === 0) {
+      this.showOpeningHint();
+      return;
+    }
     this.hud.setStatusKey(
-      this.tutorialStage === 0
-        ? "connectHint"
-        : this.tutorialStage === 1
-          ? "cutHint"
-          : "battleHint",
+      this.tutorialStage === 1 ? "cutHint" : "battleHint",
+    );
+  }
+
+  private showOpeningHint(): void {
+    this.hud.setStatus(
+      localizeLevelText(this.currentLevel.openingHint, this.locale),
     );
   }
 

@@ -3,15 +3,27 @@
 StarConquest is a touch-first browser strategy game about connecting star
 systems, routing energy and cutting links at the right moment.
 
-## Playable vertical slice
+## Playable campaign slice
 
-Step 3 implements the first complete level, **First Contact**:
+The rebuild currently contains five playable sectors with a steady learning
+curve:
 
-- production, link growth, energy transfer, capture, win and defeat;
+- **First Contact** introduces connecting and neutral expansion;
+- **Pressure Line** adds two expanding enemy outposts;
+- **Cut the Current** makes boost cuts the central tactic;
+- **Twin Fronts** asks the player to prioritize two attack lanes;
+- **Heavy Orbit** combines Pulsars, Giants, Quasars and a fortified Nexus.
+
+The current slice includes:
+
+- production, link growth, energy transfer, capture, win and defeat across all
+  five levels;
 - mouse and touch gestures: drag to connect, swipe across a link to cut;
 - responsive 16:9 canvas, mobile safe areas and a landscape orientation hint;
 - fullscreen toggle with a mobile orientation-lock attempt;
-- tutorial prompts, pause, restart, lightweight sound effects and result screen;
+- dynamic mission HUD, tutorial prompts, pause, restart, next-sector flow,
+  lightweight sound effects and result screen;
+- faction-specific transport and star-system artwork with Canvas fallbacks;
 - automated simulation tests and GitHub Pages deployment.
 
 The legacy source remains frozen in `reference/legacy-build/`. Its protected

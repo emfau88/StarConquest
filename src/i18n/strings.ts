@@ -2,9 +2,7 @@ export type Locale = "en" | "de";
 
 const STRINGS = {
   en: {
-    sector: "Sector 01",
-    title: "First Contact",
-    objective: "Capture the red system",
+    sectorLabel: "Sector",
     pause: "Pause",
     resume: "Resume",
     restart: "Restart",
@@ -14,7 +12,7 @@ const STRINGS = {
     exitFullscreen: "Exit fullscreen",
     connectHint: "Drag from your blue system to another star",
     cutHint: "Swipe across your blue link to launch its stored energy",
-    battleHint: "Build a route and capture the red system",
+    battleHint: "Build routes, reinforce your network and capture every red system",
     paused: "Simulation paused",
     selected: "System selected",
     insufficient: "That system needs more energy",
@@ -25,12 +23,11 @@ const STRINGS = {
     lostEyebrow: "Signal lost",
     lostTitle: "Your network collapsed",
     retry: "Play again",
-    resultSummary: "First Contact completed in",
+    nextSector: "Next sector",
+    resultSummary: "completed in",
   },
   de: {
-    sector: "Sektor 01",
-    title: "Erster Kontakt",
-    objective: "Erobere das rote System",
+    sectorLabel: "Sektor",
     pause: "Pause",
     resume: "Weiter",
     restart: "Neustart",
@@ -40,7 +37,7 @@ const STRINGS = {
     exitFullscreen: "Vollbild verlassen",
     connectHint: "Ziehe vom blauen System zu einem anderen Stern",
     cutHint: "Wische durch deine blaue Verbindung, um Energie zu starten",
-    battleHint: "Baue eine Route und erobere das rote System",
+    battleHint: "Baue Routen, verstärke dein Netz und erobere alle roten Systeme",
     paused: "Simulation pausiert",
     selected: "System ausgewählt",
     insufficient: "Dieses System braucht mehr Energie",
@@ -51,7 +48,8 @@ const STRINGS = {
     lostEyebrow: "Signal verloren",
     lostTitle: "Dein Netzwerk ist zusammengebrochen",
     retry: "Nochmal spielen",
-    resultSummary: "Erster Kontakt abgeschlossen in",
+    nextSector: "Nächster Sektor",
+    resultSummary: "abgeschlossen in",
   },
 } as const;
 

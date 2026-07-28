@@ -1,27 +1,28 @@
 # StarConquest – Produktions-Roadmap für CrazyGames
 
-Stand: 28. Juli 2026
+Stand: 29. Juli 2026
 
 ## Kurzstatus
 
-Letzte Aktualisierung: 28. Juli 2026, nach dem modularen HUD-Umbau und dem
-ersten Planetensystem-Asset-Batch.
+Letzte Aktualisierung: 29. Juli 2026, nach der vollständigen
+Planetensystem-Familie, den finalen Fraktions-Transportschiffen und den ersten
+fünf Kampagnenmissionen.
 
 | Bereich | Status | Aktueller Stand |
 |---|---|---|
 | Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
-| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, code-native Transportschiffe und erster System-Batch sind integriert |
+| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Fraktions-Transportschiffe und vollständige System-Größenfamilie sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
-| Onboarding und Progression | Begonnen | Ingame-Hinweise und Ergebnisdialog vorhanden; Levelauswahl, Next Sector und Kampagnenfortschritt fehlen |
-| Kampagne und Balance | Frühphase | Ein spielbares Level; weitere sieben Missionen und vollständige Balance fehlen |
+| Onboarding und Progression | Begonnen | Dynamisches Missions-HUD, Ingame-Hinweise, Ergebnisdialog und Next Sector vorhanden; Levelauswahl und gespeicherter Kampagnenfortschritt fehlen |
+| Kampagne und Balance | In Arbeit | Fünf spielbare Missionen mit Simulationsprüfung; drei weitere Missionen und menschliche Balance-Testläufe fehlen |
 | Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
 | Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
 | CrazyGames und Submission | Offen | SDK-Integration, Portal-QA, Cover, Videos und Metadaten fehlen |
 
 Fortschrittsschätzung:
 
-- Hochwertiger spielbarer Vertical Slice: ungefähr **45 %**.
-- Vollständiger CrazyGames-Release gemäß dieser Roadmap: ungefähr **25–30 %**.
+- Hochwertiger spielbarer Vertical Slice: ungefähr **55 %**.
+- Vollständiger CrazyGames-Release gemäß dieser Roadmap: ungefähr **35 %**.
 
 Die zweite Zahl ist bewusst niedriger, weil Kampagne, Progression, SDK,
 Marketing und Geräte-QA einen großen Teil der Releasearbeit ausmachen.
@@ -80,23 +81,23 @@ Die technische Basis ist vorhanden:
 - Energieproduktion, Links, Transfer, Eroberung und einfache Gegner-KI;
 - Boost, Cut, Sieg und Niederlage;
 - heller Runtime-Hintergrund im festgelegten Polished-Casual-Stil;
-- dünne Energierouten mit kleinen code-nativen Transportschiffen;
-- drei freigestellte Planetensystem-Referenzassets für Spieler, Gegner und
-  neutrale Systeme;
+- dünne Energierouten mit je einem finalen Transportschiff für Spieler und Gegner;
+- neun freigestellte Planetensystem-Assets in drei Größen für Spieler, Gegner
+  und neutrale Systeme;
 - hybrides System-Rendering mit dynamischen Zustandsringen und Canvas-Fallback;
 - Maus-, Pointer- und Touch-Eingabe;
 - Querformat-Hinweis, Safe-Area-Grundlage und Fullscreen-Schalter;
 - mindestens 48 CSS-Pixel große HUD-Touchziele im Mobile-Layout;
 - englische und deutsche Texte;
 - lokale Fortschrittsspeicherung;
-- ein spielbares Level;
+- fünf spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
 - funktionierender GitHub-Pages-Build.
 
 Noch nicht releasefähig sind vor allem:
 
-- vollständige Systemfamilie mit kleinen und großen Varianten;
-- finale Schiffsassets und vollständiges Kampf-/Capture-Game-Feel;
+- endgültige Unterscheidung von Quasar und Nexus über ein viertes Artwork-Tier;
+- vollständiges Kampf-/Capture-Game-Feel;
 - Kampagne, Levelauswahl und Progression;
 - Onboarding und UX-Feinschliff;
 - Musik und vollständiges Audio;
@@ -123,16 +124,17 @@ Kontroll-Batch abgeschlossen:
 
 Nächster Planetensystem-Batch:
 
-- [ ] Spieler-System, klein und groß;
-- [ ] Gegner-System, klein und groß;
-- [ ] neutrales System, klein und groß;
-- [ ] Größenhierarchie bei 800×450 prüfen;
+- [x] Spieler-System, klein und groß;
+- [x] Gegner-System, klein und groß;
+- [x] neutrales System, klein und groß;
+- [x] Größenhierarchie bei 800×450 prüfen;
 - [ ] Capture-Wechsel zwischen allen Fraktionen prüfen.
 
 Danach:
 
-- [ ] vier bis acht finale Schiffssilhouetten;
-- [ ] Orbit- und Stationsmodule;
+- [x] ein finales blaues und ein finales rotes Transportschiff;
+- [ ] weitere Schiffsklassen nur nach Einführung echter Rollenmechaniken;
+- [ ] Orbit- und Stationsmodule nur nach Bestätigung ihrer Gameplay-Funktionen;
 - [ ] besondere Kartenobjekte;
 - [ ] zwei weitere Sektor-Hintergründe;
 - [ ] Marketing-Key-Art erst nach finaler Namensentscheidung.
@@ -206,22 +208,22 @@ Aufwand: 1–2 Arbeitstage inklusive letzter Detailentscheidungen.
 
 Priorität: höchste
 
-Status: in Arbeit, ungefähr 60 % des Phasenumfangs
+Status: in Arbeit, ungefähr 75 % des Phasenumfangs
 
 Bereits umgesetzt:
 
 - heller, freundlicher Runtime-Hintergrund;
-- vereinfachte Routen und kleine code-native Transportschiffe;
+- vereinfachte Routen und finale Fraktions-Transportschiffe;
 - überarbeitete Boost-, Cut- und Capture-Darstellung;
 - modulares Polished-Casual-HUD;
 - mittlerer System-Kontroll-Batch für Spieler, Gegner und Neutral;
+- kleine und große Systemvarianten für alle drei Fraktionen;
+- ein finales blaues und ein finales rotes Transportschiff;
 - Browserprüfung auf Desktop und Mobile-Landscape.
 
 Noch offen:
 
-- sechs kleine und große Systemvarianten;
-- endgültige Silhouettenlogik für Pulsar, Giant, Quasar und Nexus;
-- finale Schiffsgrafiken;
+- optionales viertes System-Artwork-Tier zur getrennten Quasar-/Nexus-Silhouette;
 - vollständiger Treffer-, Gefahr-, Sieg- und Niederlage-Pass;
 - Effektbudget und Performanceprüfung auf echten Mobilgeräten.
 
@@ -560,7 +562,8 @@ aber Art Direction, UX und Balance sollten nicht übersprungen werden.
 - [x] Modulares Polished-Casual-HUD umsetzen.
 - [x] Mittleren System-Kontroll-Batch integrieren.
 - [x] Mobile Screenshot und Bedienbarkeit prüfen.
-- [ ] Kleine und große Systemvarianten erstellen.
+- [x] Kleine und große Systemvarianten erstellen.
+- [x] Finale Transportschiffe für beide Fraktionen integrieren.
 - [ ] Pulsar, Giant, Quasar und Nexus final differenzieren.
 - [ ] Finalen Effekt- und Performance-Pass durchführen.
 
