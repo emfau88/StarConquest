@@ -3,6 +3,7 @@ import type {
   Owner,
   Point,
   SceneSnapshot,
+  SectorTheme,
   StarSystemView,
   SystemClass,
   VisualEffect,
@@ -34,8 +35,23 @@ interface Star {
   phase: number;
 }
 
-const BACKDROP_URL =
-  `${import.meta.env.BASE_URL}assets/backgrounds/starconquest-bright-nebula.png`;
+const BACKDROP_URLS: Readonly<Record<SectorTheme, string>> = Object.freeze({
+  "azure-frontier":
+    `${import.meta.env.BASE_URL}assets/backgrounds/sector-azure.webp`,
+  "quasar-rift":
+    `${import.meta.env.BASE_URL}assets/backgrounds/sector-quasar.webp`,
+  "nexus-void":
+    `${import.meta.env.BASE_URL}assets/backgrounds/sector-nexus.webp`,
+});
+const CAPTURE_BURST_URL =
+  `${import.meta.env.BASE_URL}assets/vfx/capture-burst.png`;
+
+const loadImage = (url: string): HTMLImageElement => {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = url;
+  return image;
+};
 
 const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
   player: "#39c2ff",
@@ -62,13 +78,20 @@ const buildStars = (): Star[] => {
 
 export class CanvasRenderer {
   private readonly stars = buildStars();
-  private readonly backdropImage = new Image();
+  private readonly backdropImages: Readonly<
+    Record<SectorTheme, HTMLImageElement>
+  > = {
+    "azure-frontier": loadImage(BACKDROP_URLS["azure-frontier"]),
+    "quasar-rift": loadImage(BACKDROP_URLS["quasar-rift"]),
+    "nexus-void": loadImage(BACKDROP_URLS["nexus-void"]),
+  };
+  private readonly captureBurstImage = new Image();
   private readonly transportShipArt = createTransportShipArt();
   private readonly systemArt = createSystemArt();
 
   constructor(private readonly viewport: CanvasViewport) {
-    this.backdropImage.decoding = "async";
-    this.backdropImage.src = BACKDROP_URL;
+    this.captureBurstImage.decoding = "async";
+    this.captureBurstImage.src = CAPTURE_BURST_URL;
   }
 
   render(scene: SceneSnapshot): void {
@@ -76,7 +99,7 @@ export class CanvasRenderer {
     const metrics = this.viewport.getMetrics();
     this.viewport.prepareScreenSpace();
     context.clearRect(0, 0, metrics.cssWidth, metrics.cssHeight);
-    this.drawBackdrop(context, scene.elapsedSeconds);
+    this.drawBackdrop(context, scene.elapsedSeconds, scene.theme);
 
     this.viewport.enterWorldSpace();
     this.drawWorld(context, scene);
@@ -85,8 +108,10 @@ export class CanvasRenderer {
   private drawBackdrop(
     context: CanvasRenderingContext2D,
     elapsedSeconds: number,
+    theme: SectorTheme,
   ): void {
     const { cssWidth, cssHeight, safeRect } = this.viewport.getMetrics();
+    const backdropImage = this.backdropImages[theme];
     const fallback = context.createLinearGradient(0, 0, cssWidth, cssHeight);
     fallback.addColorStop(0, "#087cca");
     fallback.addColorStop(0.48, "#0b44a3");
@@ -94,27 +119,27 @@ export class CanvasRenderer {
     context.fillStyle = fallback;
     context.fillRect(0, 0, cssWidth, cssHeight);
 
-    if (this.backdropImage.complete && this.backdropImage.naturalWidth > 0) {
+    if (backdropImage.complete && backdropImage.naturalWidth > 0) {
       const imageRatio =
-        this.backdropImage.naturalWidth / this.backdropImage.naturalHeight;
+        backdropImage.naturalWidth / backdropImage.naturalHeight;
       const screenRatio = cssWidth / cssHeight;
       let sourceX = 0;
       let sourceY = 0;
-      let sourceWidth = this.backdropImage.naturalWidth;
-      let sourceHeight = this.backdropImage.naturalHeight;
+      let sourceWidth = backdropImage.naturalWidth;
+      let sourceHeight = backdropImage.naturalHeight;
 
       if (imageRatio > screenRatio) {
         sourceWidth = sourceHeight * screenRatio;
-        sourceX = (this.backdropImage.naturalWidth - sourceWidth) / 2;
+        sourceX = (backdropImage.naturalWidth - sourceWidth) / 2;
       } else {
         sourceHeight = sourceWidth / screenRatio;
-        sourceY = (this.backdropImage.naturalHeight - sourceHeight) / 2;
+        sourceY = (backdropImage.naturalHeight - sourceHeight) / 2;
       }
 
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
       context.drawImage(
-        this.backdropImage,
+        backdropImage,
         sourceX,
         sourceY,
         sourceWidth,
@@ -488,39 +513,7 @@ export class CanvasRenderer {
     context.shadowBlur = 20;
 
     if (effect.kind === "capture") {
-      const radius = 38 + progress * 112;
-      context.lineWidth = 8 - progress * 5;
-      context.beginPath();
-      context.arc(effect.position.x, effect.position.y, radius, 0, Math.PI * 2);
-      context.stroke();
-      context.strokeStyle = "#f5fdff";
-      context.lineWidth = 2.5;
-      context.beginPath();
-      context.arc(
-        effect.position.x,
-        effect.position.y,
-        radius * 0.72,
-        0,
-        Math.PI * 2,
-      );
-      context.stroke();
-      context.strokeStyle = color;
-      context.lineWidth = 3.5;
-      for (let index = 0; index < 12; index += 1) {
-        const angle = (index / 12) * Math.PI * 2;
-        const inner = 48 + progress * 32;
-        const outer = inner + 30 * alpha;
-        context.beginPath();
-        context.moveTo(
-          effect.position.x + Math.cos(angle) * inner,
-          effect.position.y + Math.sin(angle) * inner,
-        );
-        context.lineTo(
-          effect.position.x + Math.cos(angle) * outer,
-          effect.position.y + Math.sin(angle) * outer,
-        );
-        context.stroke();
-      }
+      this.drawCaptureEffect(context, effect, progress, color);
     } else if (effect.kind === "boost" && effect.targetPosition) {
       const beam = context.createLinearGradient(
         effect.position.x,
@@ -598,6 +591,74 @@ export class CanvasRenderer {
       context.stroke();
     }
     context.restore();
+  }
+
+  private drawCaptureEffect(
+    context: CanvasRenderingContext2D,
+    effect: VisualEffect,
+    progress: number,
+    color: string,
+  ): void {
+    const eased = 1 - (1 - progress) ** 3;
+    const fadeIn = Math.min(1, progress * 10);
+    const fadeOut = Math.max(0, 1 - Math.max(0, progress - 0.52) / 0.48);
+    const burstAlpha = fadeIn * fadeOut;
+    const size = 116 + eased * 184;
+
+    if (
+      this.captureBurstImage.complete &&
+      this.captureBurstImage.naturalWidth > 0
+    ) {
+      context.save();
+      context.globalCompositeOperation = "screen";
+      context.globalAlpha = burstAlpha * 0.9;
+      context.drawImage(
+        this.captureBurstImage,
+        effect.position.x - size / 2,
+        effect.position.y - size / 2,
+        size,
+        size,
+      );
+      context.restore();
+    }
+
+    const ringRadius = 34 + eased * 126;
+    context.globalAlpha = fadeOut * 0.9;
+    context.strokeStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 24;
+    context.lineWidth = 7 - progress * 4.5;
+    context.beginPath();
+    context.arc(
+      effect.position.x,
+      effect.position.y,
+      ringRadius,
+      0,
+      Math.PI * 2,
+    );
+    context.stroke();
+
+    context.lineWidth = 2;
+    context.globalAlpha = burstAlpha * 0.82;
+    for (let index = 0; index < 8; index += 1) {
+      const angle =
+        effect.id * 0.73 + index * (Math.PI / 4) + progress * 0.35;
+      const distance = 54 + eased * (72 + (index % 3) * 9);
+      const particleSize = 3.5 + (1 - progress) * (index % 2 ? 3 : 5);
+      const x = effect.position.x + Math.cos(angle) * distance;
+      const y = effect.position.y + Math.sin(angle) * distance;
+      context.save();
+      context.translate(x, y);
+      context.rotate(angle + Math.PI / 4);
+      context.fillStyle = index % 2 === 0 ? "#f8feff" : color;
+      context.fillRect(
+        -particleSize / 2,
+        -particleSize / 2,
+        particleSize,
+        particleSize,
+      );
+      context.restore();
+    }
   }
 
   private drawSystem(

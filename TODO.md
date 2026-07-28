@@ -20,7 +20,8 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Leveldaten in eine skalierbare Kampagnenstruktur auslagern.
 - [x] Level 2–5 mit klar ansteigenden Lernzielen bauen.
 - [x] „Next Sector“ im Ergebnisdialog ergänzen.
-- [ ] Levelauswahl mit Freischaltung ergänzen.
+- [x] Kampagnenkarte mit direkter Levelauswahl ergänzen.
+- [ ] Persistente Level-Freischaltung ergänzen.
 - [ ] Tutorial für Verbinden, Erobern und Boost-Cut abschließen.
 - [ ] Progression und Sterne über mehrere Level speichern.
 

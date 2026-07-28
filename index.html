@@ -38,40 +38,78 @@
 
         <div class="hud__actions">
           <span class="hud__timer">
-            <span class="hud__timer-dot" aria-hidden="true"></span>
+            <img
+              class="hud-icon hud-icon--timer"
+              src="./assets/ui/stopwatch.png"
+              alt=""
+              aria-hidden="true"
+            />
             <time class="hud__time" id="hud-time" datetime="PT0S">00:00</time>
           </span>
+          <button
+            class="icon-button icon-button--map"
+            id="map-button"
+            type="button"
+          >
+            <span class="icon-button__label" id="map-label">Map</span>
+          </button>
           <button
             class="icon-button"
             id="restart-button"
             type="button"
-            data-icon="&#8635;"
           >
-            Restart
+            <img
+              class="hud-icon"
+              id="restart-icon"
+              src="./assets/ui/restart.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="icon-button__label" id="restart-label">Restart</span>
           </button>
           <button
             class="icon-button"
             id="audio-button"
             type="button"
-            data-icon="&#9834;"
           >
-            Audio on
+            <img
+              class="hud-icon"
+              id="audio-icon"
+              src="./assets/ui/audio-on.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="icon-button__label" id="audio-label">Audio on</span>
           </button>
           <button
             class="icon-button"
             id="fullscreen-button"
             type="button"
-            data-icon="&#9974;"
           >
-            Fullscreen
+            <img
+              class="hud-icon"
+              id="fullscreen-icon"
+              src="./assets/ui/fullscreen-enter.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="icon-button__label" id="fullscreen-label">
+              Fullscreen
+            </span>
           </button>
           <button
             class="icon-button icon-button--primary"
             id="pause-button"
             type="button"
-            data-icon="&#8545;"
           >
-            Pause
+            <img
+              class="hud-icon"
+              id="pause-icon"
+              src="./assets/ui/pause.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="icon-button__label" id="pause-label">Pause</span>
           </button>
         </div>
       </header>
@@ -82,6 +120,78 @@
           Drag from your blue system to another star
         </span>
       </aside>
+
+      <section
+        class="campaign-map"
+        id="campaign-map"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="campaign-map-title"
+        hidden
+      >
+        <img
+          class="campaign-map__art"
+          src="./assets/backgrounds/campaign-map.webp"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="campaign-map__shade" aria-hidden="true"></div>
+        <header class="campaign-map__header">
+          <span class="campaign-map__eyebrow" id="campaign-map-eyebrow">
+            Campaign
+          </span>
+          <h1 id="campaign-map-title">Sector map</h1>
+          <button
+            class="campaign-map__close"
+            id="campaign-map-close"
+            type="button"
+          >
+            Close
+          </button>
+        </header>
+        <nav class="campaign-map__nodes" aria-label="Campaign sectors">
+          <button
+            class="campaign-map__node campaign-map__node--1"
+            data-level-index="0"
+            type="button"
+          >
+            <span class="campaign-map__number">01</span>
+            <span class="campaign-map__name">First Contact</span>
+          </button>
+          <button
+            class="campaign-map__node campaign-map__node--2"
+            data-level-index="1"
+            type="button"
+          >
+            <span class="campaign-map__number">02</span>
+            <span class="campaign-map__name">Pressure Line</span>
+          </button>
+          <button
+            class="campaign-map__node campaign-map__node--3"
+            data-level-index="2"
+            type="button"
+          >
+            <span class="campaign-map__number">03</span>
+            <span class="campaign-map__name">Cut the Current</span>
+          </button>
+          <button
+            class="campaign-map__node campaign-map__node--4"
+            data-level-index="3"
+            type="button"
+          >
+            <span class="campaign-map__number">04</span>
+            <span class="campaign-map__name">Twin Fronts</span>
+          </button>
+          <button
+            class="campaign-map__node campaign-map__node--5"
+            data-level-index="4"
+            type="button"
+          >
+            <span class="campaign-map__number">05</span>
+            <span class="campaign-map__name">Heavy Orbit</span>
+          </button>
+        </nav>
+      </section>
 
       <section
         class="result-overlay"

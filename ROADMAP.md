@@ -13,7 +13,7 @@ fünf Kampagnenmissionen.
 | Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
 | Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Fraktions-Transportschiffe und vollständige System-Größenfamilie sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
-| Onboarding und Progression | Begonnen | Dynamisches Missions-HUD, Ingame-Hinweise, Ergebnisdialog und Next Sector vorhanden; Levelauswahl und gespeicherter Kampagnenfortschritt fehlen |
+| Onboarding und Progression | Begonnen | Dynamisches Missions-HUD, Ingame-Hinweise, Ergebnisdialog, Next Sector und Kampagnenkarte vorhanden; Freischaltung und gespeicherter Kampagnenfortschritt fehlen |
 | Kampagne und Balance | In Arbeit | Fünf spielbare Missionen mit Simulationsprüfung; drei weitere Missionen und menschliche Balance-Testläufe fehlen |
 | Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
 | Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
@@ -98,7 +98,7 @@ Noch nicht releasefähig sind vor allem:
 
 - endgültige Unterscheidung von Quasar und Nexus über ein viertes Artwork-Tier;
 - vollständiges Kampf-/Capture-Game-Feel;
-- Kampagne, Levelauswahl und Progression;
+- persistente Kampagnenfreischaltung, Sternwertung und Progression;
 - Onboarding und UX-Feinschliff;
 - Musik und vollständiges Audio;
 - CrazyGames-SDK und Cloud-Fortschritt;
@@ -136,7 +136,7 @@ Danach:
 - [ ] weitere Schiffsklassen nur nach Einführung echter Rollenmechaniken;
 - [ ] Orbit- und Stationsmodule nur nach Bestätigung ihrer Gameplay-Funktionen;
 - [ ] besondere Kartenobjekte;
-- [ ] zwei weitere Sektor-Hintergründe;
+- [x] drei abgestufte Sektor-Hintergründe und eine Kampagnenkarte;
 - [ ] Marketing-Key-Art erst nach finaler Namensentscheidung.
 
 ## 4. Release-Maßstäbe

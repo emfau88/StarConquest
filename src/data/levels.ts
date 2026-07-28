@@ -1,6 +1,7 @@
 import type {
   Owner,
   Point,
+  SectorTheme,
   SystemClass,
 } from "../core/types";
 import type { Locale } from "../i18n/strings";
@@ -22,6 +23,7 @@ export interface LevelDefinition {
   id: string;
   sector: number;
   difficulty: number;
+  theme: SectorTheme;
   title: LocalizedLevelText;
   objective: LocalizedLevelText;
   openingHint: LocalizedLevelText;
@@ -42,6 +44,7 @@ export const LEVELS = [
     id: "first-contact",
     sector: 1,
     difficulty: 1,
+    theme: "azure-frontier",
     title: {
       en: "First Contact",
       de: "Erster Kontakt",
@@ -93,6 +96,7 @@ export const LEVELS = [
     id: "pressure-line",
     sector: 2,
     difficulty: 2,
+    theme: "azure-frontier",
     title: {
       en: "Pressure Line",
       de: "Drucklinie",
@@ -158,6 +162,7 @@ export const LEVELS = [
     id: "cut-the-current",
     sector: 3,
     difficulty: 3,
+    theme: "quasar-rift",
     title: {
       en: "Cut the Current",
       de: "Stromschnitt",
@@ -230,6 +235,7 @@ export const LEVELS = [
     id: "twin-fronts",
     sector: 4,
     difficulty: 4,
+    theme: "quasar-rift",
     title: {
       en: "Twin Fronts",
       de: "Doppelfront",
@@ -309,6 +315,7 @@ export const LEVELS = [
     id: "heavy-orbit",
     sector: 5,
     difficulty: 5,
+    theme: "nexus-void",
     title: {
       en: "Heavy Orbit",
       de: "Schwere Umlaufbahn",

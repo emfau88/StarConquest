@@ -82,6 +82,8 @@ export class GameApp {
   private lastFrameTime = 0;
   private focusedSystemId: string | null = null;
   private paused = false;
+  private campaignMapOpen = false;
+  private pausedBeforeMap = false;
   private tutorialStage = 0;
   private gesture: Gesture | null = null;
   private effects: VisualEffect[] = [];
@@ -100,6 +102,9 @@ export class GameApp {
     await this.platform.initialize();
 
     this.hud.bind({
+      onMapOpen: () => this.openCampaignMap(),
+      onMapClose: () => this.closeCampaignMap(),
+      onMapSelect: (levelIndex) => this.selectLevel(levelIndex),
       onPauseToggle: () => this.togglePause(),
       onRestart: () => this.restart(),
       onAudioToggle: () => this.toggleAudio(),
@@ -342,7 +347,13 @@ export class GameApp {
         break;
       case "capture":
         this.audio.play("capture");
-        this.addEffect("capture", event.position, undefined, event.owner);
+        this.addEffect(
+          "capture",
+          event.position,
+          undefined,
+          event.owner,
+          0.72,
+        );
         if (event.owner === "player") {
           this.tutorialStage = 2;
           this.hud.setStatusKey("battleHint");
@@ -452,9 +463,12 @@ export class GameApp {
     this.focusedSystemId = null;
     this.tutorialStage = 0;
     this.paused = false;
+    this.campaignMapOpen = false;
+    this.pausedBeforeMap = false;
     this.lastFrameTime = performance.now();
     this.hud.setElapsedSeconds(0);
     this.hud.setPaused(false);
+    this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
     this.platform.gameplayStart();
@@ -468,21 +482,67 @@ export class GameApp {
       return;
     }
 
-    this.currentLevelIndex += 1;
-    this.currentLevel = LEVELS[this.currentLevelIndex];
+    this.loadLevel(this.currentLevelIndex + 1);
+  }
+
+  private selectLevel(levelIndex: number): void {
+    if (
+      !Number.isInteger(levelIndex) ||
+      levelIndex < 0 ||
+      levelIndex >= LEVELS.length
+    ) {
+      return;
+    }
+    this.loadLevel(levelIndex);
+  }
+
+  private loadLevel(levelIndex: number): void {
+    this.currentLevelIndex = levelIndex;
+    this.currentLevel = LEVELS[levelIndex];
     this.simulation = new GameSimulation(this.currentLevel);
     this.effects = [];
     this.gesture = null;
     this.focusedSystemId = null;
     this.tutorialStage = 0;
     this.paused = false;
+    this.campaignMapOpen = false;
+    this.pausedBeforeMap = false;
     this.lastFrameTime = performance.now();
     this.hud.setLevel(this.currentLevel);
     this.hud.setElapsedSeconds(0);
     this.hud.setPaused(false);
+    this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
     this.platform.gameplayStart();
+  }
+
+  private openCampaignMap(): void {
+    if (this.campaignMapOpen) {
+      return;
+    }
+    this.campaignMapOpen = true;
+    this.pausedBeforeMap = this.paused;
+    this.paused = true;
+    this.gesture = null;
+    this.platform.gameplayStop();
+    this.hud.showCampaignMap(this.currentLevelIndex);
+  }
+
+  private closeCampaignMap(): void {
+    if (!this.campaignMapOpen) {
+      return;
+    }
+    this.campaignMapOpen = false;
+    this.hud.hideCampaignMap();
+    this.paused =
+      this.pausedBeforeMap || this.simulation.status !== "playing";
+    this.pausedBeforeMap = false;
+    if (!this.paused) {
+      this.lastFrameTime = performance.now();
+      this.platform.gameplayStart();
+      this.restoreTutorialHint();
+    }
   }
 
   private restoreTutorialHint(): void {
@@ -524,6 +584,7 @@ export class GameApp {
 
   private snapshot(): SceneSnapshot {
     return {
+      theme: this.currentLevel.theme,
       systems: this.simulation.getSystems(),
       links: this.simulation.getLinks(),
       elapsedSeconds: this.simulation.elapsedSeconds,

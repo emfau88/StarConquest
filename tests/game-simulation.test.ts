@@ -11,6 +11,7 @@ const DUEL_LEVEL: LevelDefinition = {
   id: "test-duel",
   sector: 0,
   difficulty: 1,
+  theme: "azure-frontier",
   title: { en: "Test Duel", de: "Testduell" },
   objective: { en: "Test", de: "Test" },
   openingHint: { en: "Test", de: "Test" },
@@ -118,6 +119,16 @@ test("the campaign contains five progressively denser sectors", () => {
   assert.deepEqual(
     LEVELS.map((level) => level.difficulty),
     [1, 2, 3, 4, 5],
+  );
+  assert.deepEqual(
+    LEVELS.map((level) => level.theme),
+    [
+      "azure-frontier",
+      "azure-frontier",
+      "quasar-rift",
+      "quasar-rift",
+      "nexus-void",
+    ],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.systems.length),

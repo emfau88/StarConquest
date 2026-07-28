@@ -4,6 +4,11 @@ export type SystemClass = "PULSAR" | "GIANT" | "QUASAR" | "NEXUS";
 
 export type GameStatus = "playing" | "won" | "lost";
 
+export type SectorTheme =
+  | "azure-frontier"
+  | "quasar-rift"
+  | "nexus-void";
+
 export interface Point {
   x: number;
   y: number;
@@ -49,6 +54,7 @@ export interface DragPreview {
 }
 
 export interface SceneSnapshot {
+  theme: SectorTheme;
   systems: readonly StarSystemView[];
   links: readonly EnergyLinkView[];
   elapsedSeconds: number;

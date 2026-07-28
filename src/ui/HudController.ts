@@ -6,11 +6,15 @@ import {
   type StringKey,
 } from "../i18n/strings";
 import { ActionControlsHud } from "./hud/ActionControlsHud";
+import { CampaignMapOverlay } from "./hud/CampaignMapOverlay";
 import { ResultOverlay } from "./hud/ResultOverlay";
 import { StatusPrompt } from "./hud/StatusPrompt";
 import { TopBarHud } from "./hud/TopBarHud";
 
 export interface HudActions {
+  onMapOpen: () => void;
+  onMapClose: () => void;
+  onMapSelect: (levelIndex: number) => void;
   onPauseToggle: () => void;
   onRestart: () => void;
   onAudioToggle: () => void;
@@ -22,6 +26,7 @@ export interface HudActions {
 export class HudController {
   private readonly topBar: TopBarHud;
   private readonly controls: ActionControlsHud;
+  private readonly campaignMap: CampaignMapOverlay;
   private readonly status: StatusPrompt;
   private readonly result: ResultOverlay;
   private bindings = new AbortController();
@@ -29,6 +34,7 @@ export class HudController {
   constructor(private readonly locale: Locale) {
     this.topBar = new TopBarHud(locale);
     this.controls = new ActionControlsHud(locale);
+    this.campaignMap = new CampaignMapOverlay(locale);
     this.status = new StatusPrompt();
     this.result = new ResultOverlay(locale);
     this.setStatusKey("connectHint");
@@ -38,6 +44,11 @@ export class HudController {
     this.bindings.abort();
     this.bindings = new AbortController();
     this.controls.bind(actions, this.bindings.signal);
+    this.campaignMap.bind(
+      actions.onMapSelect,
+      actions.onMapClose,
+      this.bindings.signal,
+    );
     this.result.bind(
       actions.onRetry,
       actions.onNext,
@@ -106,5 +117,13 @@ export class HudController {
 
   hideResult(): void {
     this.result.hide();
+  }
+
+  showCampaignMap(currentLevelIndex: number): void {
+    this.campaignMap.show(currentLevelIndex);
+  }
+
+  hideCampaignMap(): void {
+    this.campaignMap.hide();
   }
 }
