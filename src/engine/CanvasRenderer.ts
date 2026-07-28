@@ -17,6 +17,10 @@ import {
   pointOnLink,
 } from "./link-geometry";
 import { SYSTEM_RADII } from "./system-geometry";
+import {
+  createSystemArt,
+  isSystemArtReady,
+} from "./SystemArt";
 
 interface Star {
   x: number;
@@ -55,6 +59,7 @@ const buildStars = (): Star[] => {
 export class CanvasRenderer {
   private readonly stars = buildStars();
   private readonly backdropImage = new Image();
+  private readonly systemArt = createSystemArt();
 
   constructor(private readonly viewport: CanvasViewport) {
     this.backdropImage.decoding = "async";
@@ -593,6 +598,8 @@ export class CanvasRenderer {
     const pulse =
       1 + Math.sin(elapsedSeconds * 2.1 + phaseOffset) * 0.035;
     const drawRadius = radius * pulse;
+    const artwork = this.systemArt[system.owner];
+    const hasArtwork = isSystemArtReady(artwork);
     const energyRatio = Math.max(
       0,
       Math.min(1, system.energy / system.capacity),
@@ -601,14 +608,16 @@ export class CanvasRenderer {
     context.save();
     context.translate(system.position.x, system.position.y);
 
-    this.drawClassPattern(
-      context,
-      system.className,
-      radius,
-      color,
-      elapsedSeconds,
-      phaseOffset,
-    );
+    if (!hasArtwork) {
+      this.drawClassPattern(
+        context,
+        system.className,
+        radius,
+        color,
+        elapsedSeconds,
+        phaseOffset,
+      );
+    }
 
     const halo = context.createRadialGradient(
       0,
@@ -626,57 +635,68 @@ export class CanvasRenderer {
     context.arc(0, 0, radius * 2.25, 0, Math.PI * 2);
     context.fill();
 
-    context.fillStyle = "rgba(3, 14, 42, 0.7)";
-    context.beginPath();
-    context.arc(0, 3, drawRadius + 5, 0, Math.PI * 2);
-    context.fill();
+    if (hasArtwork) {
+      this.drawSystemArtwork(
+        context,
+        artwork,
+        radius,
+        pulse,
+        color,
+        focused,
+      );
+    } else {
+      context.fillStyle = "rgba(3, 14, 42, 0.7)";
+      context.beginPath();
+      context.arc(0, 3, drawRadius + 5, 0, Math.PI * 2);
+      context.fill();
 
-    const body = context.createRadialGradient(
-      -radius * 0.34,
-      -radius * 0.38,
-      0,
-      0,
-      0,
-      drawRadius,
-    );
-    body.addColorStop(0, "#ffffff");
-    body.addColorStop(0.14, `${color}f2`);
-    body.addColorStop(0.52, `${color}a8`);
-    body.addColorStop(0.82, `${color}62`);
-    body.addColorStop(1, "#082453");
-    context.fillStyle = body;
-    context.beginPath();
-    context.arc(0, 0, drawRadius, 0, Math.PI * 2);
-    context.fill();
+      const body = context.createRadialGradient(
+        -radius * 0.34,
+        -radius * 0.38,
+        0,
+        0,
+        0,
+        drawRadius,
+      );
+      body.addColorStop(0, "#ffffff");
+      body.addColorStop(0.14, `${color}f2`);
+      body.addColorStop(0.52, `${color}a8`);
+      body.addColorStop(0.82, `${color}62`);
+      body.addColorStop(1, "#082453");
+      context.fillStyle = body;
+      context.beginPath();
+      context.arc(0, 0, drawRadius, 0, Math.PI * 2);
+      context.fill();
 
-    context.shadowColor = color;
-    context.shadowBlur = focused ? 34 : 20;
-    context.strokeStyle = focused ? "#eaf9ff" : color;
-    context.lineWidth = focused ? 4.5 : 3;
-    context.stroke();
-    context.shadowBlur = 0;
+      context.shadowColor = color;
+      context.shadowBlur = focused ? 34 : 20;
+      context.strokeStyle = focused ? "#eaf9ff" : color;
+      context.lineWidth = focused ? 4.5 : 3;
+      context.stroke();
+      context.shadowBlur = 0;
 
-    const innerGlass = context.createRadialGradient(
-      -radius * 0.18,
-      -radius * 0.22,
-      0,
-      0,
-      0,
-      radius * 0.72,
-    );
-    innerGlass.addColorStop(0, "rgba(255,255,255,0.38)");
-    innerGlass.addColorStop(0.48, "rgba(255,255,255,0.08)");
-    innerGlass.addColorStop(1, "rgba(1,16,48,0.34)");
-    context.fillStyle = innerGlass;
-    context.beginPath();
-    context.arc(0, 0, radius * 0.72, 0, Math.PI * 2);
-    context.fill();
+      const innerGlass = context.createRadialGradient(
+        -radius * 0.18,
+        -radius * 0.22,
+        0,
+        0,
+        0,
+        radius * 0.72,
+      );
+      innerGlass.addColorStop(0, "rgba(255,255,255,0.38)");
+      innerGlass.addColorStop(0.48, "rgba(255,255,255,0.08)");
+      innerGlass.addColorStop(1, "rgba(1,16,48,0.34)");
+      context.fillStyle = innerGlass;
+      context.beginPath();
+      context.arc(0, 0, radius * 0.72, 0, Math.PI * 2);
+      context.fill();
 
-    context.strokeStyle = "rgba(232, 249, 255, 0.28)";
-    context.lineWidth = 1.5;
-    context.beginPath();
-    context.arc(0, 0, radius * 0.72, 0, Math.PI * 2);
-    context.stroke();
+      context.strokeStyle = "rgba(232, 249, 255, 0.28)";
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(0, 0, radius * 0.72, 0, Math.PI * 2);
+      context.stroke();
+    }
 
     context.strokeStyle = "rgba(3, 19, 51, 0.72)";
     context.lineWidth = 7;
@@ -727,6 +747,34 @@ export class CanvasRenderer {
 
     this.drawTierPips(context, system.className, radius, color);
     context.restore();
+  }
+
+  private drawSystemArtwork(
+    context: CanvasRenderingContext2D,
+    artwork: HTMLImageElement,
+    radius: number,
+    pulse: number,
+    color: string,
+    focused: boolean,
+  ): void {
+    const size = radius * 3.12 * pulse;
+
+    context.save();
+    context.shadowColor = color;
+    context.shadowBlur = focused ? 34 : 21;
+    context.drawImage(artwork, -size / 2, -size / 2, size, size);
+    context.restore();
+
+    context.strokeStyle = focused
+      ? "rgba(241, 253, 255, 0.96)"
+      : `${color}b8`;
+    context.lineWidth = focused ? 4 : 2;
+    context.shadowColor = color;
+    context.shadowBlur = focused ? 20 : 10;
+    context.beginPath();
+    context.arc(0, 0, radius * 0.82, 0, Math.PI * 2);
+    context.stroke();
+    context.shadowBlur = 0;
   }
 
   private drawClassPattern(

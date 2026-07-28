@@ -127,6 +127,7 @@ export class GameApp {
       this.animationFrameId = null;
     }
     this.input.dispose();
+    this.hud.dispose();
     this.fullscreen.dispose();
     this.resizeObserver.disconnect();
     document.removeEventListener(

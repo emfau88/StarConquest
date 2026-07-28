@@ -2,6 +2,30 @@
 
 Stand: 28. Juli 2026
 
+## Kurzstatus
+
+Letzte Aktualisierung: 28. Juli 2026, nach dem modularen HUD-Umbau und dem
+ersten Planetensystem-Asset-Batch.
+
+| Bereich | Status | Aktueller Stand |
+|---|---|---|
+| Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
+| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, code-native Transportschiffe und erster System-Batch sind integriert |
+| HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
+| Onboarding und Progression | Begonnen | Ingame-Hinweise und Ergebnisdialog vorhanden; Levelauswahl, Next Sector und Kampagnenfortschritt fehlen |
+| Kampagne und Balance | Frühphase | Ein spielbares Level; weitere sieben Missionen und vollständige Balance fehlen |
+| Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
+| Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
+| CrazyGames und Submission | Offen | SDK-Integration, Portal-QA, Cover, Videos und Metadaten fehlen |
+
+Fortschrittsschätzung:
+
+- Hochwertiger spielbarer Vertical Slice: ungefähr **45 %**.
+- Vollständiger CrazyGames-Release gemäß dieser Roadmap: ungefähr **25–30 %**.
+
+Die zweite Zahl ist bewusst niedriger, weil Kampagne, Progression, SDK,
+Marketing und Geräte-QA einen großen Teil der Releasearbeit ausmachen.
+
 ## 1. Ziel
 
 StarConquest wird ein hochwertiges, schnelles 2D-Strategiespiel für Browser und
@@ -52,10 +76,17 @@ Die technische Basis ist vorhanden:
 
 - modularer Vite-/TypeScript-Aufbau;
 - Canvas-2D-Rendering mit skalierbarer 800×450-Welt;
+- modular getrenntes HUD für Topbar, Steuerung, Status und Ergebnisfenster;
 - Energieproduktion, Links, Transfer, Eroberung und einfache Gegner-KI;
 - Boost, Cut, Sieg und Niederlage;
+- heller Runtime-Hintergrund im festgelegten Polished-Casual-Stil;
+- dünne Energierouten mit kleinen code-nativen Transportschiffen;
+- drei freigestellte Planetensystem-Referenzassets für Spieler, Gegner und
+  neutrale Systeme;
+- hybrides System-Rendering mit dynamischen Zustandsringen und Canvas-Fallback;
 - Maus-, Pointer- und Touch-Eingabe;
 - Querformat-Hinweis, Safe-Area-Grundlage und Fullscreen-Schalter;
+- mindestens 48 CSS-Pixel große HUD-Touchziele im Mobile-Layout;
 - englische und deutsche Texte;
 - lokale Fortschrittsspeicherung;
 - ein spielbares Level;
@@ -64,16 +95,47 @@ Die technische Basis ist vorhanden:
 
 Noch nicht releasefähig sind vor allem:
 
-- visuelle Identität und Game Feel;
-- Transportschiffe und fertige System-Silhouetten;
+- vollständige Systemfamilie mit kleinen und großen Varianten;
+- finale Schiffsassets und vollständiges Kampf-/Capture-Game-Feel;
 - Kampagne, Levelauswahl und Progression;
 - Onboarding und UX-Feinschliff;
 - Musik und vollständiges Audio;
 - CrazyGames-SDK und Cloud-Fortschritt;
 - Marketingmaterial, Portal-Metadaten und umfassende Geräte-QA.
 
-Gesamteinschätzung: ungefähr 35 % der Produktvision sind erreicht. Das
-Fundament ist wesentlich weiter als die sichtbare Präsentation.
+Der sichtbare Vertical Slice liegt inzwischen ungefähr bei 45 %. Bezogen auf
+den vollständigen CrazyGames-Release sind ungefähr 25–30 % erreicht. Das
+Fundament und die visuelle Richtung sind belastbar, der größte offene Block
+bleibt die eigentliche Produktbreite aus Kampagne, Progression und Release-QA.
+
+## 3.1 Asset-Produktion
+
+### Planetensysteme
+
+Kontroll-Batch abgeschlossen:
+
+- [x] Spieler-System, mittlere Größe;
+- [x] Gegner-System, mittlere Größe;
+- [x] neutrales System, mittlere Größe;
+- [x] Alpha-Freistellung und reproduzierbare Prompts dokumentiert;
+- [x] hybride Canvas-Integration mit dynamischer Energieanzeige;
+- [x] Desktop- und Mobile-Browserprüfung.
+
+Nächster Planetensystem-Batch:
+
+- [ ] Spieler-System, klein und groß;
+- [ ] Gegner-System, klein und groß;
+- [ ] neutrales System, klein und groß;
+- [ ] Größenhierarchie bei 800×450 prüfen;
+- [ ] Capture-Wechsel zwischen allen Fraktionen prüfen.
+
+Danach:
+
+- [ ] vier bis acht finale Schiffssilhouetten;
+- [ ] Orbit- und Stationsmodule;
+- [ ] besondere Kartenobjekte;
+- [ ] zwei weitere Sektor-Hintergründe;
+- [ ] Marketing-Key-Art erst nach finaler Namensentscheidung.
 
 ## 4. Release-Maßstäbe
 
@@ -144,6 +206,25 @@ Aufwand: 1–2 Arbeitstage inklusive letzter Detailentscheidungen.
 
 Priorität: höchste
 
+Status: in Arbeit, ungefähr 60 % des Phasenumfangs
+
+Bereits umgesetzt:
+
+- heller, freundlicher Runtime-Hintergrund;
+- vereinfachte Routen und kleine code-native Transportschiffe;
+- überarbeitete Boost-, Cut- und Capture-Darstellung;
+- modulares Polished-Casual-HUD;
+- mittlerer System-Kontroll-Batch für Spieler, Gegner und Neutral;
+- Browserprüfung auf Desktop und Mobile-Landscape.
+
+Noch offen:
+
+- sechs kleine und große Systemvarianten;
+- endgültige Silhouettenlogik für Pulsar, Giant, Quasar und Nexus;
+- finale Schiffsgrafiken;
+- vollständiger Treffer-, Gefahr-, Sieg- und Niederlage-Pass;
+- Effektbudget und Performanceprüfung auf echten Mobilgeräten.
+
 Aufgaben:
 
 - Hintergrund deutlich heller und freundlicher gestalten.
@@ -167,6 +248,8 @@ Abnahmekriterien:
 Aufwand: 6–9 Arbeitstage.
 
 ### Phase 2 – Mobile-, Eingabe- und Accessibility-Pass
+
+Status: Grundlage vorhanden, echte Geräte-QA noch offen
 
 Aufgaben:
 
@@ -470,14 +553,20 @@ aber Art Direction, UX und Balance sollten nicht übersprungen werden.
 
 ### Sprint A – Visuelles Spielfeld
 
-- Hintergrund aufhellen.
-- Vier System-Silhouetten finalisieren.
-- Routen vereinfachen.
-- Zwei code-native Transportschiffe ergänzen.
-- Boost, Capture und Cut anpassen.
-- Mobile Screenshot bei 800×450 abnehmen.
+- [x] Hintergrund aufhellen.
+- [x] Routen vereinfachen.
+- [x] Code-native Transportschiffe ergänzen.
+- [x] Boost, Capture und Cut überarbeiten.
+- [x] Modulares Polished-Casual-HUD umsetzen.
+- [x] Mittleren System-Kontroll-Batch integrieren.
+- [x] Mobile Screenshot und Bedienbarkeit prüfen.
+- [ ] Kleine und große Systemvarianten erstellen.
+- [ ] Pulsar, Giant, Quasar und Nexus final differenzieren.
+- [ ] Finalen Effekt- und Performance-Pass durchführen.
 
-Ergebnis: Das laufende Spiel sieht erstmals wie das Zielprodukt aus.
+Zwischenstand: Das laufende Spiel zeigt erstmals klar die gewünschte
+Zielrichtung. Sprint A ist noch nicht abgeschlossen, bis Systemfamilie und
+Effekt-Pass vollständig sind.
 
 ### Sprint B – Spielbare Mini-Kampagne
 

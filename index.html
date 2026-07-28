@@ -10,8 +10,8 @@
       name="description"
       content="StarConquest is a fast strategy game about linking star systems and redirecting energy."
     />
-    <meta name="theme-color" content="#030914" />
-    <title>StarConquest — First Contact</title>
+    <meta name="theme-color" content="#08265f" />
+    <title>StarConquest &mdash; First Contact</title>
   </head>
   <body>
     <main id="app" class="game-shell">
@@ -22,21 +22,30 @@
 
       <header class="hud" aria-label="Mission status">
         <div class="hud__mission">
-          <span class="hud__eyebrow" id="hud-sector">Sector 01</span>
-          <strong class="hud__title" id="hud-title">First Contact</strong>
+          <span class="hud__brand-mark" aria-hidden="true"></span>
+          <span class="hud__mission-copy">
+            <span class="hud__eyebrow" id="hud-sector">Sector 01</span>
+            <strong class="hud__title" id="hud-title">First Contact</strong>
+          </span>
         </div>
 
-        <p class="hud__objective" id="hud-objective">
-          Capture the red system
-        </p>
+        <div class="hud__objective-panel">
+          <span class="hud__objective-label">Mission</span>
+          <p class="hud__objective" id="hud-objective">
+            Capture the red system
+          </p>
+        </div>
 
         <div class="hud__actions">
-          <time class="hud__time" id="hud-time" datetime="PT0S">00:00</time>
+          <span class="hud__timer">
+            <span class="hud__timer-dot" aria-hidden="true"></span>
+            <time class="hud__time" id="hud-time" datetime="PT0S">00:00</time>
+          </span>
           <button
             class="icon-button"
             id="restart-button"
             type="button"
-            data-icon="↻"
+            data-icon="&#8635;"
           >
             Restart
           </button>
@@ -44,7 +53,7 @@
             class="icon-button"
             id="audio-button"
             type="button"
-            data-icon="♪"
+            data-icon="&#9834;"
           >
             Audio on
           </button>
@@ -52,7 +61,7 @@
             class="icon-button"
             id="fullscreen-button"
             type="button"
-            data-icon="⛶"
+            data-icon="&#9974;"
           >
             Fullscreen
           </button>
@@ -60,7 +69,7 @@
             class="icon-button icon-button--primary"
             id="pause-button"
             type="button"
-            data-icon="Ⅱ"
+            data-icon="&#8545;"
           >
             Pause
           </button>
@@ -81,12 +90,13 @@
         hidden
       >
         <div class="result-card">
+          <span class="result-card__emblem" aria-hidden="true"></span>
           <span class="result-card__eyebrow" id="result-eyebrow">
             Sector secured
           </span>
           <h1 id="result-title">Network captured</h1>
           <div class="result-card__stars" id="result-stars" aria-label="3 stars">
-            ★★★
+            &#9733;&#9733;&#9733;
           </div>
           <p id="result-summary">First Contact completed in 00:00</p>
           <button id="retry-button" type="button">Play again</button>
