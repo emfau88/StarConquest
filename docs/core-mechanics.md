@@ -41,7 +41,9 @@ systems use the same class rules.
 - A source may form a link only when `source energy > formation cost + 1`.
 - The formation cost is removed from the source and becomes the link's initial
   in-transit energy.
-- The legacy link-growth speed is 62 pixels per second. Growth is primarily a
+- Creating a link beyond the source class limit is rejected. Existing links
+  and their in-transit energy are never deleted implicitly.
+- The current link-growth speed is 220 pixels per second. Growth is primarily a
   timing and presentation rule; transfer begins after growth completes.
 - There is no hard range limit. The legacy 200-pixel drag circle is not a rule.
 
@@ -70,8 +72,11 @@ keep the link charged.
 - At `target energy <= 0`, ownership changes to the link owner.
 - Legacy post-capture energy is
   `min(target capacity, max(5, absolute overkill))`.
-- Opposing links aimed at a newly captured target are removed by the legacy
-  implementation.
+- Opposing links aimed at a newly captured target remain active. Capturing a
+  system does not erase hostile energy that is already on its way.
+- When a link source changes ownership, that link collapses and its remaining
+  in-transit energy is delivered once to the target. No energy disappears
+  silently and the captured source cannot keep feeding its former owner's link.
 
 The minimum five-energy capture foothold is preserved for the first rebuild
 version so that the existing level balance remains comparable. It may be
@@ -97,6 +102,12 @@ energy returned = in-transit energy × t
 
 The mechanical split applies to every valid cut. "Boost" describes the
 high-value near-source use of that rule, not a separate damage multiplier.
+
+## Simulation timing
+
+Gameplay advances in fixed `1 / 60` second steps, independently of the display
+refresh rate. Long frame gaps are capped before they enter the accumulator so a
+backgrounded tab cannot trigger a large simulation jump when it resumes.
 
 ## Level baseline
 
@@ -139,8 +150,6 @@ These legacy behaviors are initially preserved or isolated, but are not yet
 declared final balance decisions:
 
 - Whether a captured system should always start with at least five energy.
-- Whether replacing the oldest outgoing link should discard its in-transit
-  energy.
 - Whether players need a genuine per-link transfer mode at all.
 - Exact AI action and cut timings after the onboarding and visual pacing change.
 - Final star thresholds after effects and level flow become faster to read.

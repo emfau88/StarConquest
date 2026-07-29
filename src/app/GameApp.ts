@@ -19,6 +19,7 @@ import {
 } from "../data/levels";
 import { CanvasRenderer } from "../engine/CanvasRenderer";
 import { CanvasViewport } from "../engine/CanvasViewport";
+import { FixedStepClock } from "../engine/FixedStepClock";
 import {
   distanceToSegment,
   getLinkCurve,
@@ -40,7 +41,6 @@ import { SafeStorage } from "../storage/SafeStorage";
 import { CampaignProgress } from "../storage/CampaignProgress";
 import { HudController } from "../ui/HudController";
 
-const MAX_DELTA_SECONDS = 0.1;
 const CUT_SAMPLE_COUNT = 40;
 const CUT_DISTANCE = 34;
 const CUT_TRAIL_POINT_DISTANCE = 10;
@@ -83,6 +83,7 @@ export class GameApp {
   private readonly viewport: CanvasViewport;
   private readonly renderer: CanvasRenderer;
   private readonly input: PointerInput;
+  private readonly simulationClock = new FixedStepClock();
   private currentLevelIndex = resolveInitialLevelIndex();
   private currentLevel: LevelDefinition = LEVELS[this.currentLevelIndex];
   private simulation = new GameSimulation(this.currentLevel);
@@ -172,15 +173,18 @@ export class GameApp {
       this.lastFrameTime === 0
         ? 0
         : (currentTime - this.lastFrameTime) / 1000;
-    const deltaSeconds = Math.min(MAX_DELTA_SECONDS, rawDelta);
     this.lastFrameTime = currentTime;
 
     this.processInput();
     if (!this.paused) {
-      this.simulation.update(deltaSeconds);
-      this.updateEffects(deltaSeconds);
-      this.processSimulationEvents();
+      this.simulationClock.advance(rawDelta, (stepSeconds) => {
+        this.simulation.update(stepSeconds);
+        this.updateEffects(stepSeconds);
+        this.processSimulationEvents();
+      });
       this.hud.setElapsedSeconds(this.simulation.elapsedSeconds);
+    } else {
+      this.simulationClock.reset();
     }
 
     this.renderer.render(this.snapshot());
@@ -288,6 +292,8 @@ export class GameApp {
         ? "insufficient"
         : reason === "duplicate-link"
           ? "duplicate"
+          : reason === "link-limit"
+            ? "linkLimit"
           : "invalid";
     this.hud.setStatusKey(messageKey);
   }
@@ -399,6 +405,15 @@ export class GameApp {
         this.addEffect("invalid", event.position);
         this.showLinkError(event.reason);
         break;
+      case "link-collapsed":
+        this.addEffect(
+          "cut",
+          event.position,
+          event.targetPosition,
+          event.owner,
+          0.36,
+        );
+        break;
       case "won": {
         this.audio.play("win");
         this.platform.gameplayStop();
@@ -470,6 +485,7 @@ export class GameApp {
     }
     this.paused = !this.paused;
     this.gesture = null;
+    this.simulationClock.reset();
     this.hud.setPaused(this.paused);
     if (this.paused) {
       this.platform.gameplayStop();
@@ -489,6 +505,7 @@ export class GameApp {
     this.paused = false;
     this.campaignMapOpen = false;
     this.pausedBeforeMap = false;
+    this.simulationClock.reset();
     this.lastFrameTime = performance.now();
     this.hud.setElapsedSeconds(0);
     this.hud.setPaused(false);
@@ -532,6 +549,7 @@ export class GameApp {
     this.paused = false;
     this.campaignMapOpen = false;
     this.pausedBeforeMap = false;
+    this.simulationClock.reset();
     this.lastFrameTime = performance.now();
     this.hud.setLevel(this.currentLevel);
     this.hud.setElapsedSeconds(0);
@@ -550,6 +568,7 @@ export class GameApp {
     this.pausedBeforeMap = this.paused;
     this.paused = true;
     this.gesture = null;
+    this.simulationClock.reset();
     this.platform.gameplayStop();
     this.hud.showCampaignMap(
       this.currentLevelIndex,
@@ -566,6 +585,7 @@ export class GameApp {
     this.paused =
       this.pausedBeforeMap || this.simulation.status !== "playing";
     this.pausedBeforeMap = false;
+    this.simulationClock.reset();
     if (!this.paused) {
       this.lastFrameTime = performance.now();
       this.platform.gameplayStart();
@@ -605,6 +625,7 @@ export class GameApp {
     ) {
       this.paused = true;
       this.gesture = null;
+      this.simulationClock.reset();
       this.hud.setPaused(true);
       this.platform.gameplayStop();
     }

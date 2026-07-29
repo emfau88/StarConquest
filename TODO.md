@@ -18,6 +18,8 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Orange Helion-Systemfamilie und Transporter für spätere Sektoren
   runtime-fertig integrieren.
 - [x] Helion als eigenständige KI-Fraktion in Level 6 spielbar machen.
+- [x] Stille Energieverluste bei Routenlimit und Capture beseitigen.
+- [x] Fixed-Timestep-Simulation für konsistentes Verhalten ergänzen.
 
 ## Danach
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { GameSimulation } from "../src/core/GameSimulation";
 import { SYSTEM_CLASS_SPECS } from "../src/core/game-rules";
+import { FixedStepClock } from "../src/engine/FixedStepClock";
 import {
   LEVELS,
   type LevelDefinition,
@@ -47,6 +48,22 @@ const advance = (
     simulation.update(step);
   }
 };
+
+test("fixed-step clock produces consistent simulation time across frame rates", () => {
+  const runClock = (framesPerSecond: number): number => {
+    const clock = new FixedStepClock();
+    let simulatedSeconds = 0;
+    for (let frame = 0; frame < framesPerSecond * 2; frame += 1) {
+      clock.advance(1 / framesPerSecond, (stepSeconds) => {
+        simulatedSeconds += stepSeconds;
+      });
+    }
+    return simulatedSeconds;
+  };
+
+  assert.ok(Math.abs(runClock(60) - 2) < 0.000_001);
+  assert.ok(Math.abs(runClock(144) - 2) < 1 / 60);
+});
 
 const runExpansionBot = (
   level: LevelDefinition,
@@ -231,6 +248,140 @@ test("owned systems produce energy", () => {
   advance(simulation, 1);
   const after = simulation.getSystem("player")?.energy ?? 0;
   assert.ok(after > before);
+});
+
+test("route limits reject new links without deleting stored energy", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    systems: [
+      {
+        ...DUEL_LEVEL.systems[0],
+        id: "source",
+        className: "PULSAR",
+        startEnergy: 100,
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        id: "target-a",
+        owner: "neutral",
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        id: "target-b",
+        owner: "neutral",
+        position: { x: 700, y: 450 },
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  assert.deepEqual(simulation.createPlayerLink("source", "target-a"), {
+    ok: true,
+  });
+  const energyAfterFirstLink =
+    simulation.getSystem("source")?.energy ?? 0;
+  const firstLinkId = simulation.getLinks()[0]?.id;
+
+  assert.deepEqual(simulation.createPlayerLink("source", "target-b"), {
+    ok: false,
+    reason: "link-limit",
+  });
+  assert.equal(simulation.getLinks()[0]?.id, firstLinkId);
+  assert.equal(
+    simulation.getSystem("source")?.energy,
+    energyAfterFirstLink,
+  );
+});
+
+test("hostile incoming links survive a third-party capture", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    aiActionIntervalSeconds: 0.1,
+    systems: [
+      {
+        id: "player",
+        owner: "player",
+        className: "GIANT",
+        position: { x: 100, y: 450 },
+        startEnergy: 100,
+      },
+      {
+        id: "contested",
+        owner: "neutral",
+        className: "PULSAR",
+        position: { x: 200, y: 450 },
+        startEnergy: 1,
+      },
+      {
+        id: "enemy",
+        owner: "enemy",
+        className: "GIANT",
+        position: { x: 700, y: 450 },
+        startEnergy: 100,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  simulation.createPlayerLink("player", "contested");
+  advance(simulation, 1);
+
+  assert.equal(simulation.getSystem("contested")?.owner, "player");
+  assert.ok(
+    simulation
+      .getLinks()
+      .some(
+        (link) =>
+          link.owner === "enemy" && link.targetId === "contested",
+      ),
+  );
+});
+
+test("captured sources collapse old links into a final payload", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    aiActionIntervalSeconds: 0.1,
+    systems: [
+      {
+        id: "source",
+        owner: "player",
+        className: "PULSAR",
+        position: { x: 200, y: 450 },
+        startEnergy: 10,
+      },
+      {
+        id: "ally",
+        owner: "player",
+        className: "GIANT",
+        position: { x: 100, y: 450 },
+        startEnergy: 100,
+      },
+      {
+        id: "enemy",
+        owner: "enemy",
+        className: "GIANT",
+        position: { x: 300, y: 450 },
+        startEnergy: 100,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  simulation.createPlayerLink("source", "ally");
+  advance(simulation, 2);
+
+  assert.equal(simulation.getSystem("source")?.owner, "enemy");
+  assert.equal(
+    simulation
+      .getLinks()
+      .some(
+        (link) =>
+          link.sourceId === "source" && link.owner === "player",
+      ),
+    false,
+  );
+  assert.ok(
+    simulation
+      .drainEvents()
+      .some((event) => event.kind === "link-collapsed"),
+  );
 });
 
 test("a player link grows, attacks and wins the duel", () => {

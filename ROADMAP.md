@@ -92,6 +92,7 @@ Die technische Basis ist vorhanden:
 - lokale Fortschrittsspeicherung;
 - sechs spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
+- feste 60-Hz-Simulationsschritte unabhängig von der Render-Bildrate;
 - funktionierender GitHub-Pages-Build.
 
 Noch nicht releasefähig sind vor allem:

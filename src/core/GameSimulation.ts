@@ -21,8 +21,6 @@ interface StarSystemState extends StarSystemView {
 
 interface EnergyLinkState extends EnergyLinkView {
   formationCost: number;
-  createdOrder: number;
-  wasFriendlyAtCreation: boolean;
 }
 
 export type SimulationEvent =
@@ -47,14 +45,28 @@ export type SimulationEvent =
   | {
       kind: "invalid";
       position: Point;
-      reason: "insufficient-energy" | "duplicate-link" | "invalid-target";
+      reason:
+        | "insufficient-energy"
+        | "duplicate-link"
+        | "invalid-target"
+        | "link-limit";
+    }
+  | {
+      kind: "link-collapsed";
+      owner: Owner;
+      position: Point;
+      targetPosition: Point;
     }
   | { kind: "won"; elapsedSeconds: number }
   | { kind: "lost"; elapsedSeconds: number };
 
 export interface LinkCommandResult {
   ok: boolean;
-  reason?: "insufficient-energy" | "duplicate-link" | "invalid-target";
+  reason?:
+    | "insufficient-energy"
+    | "duplicate-link"
+    | "invalid-target"
+    | "link-limit";
 }
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
@@ -71,7 +83,6 @@ export class GameSimulation {
   private links: EnergyLinkState[] = [];
   private events: SimulationEvent[] = [];
   private nextLinkId = 1;
-  private creationOrder = 1;
   private aiElapsedSeconds = 0;
 
   elapsedSeconds = 0;
@@ -98,7 +109,6 @@ export class GameSimulation {
     this.links = [];
     this.events = [];
     this.nextLinkId = 1;
-    this.creationOrder = 1;
     this.aiElapsedSeconds = 0;
     this.elapsedSeconds = 0;
     this.status = "playing";
@@ -167,7 +177,8 @@ export class GameSimulation {
         source !== target &&
         cost !== null &&
         source.energy > cost + 1 &&
-        !this.hasDuplicateLink(sourceId, targetId),
+        !this.hasDuplicateLink(sourceId, targetId) &&
+        this.outgoingLinkCount(sourceId) < source.maxOutgoingLinks,
     );
   }
 
@@ -236,8 +247,17 @@ export class GameSimulation {
         continue;
       }
 
-      if (!link.wasFriendlyAtCreation && source.owner !== link.owner) {
+      if (source.owner !== link.owner) {
+        const finalPayload = link.unitsInTransit;
+        link.unitsInTransit = 0;
         this.removeLink(link);
+        this.applyTransfer(link.owner, target, finalPayload);
+        this.events.push({
+          kind: "link-collapsed",
+          owner: link.owner,
+          position: { ...source.position },
+          targetPosition: { ...target.position },
+        });
         continue;
       }
 
@@ -295,9 +315,6 @@ export class GameSimulation {
       target.capacity,
       Math.max(GAME_RULES.captureEnergyFloor, Math.abs(target.energy)),
     );
-    this.links = this.links.filter(
-      (link) => link.targetId !== target.id || link.owner === owner,
-    );
     this.events.push({
       kind: "capture",
       owner,
@@ -335,11 +352,13 @@ export class GameSimulation {
       return { ok: false, reason: "insufficient-energy" };
     }
 
-    const outgoing = this.links
-      .filter((link) => link.sourceId === source.id)
-      .sort((a, b) => a.createdOrder - b.createdOrder);
-    if (outgoing.length >= source.maxOutgoingLinks) {
-      this.removeLink(outgoing[0]);
+    if (this.outgoingLinkCount(source.id) >= source.maxOutgoingLinks) {
+      this.events.push({
+        kind: "invalid",
+        position: { ...source.position },
+        reason: "link-limit",
+      });
+      return { ok: false, reason: "link-limit" };
     }
 
     source.energy -= cost;
@@ -353,8 +372,6 @@ export class GameSimulation {
       growProgress: 0,
       unitsInTransit: cost,
       formationCost: cost,
-      createdOrder: this.creationOrder++,
-      wasFriendlyAtCreation: source.owner === target.owner,
     };
     this.links.push(link);
     this.events.push({
@@ -370,6 +387,10 @@ export class GameSimulation {
     return this.links.some(
       (link) => link.sourceId === sourceId && link.targetId === targetId,
     );
+  }
+
+  private outgoingLinkCount(sourceId: string): number {
+    return this.links.filter((link) => link.sourceId === sourceId).length;
   }
 
   private performHostileActions(): void {
