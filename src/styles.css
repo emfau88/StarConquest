@@ -430,6 +430,29 @@ button {
   z-index: 1;
 }
 
+.campaign-map__helion-branch {
+  position: absolute;
+  left: 85%;
+  top: 18%;
+  width: 6%;
+  height: 34%;
+  background: linear-gradient(
+    180deg,
+    rgba(89, 206, 255, 0.58),
+    rgba(255, 177, 74, 0.7)
+  );
+  clip-path: polygon(
+    0 0,
+    5% 0,
+    100% 99%,
+    100% 100%,
+    95% 100%,
+    0 1%
+  );
+  filter: drop-shadow(0 0 7px rgba(255, 177, 74, 0.62));
+  pointer-events: none;
+}
+
 .campaign-map__node {
   position: absolute;
   width: 64px;
@@ -591,6 +614,22 @@ button {
 .campaign-map__node--5 {
   left: 85%;
   top: 18%;
+}
+
+.campaign-map__node--6 {
+  left: 91%;
+  top: 52%;
+}
+
+.campaign-map__node--helion:not(.is-locked) {
+  border-color: rgba(255, 220, 143, 0.94);
+  background:
+    radial-gradient(circle, rgba(255, 249, 215, 0.94) 0 8%, transparent 10%),
+    rgba(175, 92, 13, 0.62);
+  box-shadow:
+    0 0 0 7px rgba(255, 177, 74, 0.14),
+    0 0 27px rgba(255, 171, 64, 0.66),
+    inset 0 0 18px rgba(255, 225, 154, 0.3);
 }
 
 .result-overlay {

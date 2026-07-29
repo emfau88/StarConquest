@@ -17,6 +17,7 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Beide Schiffe auf Routen animieren und auf Mobile prüfen.
 - [x] Orange Helion-Systemfamilie und Transporter für spätere Sektoren
   runtime-fertig integrieren.
+- [x] Helion als eigenständige KI-Fraktion in Level 6 spielbar machen.
 
 ## Danach
 
@@ -60,4 +61,5 @@ Spielmechanik umgesetzt und für Version 1.0 bestätigt wurde.
 - [x] Level 3: Cut the Current.
 - [x] Level 4: Twin Fronts.
 - [x] Level 5: Heavy Orbit.
-- [ ] Level 6–8 gemäß Kampagnenplan in `ROADMAP.md`.
+- [x] Level 6: Helion Run.
+- [ ] Level 7–8 gemäß Kampagnenplan in `ROADMAP.md`.

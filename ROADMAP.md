@@ -6,15 +6,15 @@ Stand: 29. Juli 2026
 
 Letzte Aktualisierung: 29. Juli 2026, nach der vollständigen
 Planetensystem-Familie, den finalen Fraktions-Transportschiffen und den ersten
-fünf Kampagnenmissionen.
+sechs Kampagnenmissionen.
 
 | Bereich | Status | Aktueller Stand |
 |---|---|---|
 | Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
-| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Transporter, vollständige System-Größenfamilie und eine runtime-fertige orange Helion-Fraktion sind integriert |
+| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Transporter, vollständige System-Größenfamilie und die spielbare orange Helion-Fraktion sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
 | Onboarding und Progression | In Arbeit | Visuelles Gesten-Tutorial, Ergebnisdialog, Next Sector sowie Kampagnenkarte mit persistenter Freischaltung und Sternwertung vorhanden |
-| Kampagne und Balance | In Arbeit | Fünf spielbare Missionen mit Simulationsprüfung; drei weitere Missionen und menschliche Balance-Testläufe fehlen |
+| Kampagne und Balance | In Arbeit | Sechs spielbare Missionen mit Simulationsprüfung; zwei weitere Missionen und menschliche Balance-Testläufe fehlen |
 | Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
 | Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
 | CrazyGames und Submission | Offen | SDK-Integration, Portal-QA, Cover, Videos und Metadaten fehlen |
@@ -90,7 +90,7 @@ Die technische Basis ist vorhanden:
 - mindestens 48 CSS-Pixel große HUD-Touchziele im Mobile-Layout;
 - englische und deutsche Texte;
 - lokale Fortschrittsspeicherung;
-- fünf spielbare, aufeinander aufbauende Level;
+- sechs spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
 - funktionierender GitHub-Pages-Build.
 
@@ -311,7 +311,7 @@ Geplante Lernkurve:
 3. **Cut the Current** – Boost-Cut als Hauptlektion.
 4. **Twin Fronts** – zwei Angriffsrichtungen priorisieren.
 5. **Heavy Orbit** – Giant und Kapazitätsunterschiede.
-6. **Quasar Run** – lange Routen und Timing.
+6. **Helion Run** – lange Routen, Timing und die orange Helion-Fraktion.
 7. **Three Powers** – zweite Gegnerfarbe und wechselnde Fronten.
 8. **Nexus Siege** – Abschlussmission mit allen Kernregeln.
 

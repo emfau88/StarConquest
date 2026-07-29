@@ -28,8 +28,8 @@ Generated with the built-in ImageGen workflow on 29 July 2026:
 
 - `sector-azure.webp` for sectors 1–2;
 - `sector-quasar.webp` for sectors 3–4;
-- `sector-nexus.webp` for sector 5;
-- `campaign-map.webp` as the backdrop for the five-sector level selector.
+- `sector-nexus.webp` for sectors 5–6;
+- `campaign-map.webp` as the backdrop for the campaign level selector.
 
 All runtime files are 1600 × 900 WebP images. The lossless ImageGen sources,
 exact prompts, and processing notes live in

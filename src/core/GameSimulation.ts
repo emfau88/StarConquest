@@ -63,6 +63,9 @@ const clamp = (value: number, minimum: number, maximum: number): number =>
 const distance = (a: Point, b: Point): number =>
   Math.hypot(b.x - a.x, b.y - a.y);
 
+const HOSTILE_OWNERS = ["enemy", "enemy2"] as const;
+type HostileOwner = (typeof HOSTILE_OWNERS)[number];
+
 export class GameSimulation {
   private systems: StarSystemState[] = [];
   private links: EnergyLinkState[] = [];
@@ -114,7 +117,7 @@ export class GameSimulation {
 
     if (this.aiElapsedSeconds >= this.level.aiActionIntervalSeconds) {
       this.aiElapsedSeconds = 0;
-      this.performEnemyAction();
+      this.performHostileActions();
     }
 
     this.evaluateOutcome();
@@ -369,28 +372,37 @@ export class GameSimulation {
     );
   }
 
-  private performEnemyAction(): void {
-    const enemySources = this.systems
-      .filter((system) => system.owner === "enemy")
-      .sort((a, b) => b.energy - a.energy);
+  private performHostileActions(): void {
+    for (const owner of HOSTILE_OWNERS) {
+      this.performFactionAction(owner);
+    }
+  }
 
-    for (const source of enemySources) {
+  private performFactionAction(owner: HostileOwner): void {
+    const factionSources = this.systems
+      .filter((system) => system.owner === owner)
+      .sort((a, b) => b.energy - a.energy);
+    const distanceWeight = owner === "enemy2" ? 0.006 : 0.012;
+
+    for (const source of factionSources) {
       const targets = this.systems
         .filter(
           (system) =>
             system !== source &&
-            system.owner !== "enemy" &&
+            system.owner !== owner &&
             !this.hasDuplicateLink(source.id, system.id),
         )
         .sort((a, b) => {
           const aScore =
-            a.energy + distance(source.position, a.position) * 0.012;
+            a.energy +
+            distance(source.position, a.position) * distanceWeight;
           const bScore =
-            b.energy + distance(source.position, b.position) * 0.012;
+            b.energy +
+            distance(source.position, b.position) * distanceWeight;
           return aScore - bScore;
         });
       const target = targets[0];
-      if (target && this.createLink(source.id, target.id, "enemy").ok) {
+      if (target && this.createLink(source.id, target.id, owner).ok) {
         return;
       }
     }

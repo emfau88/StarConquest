@@ -45,6 +45,20 @@ const CUT_SAMPLE_COUNT = 40;
 const CUT_DISTANCE = 34;
 const CUT_TRAIL_POINT_DISTANCE = 10;
 
+const resolveInitialLevelIndex = (): number => {
+  if (!import.meta.env.DEV) {
+    return 0;
+  }
+  const requestedSector = Number(
+    new URLSearchParams(window.location.search).get("level"),
+  );
+  return Number.isInteger(requestedSector) &&
+    requestedSector >= 1 &&
+    requestedSector <= LEVELS.length
+    ? requestedSector - 1
+    : 0;
+};
+
 interface LinkGesture {
   kind: "link";
   sourceId: string;
@@ -69,8 +83,8 @@ export class GameApp {
   private readonly viewport: CanvasViewport;
   private readonly renderer: CanvasRenderer;
   private readonly input: PointerInput;
-  private currentLevelIndex = 0;
-  private currentLevel: LevelDefinition = LEVELS[0];
+  private currentLevelIndex = resolveInitialLevelIndex();
+  private currentLevel: LevelDefinition = LEVELS[this.currentLevelIndex];
   private simulation = new GameSimulation(this.currentLevel);
   private readonly storage = new SafeStorage();
   private readonly progress = new CampaignProgress(this.storage);

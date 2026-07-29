@@ -111,15 +111,15 @@ const runExpansionBot = (
   return simulation;
 };
 
-test("the campaign contains five progressively denser sectors", () => {
-  assert.equal(LEVELS.length, 5);
+test("the campaign contains six progressively denser sectors", () => {
+  assert.equal(LEVELS.length, 6);
   assert.deepEqual(
     LEVELS.map((level) => level.sector),
-    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5, 6],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.difficulty),
-    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5, 6],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.theme),
@@ -129,15 +129,16 @@ test("the campaign contains five progressively denser sectors", () => {
       "quasar-rift",
       "quasar-rift",
       "nexus-void",
+      "nexus-void",
     ],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.systems.length),
-    [4, 6, 7, 8, 9],
+    [4, 6, 7, 8, 9, 10],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.aiActionIntervalSeconds),
-    [14, 10, 8.5, 7, 5.5],
+    [14, 10, 8.5, 7, 5.5, 5],
   );
 });
 
@@ -149,7 +150,7 @@ test("campaign progress unlocks one sector and keeps the best star result", () =
       values.set(key, value);
     },
   };
-  const progress = new CampaignProgress(storage, 5);
+  const progress = new CampaignProgress(storage, 6);
 
   assert.equal(progress.isUnlocked(0), true);
   assert.equal(progress.isUnlocked(1), false);
@@ -158,11 +159,26 @@ test("campaign progress unlocks one sector and keeps the best star result", () =
   progress.recordWin(0, 1);
   progress.recordWin(1, 3);
 
-  const reloaded = new CampaignProgress(storage, 5);
+  const reloaded = new CampaignProgress(storage, 6);
   assert.deepEqual(reloaded.snapshot(), {
     unlockedThrough: 2,
-    bestStars: [2, 3, 0, 0, 0],
+    bestStars: [2, 3, 0, 0, 0, 0],
   });
+});
+
+test("completed five-sector progress unlocks the added Helion sector", () => {
+  const storage = {
+    get: (): string =>
+      JSON.stringify({
+        unlockedThrough: 4,
+        bestStars: [3, 2, 2, 1, 2],
+      }),
+    set: (): void => {},
+  };
+
+  const progress = new CampaignProgress(storage, 6);
+  assert.equal(progress.isUnlocked(5), true);
+  assert.deepEqual(progress.snapshot().bestStars, [3, 2, 2, 1, 2, 0]);
 });
 
 test("every campaign sector has valid, unique systems and scoring targets", () => {
@@ -170,7 +186,12 @@ test("every campaign sector has valid, unique systems and scoring targets", () =
     const ids = new Set(level.systems.map((system) => system.id));
     assert.equal(ids.size, level.systems.length);
     assert.ok(level.systems.some((system) => system.owner === "player"));
-    assert.ok(level.systems.some((system) => system.owner === "enemy"));
+    assert.ok(
+      level.systems.some(
+        (system) =>
+          system.owner === "enemy" || system.owner === "enemy2",
+      ),
+    );
     assert.ok(level.threeStarSeconds < level.twoStarSeconds);
 
     for (const system of level.systems) {
@@ -179,6 +200,18 @@ test("every campaign sector has valid, unique systems and scoring targets", () =
       assert.ok(system.startEnergy > 0);
     }
   }
+});
+
+test("Helion systems expand with orange-owned links", () => {
+  const helionLevel = LEVELS.find((level) => level.id === "helion-run");
+  assert.ok(helionLevel);
+  const simulation = new GameSimulation(helionLevel);
+
+  advance(simulation, helionLevel.aiActionIntervalSeconds + 0.2);
+
+  assert.ok(
+    simulation.getLinks().some((link) => link.owner === "enemy2"),
+  );
 });
 
 test("a simple deterministic expansion strategy can win every sector", () => {

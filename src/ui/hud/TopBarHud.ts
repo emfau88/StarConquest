@@ -17,9 +17,13 @@ export class TopBarHud {
   constructor(private readonly locale: Locale) {}
 
   setLevel(level: LevelDefinition): void {
+    const displayedDifficulty = Math.max(
+      1,
+      Math.min(5, level.difficulty),
+    );
     const difficulty =
-      `${"\u2605".repeat(level.difficulty)}` +
-      `${"\u2606".repeat(5 - level.difficulty)}`;
+      `${"\u2605".repeat(displayedDifficulty)}` +
+      `${"\u2606".repeat(5 - displayedDifficulty)}`;
     this.sector.textContent =
       `${translate(this.locale, "sectorLabel")} ` +
       `${String(level.sector).padStart(2, "0")} · ${difficulty}`;

@@ -93,6 +93,14 @@ export class CampaignProgress {
             : 0;
         },
       );
+      const completedThrough = this.bestStars.reduce(
+        (highest, stars, index) => (stars > 0 ? index : highest),
+        -1,
+      );
+      this.unlockedThrough = Math.max(
+        this.unlockedThrough,
+        Math.min(this.levelCount - 1, completedThrough + 1),
+      );
     } catch {
       // Corrupt progress falls back to a fresh campaign.
     }
