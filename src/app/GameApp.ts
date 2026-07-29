@@ -352,7 +352,7 @@ export class GameApp {
           event.position,
           undefined,
           event.owner,
-          0.72,
+          0.52,
         );
         if (event.owner === "player") {
           this.tutorialStage = 2;

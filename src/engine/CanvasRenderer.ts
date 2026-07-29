@@ -601,9 +601,9 @@ export class CanvasRenderer {
   ): void {
     const eased = 1 - (1 - progress) ** 3;
     const fadeIn = Math.min(1, progress * 10);
-    const fadeOut = Math.max(0, 1 - Math.max(0, progress - 0.52) / 0.48);
+    const fadeOut = Math.max(0, 1 - Math.max(0, progress - 0.45) / 0.55);
     const burstAlpha = fadeIn * fadeOut;
-    const size = 116 + eased * 184;
+    const size = 84 + eased * 132;
 
     if (
       this.captureBurstImage.complete &&
@@ -611,7 +611,7 @@ export class CanvasRenderer {
     ) {
       context.save();
       context.globalCompositeOperation = "screen";
-      context.globalAlpha = burstAlpha * 0.9;
+      context.globalAlpha = burstAlpha * 0.68;
       context.drawImage(
         this.captureBurstImage,
         effect.position.x - size / 2,
@@ -622,12 +622,12 @@ export class CanvasRenderer {
       context.restore();
     }
 
-    const ringRadius = 34 + eased * 126;
-    context.globalAlpha = fadeOut * 0.9;
+    const ringRadius = 30 + eased * 92;
+    context.globalAlpha = fadeOut * 0.78;
     context.strokeStyle = color;
     context.shadowColor = color;
-    context.shadowBlur = 24;
-    context.lineWidth = 7 - progress * 4.5;
+    context.shadowBlur = 16;
+    context.lineWidth = 5 - progress * 3.2;
     context.beginPath();
     context.arc(
       effect.position.x,
@@ -639,12 +639,12 @@ export class CanvasRenderer {
     context.stroke();
 
     context.lineWidth = 2;
-    context.globalAlpha = burstAlpha * 0.82;
-    for (let index = 0; index < 8; index += 1) {
+    context.globalAlpha = burstAlpha * 0.7;
+    for (let index = 0; index < 6; index += 1) {
       const angle =
-        effect.id * 0.73 + index * (Math.PI / 4) + progress * 0.35;
-      const distance = 54 + eased * (72 + (index % 3) * 9);
-      const particleSize = 3.5 + (1 - progress) * (index % 2 ? 3 : 5);
+        effect.id * 0.73 + index * (Math.PI / 3) + progress * 0.28;
+      const distance = 42 + eased * (48 + (index % 3) * 6);
+      const particleSize = 2.4 + (1 - progress) * (index % 2 ? 2 : 3.5);
       const x = effect.position.x + Math.cos(angle) * distance;
       const y = effect.position.y + Math.sin(angle) * distance;
       context.save();
