@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
+    "balance:sim": "tsx scripts/balance-sim.ts",
     "check": "tsc --noEmit",
     "test": "npm run test:legacy && npm run test:assets && npm run test:game",
     "test:assets": "node --test tests/runtime-assets.test.mjs",

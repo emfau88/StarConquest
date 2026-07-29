@@ -24,6 +24,8 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Runtime-Grafiken komprimieren und nur bei tatsächlichem Bedarf laden.
 - [x] Gegner-KI um Verstärkung, Verteidigungspriorität und Cuts erweitern.
 - [x] Gefahr, Capture sowie Sieg und Niederlage klarer und ruhiger inszenieren.
+- [x] Level 1–6 mit drei reproduzierbaren Spielprofilen simulieren.
+- [ ] Sternzeiten mit mindestens fünf menschlichen Erstspieler-Läufen prüfen.
 
 ## Danach
 

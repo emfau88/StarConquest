@@ -58,8 +58,8 @@ export const LEVELS = [
       de: "Ziehe vom blauen System zu einem neutralen Stern",
     },
     tutorialNoCost: true,
-    threeStarSeconds: 90,
-    twoStarSeconds: 150,
+    threeStarSeconds: 75,
+    twoStarSeconds: 130,
     aiActionIntervalSeconds: 14,
     systems: [
       {
@@ -110,8 +110,8 @@ export const LEVELS = [
       de: "Der zentrale Giant ist die entscheidende Verstärkung",
     },
     tutorialNoCost: false,
-    threeStarSeconds: 110,
-    twoStarSeconds: 190,
+    threeStarSeconds: 100,
+    twoStarSeconds: 170,
     aiActionIntervalSeconds: 10,
     systems: [
       {
@@ -176,8 +176,8 @@ export const LEVELS = [
       de: "Schneide eine aktive blaue Route nahe der Quelle für einen Boost",
     },
     tutorialNoCost: false,
-    threeStarSeconds: 130,
-    twoStarSeconds: 220,
+    threeStarSeconds: 115,
+    twoStarSeconds: 190,
     aiActionIntervalSeconds: 8.5,
     systems: [
       {
@@ -249,8 +249,8 @@ export const LEVELS = [
       de: "Bündele deine Routen, statt sie gleichmäßig aufzuteilen",
     },
     tutorialNoCost: false,
-    threeStarSeconds: 150,
-    twoStarSeconds: 250,
+    threeStarSeconds: 140,
+    twoStarSeconds: 230,
     aiActionIntervalSeconds: 7,
     systems: [
       {
@@ -329,8 +329,8 @@ export const LEVELS = [
       de: "Pulsare expandieren, Giants speichern Energie, der Nexus hält die Front",
     },
     tutorialNoCost: false,
-    threeStarSeconds: 180,
-    twoStarSeconds: 300,
+    threeStarSeconds: 165,
+    twoStarSeconds: 270,
     aiActionIntervalSeconds: 5.5,
     systems: [
       {
@@ -416,8 +416,8 @@ export const LEVELS = [
       de: "Orange Helion-Systeme greifen weit aus – komm ihnen mit Boost-Schnitten zuvor",
     },
     tutorialNoCost: false,
-    threeStarSeconds: 210,
-    twoStarSeconds: 340,
+    threeStarSeconds: 195,
+    twoStarSeconds: 320,
     aiActionIntervalSeconds: 5,
     systems: [
       {

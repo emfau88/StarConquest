@@ -30,7 +30,8 @@ The current slice includes:
 - faction-specific transport and star-system artwork, including distinct
   Quasar and Nexus silhouettes plus the playable orange Helion faction,
   with Canvas fallbacks;
-- automated simulation tests and GitHub Pages deployment.
+- automated simulation tests, a repeatable three-profile balance run and
+  GitHub Pages deployment.
 
 The legacy source remains frozen in `reference/legacy-build/`. Its protected
 gameplay contract is documented in `docs/core-mechanics.md`.
@@ -40,6 +41,7 @@ gameplay contract is documented in `docs/core-mechanics.md`.
 ```powershell
 npm.cmd run dev
 npm.cmd test
+npm.cmd run balance:sim
 npm.cmd run build
 ```
 

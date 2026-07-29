@@ -93,6 +93,7 @@ Die technische Basis ist vorhanden:
 - lokale Fortschrittsspeicherung;
 - sechs spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
+- reproduzierbarer Balance-Lauf mit Learner-, Regular- und Expert-Profil;
 - feste 60-Hz-Simulationsschritte unabhängig von der Render-Bildrate;
 - bedarfsgesteuertes Runtime-Asset-Laden; Produktions-Build aktuell rund
   1,5 MB bei 43 Dateien;

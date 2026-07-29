@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  BALANCE_PROFILES,
+  simulateLevel,
+} from "../src/balance/BalanceSimulator";
+import {
   GameSimulation,
   calculateCutOutcome,
   linkIntensityForEnergy,
@@ -190,6 +194,14 @@ test("the campaign contains six progressively denser sectors", () => {
     LEVELS.map((level) => level.aiActionIntervalSeconds),
     [14, 10, 8.5, 7, 5.5, 5],
   );
+  assert.deepEqual(
+    LEVELS.map((level) => level.threeStarSeconds),
+    [75, 100, 115, 140, 165, 195],
+  );
+  assert.deepEqual(
+    LEVELS.map((level) => level.twoStarSeconds),
+    [130, 170, 190, 230, 270, 320],
+  );
 });
 
 test("campaign progress unlocks one sector and keeps the best star result", () => {
@@ -354,6 +366,31 @@ test("a deterministic cut-aware strategy can win every sector", () => {
       `${level.id} was not won after ${simulation.elapsedSeconds.toFixed(1)}s`,
     );
   }
+});
+
+test("balance profiles preserve a readable campaign difficulty curve", () => {
+  const learnerResults = LEVELS.map((level) =>
+    simulateLevel(level, BALANCE_PROFILES.learner)
+  );
+  const regularResults = LEVELS.map((level) =>
+    simulateLevel(level, BALANCE_PROFILES.regular)
+  );
+  const expertResults = LEVELS.map((level) =>
+    simulateLevel(level, BALANCE_PROFILES.expert)
+  );
+
+  assert.equal(learnerResults[0]?.status, "won");
+  assert.equal(learnerResults[5]?.status, "lost");
+  assert.ok(regularResults.every((result) => result.status === "won"));
+  assert.ok(expertResults.every((result) => result.status === "won"));
+  assert.ok(
+    regularResults[3].elapsedSeconds >
+      regularResults[0].elapsedSeconds,
+  );
+  assert.ok(
+    regularResults[5].elapsedSeconds >
+      regularResults[2].elapsedSeconds,
+  );
 });
 
 test("owned systems produce energy", () => {
