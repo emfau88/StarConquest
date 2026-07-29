@@ -53,6 +53,14 @@ export interface DragPreview {
   targetId: string | null;
 }
 
+export interface CutPreview {
+  linkId: string;
+  position: Point;
+  forwardEnergy: number;
+  returnedEnergy: number;
+  prominentBoost: boolean;
+}
+
 export interface TutorialCue {
   kind: "connect" | "cut";
   source: Point;
@@ -69,6 +77,7 @@ export interface SceneSnapshot {
   status: GameStatus;
   dragPreview: DragPreview | null;
   cutTrail: readonly Point[];
+  cutPreview: CutPreview | null;
   effects: readonly VisualEffect[];
   tutorialCue: TutorialCue | null;
 }

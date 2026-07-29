@@ -1,4 +1,5 @@
 import type {
+  CutPreview,
   EnergyLinkView,
   Owner,
   Point,
@@ -247,6 +248,9 @@ export class CanvasRenderer {
     }
 
     this.drawCutTrail(context, scene.cutTrail);
+    if (scene.cutPreview) {
+      this.drawCutPreview(context, scene.cutPreview);
+    }
     for (const effect of scene.effects) {
       this.drawEffect(context, effect);
     }
@@ -268,10 +272,6 @@ export class CanvasRenderer {
   ): void {
     const color = OWNER_COLORS[link.owner];
     const curve = getLinkCurve(link, source, target);
-    const length = Math.hypot(
-      target.position.x - source.position.x,
-      target.position.y - source.position.y,
-    );
     const progress = Math.max(0, Math.min(1, link.growProgress));
 
     context.save();
@@ -291,26 +291,39 @@ export class CanvasRenderer {
     context.lineWidth = 2.4 + link.intensity * 1.15;
     this.strokeLinkProgress(context, curve, progress);
 
-    const markerCount = Math.max(3, Math.floor(length / 170));
-    for (let index = 1; index < markerCount; index += 1) {
-      const t = index / markerCount;
-      if (t >= progress) {
-        break;
-      }
+    const speed = 0.105 + link.intensity * 0.065;
+    const chargeDotCount =
+      progress > 0.05
+        ? Math.min(
+            72,
+            Math.max(0, Math.floor(link.unitsInTransit)),
+          )
+        : 0;
+    for (let index = 0; index < chargeDotCount; index += 1) {
+      const phase =
+        ((index + 0.5) / Math.max(1, chargeDotCount) +
+          elapsedSeconds * speed) %
+        1;
+      const t = 0.045 + Math.max(0, progress - 0.09) * phase;
       const point = pointOnLink(curve, t);
-      context.globalAlpha = 0.42;
+      context.globalAlpha = 0.2 + link.intensity * 0.34;
       context.fillStyle = "#f4fcff";
       context.beginPath();
-      context.arc(point.x, point.y, 2.2, 0, Math.PI * 2);
+      context.arc(
+        point.x,
+        point.y,
+        0.9 + link.intensity * 0.65,
+        0,
+        Math.PI * 2,
+      );
       context.fill();
     }
 
     const shipCount = Math.min(
       5,
-      Math.max(2, 2 + Math.floor(link.unitsInTransit / 8)),
+      Math.max(1, Math.ceil(link.unitsInTransit / 6)),
     );
-    const speed = 0.105 + link.intensity * 0.065;
-    if (progress > 0.18) {
+    if (progress > 0.18 && link.unitsInTransit > 0.25) {
       const routeStart = 0.085;
       const routeEnd = Math.max(routeStart, progress - 0.085);
       for (let index = 0; index < shipCount; index += 1) {
@@ -518,6 +531,57 @@ export class CanvasRenderer {
     for (let index = 1; index < trail.length; index += 1) {
       context.lineTo(trail[index].x, trail[index].y);
     }
+    context.stroke();
+    context.restore();
+  }
+
+  private drawCutPreview(
+    context: CanvasRenderingContext2D,
+    preview: CutPreview,
+  ): void {
+    const displayEnergy = (energy: number): string =>
+      String(Math.round(energy * 10) / 10);
+    const label =
+      `→ ${displayEnergy(preview.forwardEnergy)}   ` +
+      `↩ ${displayEnergy(preview.returnedEnergy)}`;
+    const color = preview.prominentBoost ? "#ffd65a" : "#c7efff";
+
+    context.save();
+    context.font = "800 18px Inter, system-ui, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    const width = context.measureText(label).width + 30;
+    const labelX = Math.max(
+      width / 2 + 12,
+      Math.min(LOGICAL_WIDTH - width / 2 - 12, preview.position.x),
+    );
+    const labelY = Math.max(28, preview.position.y - 48);
+
+    context.fillStyle = "rgba(3, 14, 38, 0.9)";
+    context.strokeStyle = color;
+    context.lineWidth = 2.5;
+    context.shadowColor = color;
+    context.shadowBlur = preview.prominentBoost ? 16 : 8;
+    context.beginPath();
+    context.roundRect(labelX - width / 2, labelY - 18, width, 36, 12);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#f7fcff";
+    context.shadowBlur = 0;
+    context.fillText(label, labelX, labelY + 1);
+
+    context.strokeStyle = color;
+    context.lineWidth = 4;
+    context.shadowBlur = 12;
+    context.beginPath();
+    context.arc(
+      preview.position.x,
+      preview.position.y,
+      preview.prominentBoost ? 13 : 10,
+      0,
+      Math.PI * 2,
+    );
     context.stroke();
     context.restore();
   }

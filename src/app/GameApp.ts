@@ -4,6 +4,7 @@ import {
   type SimulationEvent,
 } from "../core/GameSimulation";
 import type {
+  CutPreview,
   DragPreview,
   Point,
   SceneSnapshot,
@@ -643,9 +644,31 @@ export class GameApp {
       dragPreview: this.dragPreview(),
       cutTrail:
         this.gesture?.kind === "cut" ? this.gesture.trail : [],
+      cutPreview: this.cutPreview(),
       effects: this.effects,
       tutorialCue: this.tutorialCue(),
     };
+  }
+
+  private cutPreview(): CutPreview | null {
+    if (this.gesture?.kind !== "cut") {
+      return null;
+    }
+    const candidate = this.findCutCandidate(this.gesture.trail);
+    if (!candidate) {
+      return null;
+    }
+    const outcome = this.simulation.previewPlayerCut(
+      candidate.linkId,
+      candidate.fraction,
+    );
+    return outcome
+      ? {
+          linkId: candidate.linkId,
+          position: candidate.position,
+          ...outcome,
+        }
+      : null;
   }
 
   private tutorialCue(): TutorialCue | null {

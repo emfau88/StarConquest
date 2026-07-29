@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { GameSimulation } from "../src/core/GameSimulation";
+import {
+  GameSimulation,
+  calculateCutOutcome,
+  linkIntensityForEnergy,
+} from "../src/core/GameSimulation";
 import { SYSTEM_CLASS_SPECS } from "../src/core/game-rules";
 import { FixedStepClock } from "../src/engine/FixedStepClock";
 import {
@@ -248,6 +252,34 @@ test("owned systems produce energy", () => {
   advance(simulation, 1);
   const after = simulation.getSystem("player")?.energy ?? 0;
   assert.ok(after > before);
+});
+
+test("link intensity follows stored route energy and stays bounded", () => {
+  assert.equal(linkIntensityForEnergy(-10), 0.18);
+  assert.ok(linkIntensityForEnergy(12) > linkIntensityForEnergy(4));
+  assert.equal(linkIntensityForEnergy(24), 1);
+  assert.equal(linkIntensityForEnergy(240), 1);
+});
+
+test("cut preview reports the same split used by the simulation", () => {
+  const expected = calculateCutOutcome(10, 0.2);
+  assert.deepEqual(expected, {
+    forwardEnergy: 8,
+    returnedEnergy: 2,
+    prominentBoost: true,
+  });
+
+  const simulation = new GameSimulation(DUEL_LEVEL);
+  simulation.createPlayerLink("player", "enemy");
+  advance(simulation, 3);
+  const link = simulation.getLinks()[0];
+  assert.ok(link);
+  const preview = simulation.previewPlayerCut(link.id, 0.2);
+  assert.ok(preview);
+  assert.equal(
+    preview.forwardEnergy + preview.returnedEnergy,
+    link.unitsInTransit,
+  );
 });
 
 test("route limits reject new links without deleting stored energy", () => {

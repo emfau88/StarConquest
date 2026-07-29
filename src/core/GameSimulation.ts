@@ -69,8 +69,46 @@ export interface LinkCommandResult {
     | "link-limit";
 }
 
+export interface CutOutcome {
+  forwardEnergy: number;
+  returnedEnergy: number;
+  prominentBoost: boolean;
+}
+
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.max(minimum, Math.min(maximum, value));
+
+export const linkIntensityForEnergy = (unitsInTransit: number): number => {
+  const charge = clamp(
+    Number.isFinite(unitsInTransit) ? unitsInTransit : 0,
+    0,
+    24,
+  );
+  return 0.18 + (charge / 24) * 0.82;
+};
+
+export const calculateCutOutcome = (
+  unitsInTransit: number,
+  cutFraction: number,
+): CutOutcome => {
+  const energy = Math.max(
+    0,
+    Number.isFinite(unitsInTransit) ? unitsInTransit : 0,
+  );
+  const fraction = clamp(
+    Number.isFinite(cutFraction) ? cutFraction : 0,
+    0,
+    1,
+  );
+  const forwardEnergy = energy * (1 - fraction);
+  return {
+    forwardEnergy,
+    returnedEnergy: energy - forwardEnergy,
+    prominentBoost:
+      fraction < GAME_RULES.prominentBoostCutFraction &&
+      forwardEnergy > GAME_RULES.prominentBoostMinimumForwardEnergy,
+  };
+};
 
 const distance = (a: Point, b: Point): number =>
   Math.hypot(b.x - a.x, b.y - a.y);
@@ -186,6 +224,21 @@ export class GameSimulation {
     return this.createLink(sourceId, targetId, "player");
   }
 
+  previewPlayerCut(
+    linkId: string,
+    cutFraction: number,
+  ): CutOutcome | null {
+    const link = this.links.find(
+      (candidate) =>
+        candidate.id === linkId &&
+        candidate.owner === "player" &&
+        candidate.state === "active",
+    );
+    return link
+      ? calculateCutOutcome(link.unitsInTransit, cutFraction)
+      : null;
+  }
+
   cutPlayerLink(linkId: string, cutFraction: number): boolean {
     const link = this.links.find(
       (candidate) =>
@@ -203,24 +256,25 @@ export class GameSimulation {
       return false;
     }
 
-    const fraction = clamp(cutFraction, 0, 1);
-    const forward = link.unitsInTransit * (1 - fraction);
-    const rear = link.unitsInTransit * fraction;
-    this.applyTransfer(link.owner, target, forward);
+    const outcome = calculateCutOutcome(
+      link.unitsInTransit,
+      cutFraction,
+    );
+    this.applyTransfer(link.owner, target, outcome.forwardEnergy);
     if (source.owner === link.owner) {
-      source.energy = Math.min(source.capacity, source.energy + rear);
+      source.energy = Math.min(
+        source.capacity,
+        source.energy + outcome.returnedEnergy,
+      );
     }
 
     link.unitsInTransit = 0;
     this.removeLink(link);
-    const prominentBoost =
-      fraction < GAME_RULES.prominentBoostCutFraction &&
-      forward > GAME_RULES.prominentBoostMinimumForwardEnergy;
     this.events.push({
       kind: "cut",
       position: { ...source.position },
       targetPosition: { ...target.position },
-      prominentBoost,
+      prominentBoost: outcome.prominentBoost,
     });
     this.evaluateOutcome();
     return true;
@@ -288,6 +342,7 @@ export class GameSimulation {
       const pumped = Math.min(source.energy, requested);
       source.energy -= pumped;
       link.unitsInTransit += pumped;
+      link.intensity = linkIntensityForEnergy(link.unitsInTransit);
     }
   }
 
@@ -367,7 +422,7 @@ export class GameSimulation {
       sourceId,
       targetId,
       owner,
-      intensity: 0.7,
+      intensity: linkIntensityForEnergy(cost),
       state: "growing",
       growProgress: 0,
       unitsInTransit: cost,

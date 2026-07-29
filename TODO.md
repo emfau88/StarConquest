@@ -20,6 +20,7 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Helion als eigenständige KI-Fraktion in Level 6 spielbar machen.
 - [x] Stille Energieverluste bei Routenlimit und Capture beseitigen.
 - [x] Fixed-Timestep-Simulation für konsistentes Verhalten ergänzen.
+- [x] Link-Ladung und Schnittausbeute direkt im Spielfeld sichtbar machen.
 
 ## Danach
 
