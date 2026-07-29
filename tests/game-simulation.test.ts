@@ -165,15 +165,15 @@ const runExpansionBot = (
   return simulation;
 };
 
-test("the campaign contains six progressively denser sectors", () => {
-  assert.equal(LEVELS.length, 6);
+test("the campaign contains eight progressively denser sectors", () => {
+  assert.equal(LEVELS.length, 8);
   assert.deepEqual(
     LEVELS.map((level) => level.sector),
-    [1, 2, 3, 4, 5, 6],
+    [1, 2, 3, 4, 5, 6, 7, 8],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.difficulty),
-    [1, 2, 3, 4, 5, 6],
+    [1, 2, 3, 4, 5, 6, 7, 8],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.theme),
@@ -184,23 +184,25 @@ test("the campaign contains six progressively denser sectors", () => {
       "quasar-rift",
       "nexus-void",
       "nexus-void",
+      "nexus-void",
+      "nexus-void",
     ],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.systems.length),
-    [4, 6, 7, 8, 9, 10],
+    [4, 6, 7, 8, 9, 10, 11, 12],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.aiActionIntervalSeconds),
-    [14, 10, 8.5, 7, 5.5, 5],
+    [14, 10, 8.5, 7, 5.5, 5, 4.6, 4],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.threeStarSeconds),
-    [75, 100, 115, 140, 165, 195],
+    [75, 100, 115, 140, 165, 195, 225, 255],
   );
   assert.deepEqual(
     LEVELS.map((level) => level.twoStarSeconds),
-    [130, 170, 190, 230, 270, 320],
+    [130, 170, 190, 230, 270, 320, 360, 400],
   );
 });
 
@@ -212,7 +214,7 @@ test("campaign progress unlocks one sector and keeps the best star result", () =
       values.set(key, value);
     },
   };
-  const progress = new CampaignProgress(storage, 6);
+  const progress = new CampaignProgress(storage, 8);
 
   assert.equal(progress.isUnlocked(0), true);
   assert.equal(progress.isUnlocked(1), false);
@@ -221,26 +223,29 @@ test("campaign progress unlocks one sector and keeps the best star result", () =
   progress.recordWin(0, 1);
   progress.recordWin(1, 3);
 
-  const reloaded = new CampaignProgress(storage, 6);
+  const reloaded = new CampaignProgress(storage, 8);
   assert.deepEqual(reloaded.snapshot(), {
     unlockedThrough: 2,
-    bestStars: [2, 3, 0, 0, 0, 0],
+    bestStars: [2, 3, 0, 0, 0, 0, 0, 0],
   });
 });
 
-test("completed five-sector progress unlocks the added Helion sector", () => {
+test("completed six-sector progress safely unlocks the added seventh sector", () => {
   const storage = {
     get: (): string =>
       JSON.stringify({
-        unlockedThrough: 4,
-        bestStars: [3, 2, 2, 1, 2],
+        unlockedThrough: 5,
+        bestStars: [3, 2, 2, 1, 2, 3],
       }),
     set: (): void => {},
   };
 
-  const progress = new CampaignProgress(storage, 6);
-  assert.equal(progress.isUnlocked(5), true);
-  assert.deepEqual(progress.snapshot().bestStars, [3, 2, 2, 1, 2, 0]);
+  const progress = new CampaignProgress(storage, 8);
+  assert.equal(progress.isUnlocked(6), true);
+  assert.deepEqual(
+    progress.snapshot().bestStars,
+    [3, 2, 2, 1, 2, 3, 0, 0],
+  );
 });
 
 test("every campaign sector has valid, unique systems and scoring targets", () => {
@@ -261,6 +266,14 @@ test("every campaign sector has valid, unique systems and scoring targets", () =
       assert.ok(system.position.y >= 180 && system.position.y <= 760);
       assert.ok(system.startEnergy > 0);
     }
+  }
+});
+
+test("the final two sectors contain both hostile factions", () => {
+  for (const level of LEVELS.slice(6)) {
+    const owners = new Set(level.systems.map((system) => system.owner));
+    assert.equal(owners.has("enemy"), true);
+    assert.equal(owners.has("enemy2"), true);
   }
 });
 
@@ -388,8 +401,8 @@ test("balance profiles preserve a readable campaign difficulty curve", () => {
       regularResults[0].elapsedSeconds,
   );
   assert.ok(
-    regularResults[5].elapsedSeconds >
-      regularResults[2].elapsedSeconds,
+    regularResults[7].elapsedSeconds >
+      regularResults[4].elapsedSeconds,
   );
 });
 

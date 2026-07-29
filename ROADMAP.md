@@ -5,8 +5,8 @@ Stand: 29. Juli 2026
 ## Kurzstatus
 
 Letzte Aktualisierung: 29. Juli 2026, nach der vollständigen
-Planetensystem-Familie, den finalen Fraktions-Transportschiffen und den ersten
-sechs Kampagnenmissionen.
+Planetensystem-Familie, den finalen Fraktions-Transportschiffen und allen acht
+Kampagnenmissionen.
 
 | Bereich | Status | Aktueller Stand |
 |---|---|---|
@@ -14,7 +14,7 @@ sechs Kampagnenmissionen.
 | Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Transporter, vollständige System-Größenfamilie und die spielbare orange Helion-Fraktion sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
 | Onboarding und Progression | In Arbeit | Visuelles Gesten-Tutorial, Ergebnisdialog, Next Sector sowie Kampagnenkarte mit persistenter Freischaltung und Sternwertung vorhanden |
-| Kampagne und Balance | In Arbeit | Sechs spielbare Missionen mit Simulationsprüfung; zwei weitere Missionen und menschliche Balance-Testläufe fehlen |
+| Kampagne und Balance | In Arbeit | Acht spielbare Missionen mit Simulationsprüfung; menschliche Balance-Testläufe fehlen |
 | Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
 | Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
 | CrazyGames und Submission | Offen | SDK-Integration, Portal-QA, Cover, Videos und Metadaten fehlen |
@@ -91,7 +91,7 @@ Die technische Basis ist vorhanden:
 - mindestens 48 CSS-Pixel große HUD-Touchziele im Mobile-Layout;
 - englische und deutsche Texte;
 - lokale Fortschrittsspeicherung;
-- sechs spielbare, aufeinander aufbauende Level;
+- acht spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
 - reproduzierbarer Balance-Lauf mit Learner-, Regular- und Expert-Profil;
 - feste 60-Hz-Simulationsschritte unabhängig von der Render-Bildrate;

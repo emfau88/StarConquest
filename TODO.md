@@ -70,4 +70,5 @@ Spielmechanik umgesetzt und für Version 1.0 bestätigt wurde.
 - [x] Level 4: Twin Fronts.
 - [x] Level 5: Heavy Orbit.
 - [x] Level 6: Helion Run.
-- [ ] Level 7–8 gemäß Kampagnenplan in `ROADMAP.md`.
+- [x] Level 7: Three Powers.
+- [x] Level 8: Nexus Siege.

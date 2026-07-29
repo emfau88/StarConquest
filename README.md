@@ -5,7 +5,7 @@ systems, routing energy and cutting links at the right moment.
 
 ## Playable campaign slice
 
-The rebuild currently contains six playable sectors with a steady learning
+The rebuild currently contains eight playable sectors with a steady learning
 curve:
 
 - **First Contact** introduces connecting and neutral expansion;
@@ -13,12 +13,14 @@ curve:
 - **Cut the Current** makes boost cuts the central tactic;
 - **Twin Fronts** asks the player to prioritize two attack lanes;
 - **Heavy Orbit** combines Pulsars, Giants, Quasars and a fortified Nexus;
-- **Helion Run** introduces the long-range orange Helion faction.
+- **Helion Run** introduces the long-range orange Helion faction;
+- **Three Powers** creates a shifting conflict between three factions;
+- **Nexus Siege** closes the campaign with two fortified enemy networks.
 
 The current slice includes:
 
 - production, link growth, energy transfer, capture, win and defeat across all
-  six levels;
+  eight levels;
 - mouse and touch gestures: drag to connect, swipe across a link to cut;
 - responsive 16:9 canvas, mobile safe areas and a landscape orientation hint;
 - fullscreen toggle with a mobile orientation-lock attempt;

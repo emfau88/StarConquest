@@ -453,6 +453,42 @@ button {
   pointer-events: none;
 }
 
+.campaign-map__red-branch {
+  position: absolute;
+  left: 91%;
+  top: 52%;
+  width: 18%;
+  height: 4px;
+  transform: rotate(158deg);
+  transform-origin: left center;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 126, 126, 0.68),
+    rgba(89, 206, 255, 0.62)
+  );
+  filter: drop-shadow(0 0 7px rgba(255, 111, 111, 0.54));
+  pointer-events: none;
+}
+
+.campaign-map__final-route {
+  position: absolute;
+  left: 76%;
+  top: 63%;
+  width: 18%;
+  height: 4px;
+  transform: rotate(34deg);
+  transform-origin: left center;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(89, 206, 255, 0.58),
+    rgba(255, 177, 74, 0.72)
+  );
+  filter: drop-shadow(0 0 7px rgba(102, 213, 255, 0.6));
+  pointer-events: none;
+}
+
 .campaign-map__node {
   position: absolute;
   width: 64px;
@@ -619,6 +655,34 @@ button {
 .campaign-map__node--6 {
   left: 91%;
   top: 52%;
+}
+
+.campaign-map__node--7 {
+  left: 76%;
+  top: 63%;
+}
+
+.campaign-map__node--8 {
+  left: 89%;
+  top: 78%;
+}
+
+.campaign-map__node--7:not(.is-locked),
+.campaign-map__node--8:not(.is-locked) {
+  border-color: rgba(211, 226, 255, 0.96);
+  background:
+    radial-gradient(circle, rgba(255, 245, 213, 0.92) 0 8%, transparent 10%),
+    linear-gradient(135deg, rgba(39, 123, 205, 0.74), rgba(175, 92, 13, 0.68));
+  box-shadow:
+    0 0 0 7px rgba(141, 174, 255, 0.14),
+    0 0 28px rgba(168, 132, 255, 0.62),
+    inset 0 0 18px rgba(255, 225, 154, 0.26);
+}
+
+.campaign-map__node--8 .campaign-map__name {
+  right: -6px;
+  left: auto;
+  transform: none;
 }
 
 .campaign-map__node--helion:not(.is-locked) {
