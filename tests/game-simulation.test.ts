@@ -6,6 +6,7 @@ import {
   LEVELS,
   type LevelDefinition,
 } from "../src/data/levels";
+import { CampaignProgress } from "../src/storage/CampaignProgress";
 
 const DUEL_LEVEL: LevelDefinition = {
   id: "test-duel",
@@ -138,6 +139,30 @@ test("the campaign contains five progressively denser sectors", () => {
     LEVELS.map((level) => level.aiActionIntervalSeconds),
     [14, 10, 8.5, 7, 5.5],
   );
+});
+
+test("campaign progress unlocks one sector and keeps the best star result", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    get: (key: string): string | null => values.get(key) ?? null,
+    set: (key: string, value: string): void => {
+      values.set(key, value);
+    },
+  };
+  const progress = new CampaignProgress(storage, 5);
+
+  assert.equal(progress.isUnlocked(0), true);
+  assert.equal(progress.isUnlocked(1), false);
+  progress.recordWin(0, 2);
+  assert.equal(progress.isUnlocked(1), true);
+  progress.recordWin(0, 1);
+  progress.recordWin(1, 3);
+
+  const reloaded = new CampaignProgress(storage, 5);
+  assert.deepEqual(reloaded.snapshot(), {
+    unlockedThrough: 2,
+    bestStars: [2, 3, 0, 0, 0],
+  });
 });
 
 test("every campaign sector has valid, unique systems and scoring targets", () => {

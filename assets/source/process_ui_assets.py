@@ -28,6 +28,29 @@ QUASAR_OWNERS = (
     "player",
     "enemy",
 )
+PROGRESSION_ICON_NAMES = (
+    "locked",
+    "completed",
+    "star",
+)
+
+
+def remove_magenta_fringe(image: Image.Image) -> Image.Image:
+    pixels = []
+    for red, green, blue, alpha in image.convert("RGBA").getdata():
+        is_magenta = (
+            alpha > 0
+            and red - green > 24
+            and blue - green > 24
+        )
+        pixels.append(
+            (red, green, blue, 0)
+            if is_magenta
+            else (red, green, blue, alpha)
+        )
+    cleaned = Image.new("RGBA", image.size)
+    cleaned.putdata(pixels)
+    return cleaned
 
 
 def resize_capture_texture() -> None:
@@ -174,9 +197,48 @@ def split_quasar_systems() -> None:
             )
 
 
+def split_progression_icons() -> None:
+    source = (
+        ROOT
+        / "assets/source/progression/campaign-status-icons-transparent.png"
+    )
+    destination = ROOT / "public/assets/progression"
+    destination.mkdir(parents=True, exist_ok=True)
+
+    with Image.open(source) as sheet:
+        sheet = sheet.convert("RGBA")
+        cell_width = sheet.width // len(PROGRESSION_ICON_NAMES)
+
+        for index, name in enumerate(PROGRESSION_ICON_NAMES):
+            cell = sheet.crop(
+                (
+                    index * cell_width,
+                    0,
+                    (index + 1) * cell_width,
+                    sheet.height,
+                )
+            )
+            cell = remove_magenta_fringe(cell)
+            bounds = cell.getchannel("A").getbbox()
+            if bounds is None:
+                raise RuntimeError(f"Generated progression icon is empty: {name}")
+
+            icon = cell.crop(bounds)
+            padding = max(14, round(max(icon.size) * 0.08))
+            side = max(icon.size) + padding * 2
+            square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+            square.alpha_composite(
+                icon,
+                ((side - icon.width) // 2, (side - icon.height) // 2),
+            )
+            square.thumbnail((128, 128), Image.Resampling.LANCZOS)
+            square.save(destination / f"{name}.png", optimize=True)
+
+
 if __name__ == "__main__":
     resize_capture_texture()
     split_hud_icons()
     resize_backgrounds()
     split_tutorial_gestures()
     split_quasar_systems()
+    split_progression_icons()

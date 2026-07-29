@@ -13,7 +13,7 @@ fünf Kampagnenmissionen.
 | Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
 | Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Fraktions-Transportschiffe und vollständige System-Größenfamilie sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
-| Onboarding und Progression | Begonnen | Dynamisches Missions-HUD, Ingame-Hinweise, Ergebnisdialog, Next Sector und Kampagnenkarte vorhanden; Freischaltung und gespeicherter Kampagnenfortschritt fehlen |
+| Onboarding und Progression | In Arbeit | Visuelles Gesten-Tutorial, Ergebnisdialog, Next Sector sowie Kampagnenkarte mit persistenter Freischaltung und Sternwertung vorhanden |
 | Kampagne und Balance | In Arbeit | Fünf spielbare Missionen mit Simulationsprüfung; drei weitere Missionen und menschliche Balance-Testläufe fehlen |
 | Audio | Grundlage vorhanden | Kern-SFX und Audio-Schalter vorhanden; Musik, Mischung und vollständiger Event-Satz fehlen |
 | Release-Technik | Begonnen | Tests, Build, GitHub Pages und PlatformAdapter vorhanden; Preloader, E2E und Performanceprofil fehlen |
@@ -96,10 +96,8 @@ Die technische Basis ist vorhanden:
 
 Noch nicht releasefähig sind vor allem:
 
-- persistente Kampagnenfreischaltung und Sternwertung;
 - vollständiges Kampf-/Capture-Game-Feel;
-- persistente Kampagnenfreischaltung, Sternwertung und Progression;
-- Onboarding und UX-Feinschliff;
+- weitere Kampagnenmissionen, Balance und UX-Feinschliff;
 - Musik und vollständiges Audio;
 - CrazyGames-SDK und Cloud-Fortschritt;
 - Marketingmaterial, Portal-Metadaten und umfassende Geräte-QA.

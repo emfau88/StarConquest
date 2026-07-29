@@ -475,11 +475,80 @@ button {
     inset 0 0 18px rgba(255, 211, 111, 0.24);
 }
 
+.campaign-map__node:disabled {
+  cursor: not-allowed;
+}
+
+.campaign-map__node.is-locked {
+  border-color: rgba(142, 175, 202, 0.46);
+  background: rgba(17, 39, 76, 0.66);
+  box-shadow:
+    0 0 0 6px rgba(79, 113, 148, 0.08),
+    0 0 18px rgba(34, 83, 127, 0.26);
+  filter: saturate(0.45);
+  opacity: 0.72;
+}
+
+.campaign-map__node.is-locked:hover {
+  transform: translate(-50%, -50%);
+  border-color: rgba(142, 175, 202, 0.46);
+}
+
+.campaign-map__node.is-completed:not(.is-current) {
+  border-color: rgba(112, 231, 255, 0.9);
+}
+
 .campaign-map__number {
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72);
+}
+
+.campaign-map__status-icon {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.48));
+  pointer-events: none;
+}
+
+.campaign-map__node.is-locked .campaign-map__status-icon {
+  top: 50%;
+  right: auto;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+}
+
+.campaign-map__node.is-locked .campaign-map__number {
+  opacity: 0.12;
+}
+
+.campaign-map__stars {
+  position: absolute;
+  top: calc(100% + 28px);
+  left: 50%;
+  display: flex;
+  transform: translateX(-50%);
+  gap: 1px;
+  pointer-events: none;
+}
+
+.campaign-map__stars img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  opacity: 0.2;
+}
+
+.campaign-map__stars img.is-earned {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(255, 202, 73, 0.5));
 }
 
 .campaign-map__name {
@@ -771,6 +840,10 @@ button {
 
   .campaign-map__name {
     display: none;
+  }
+
+  .campaign-map__stars {
+    top: calc(100% + 6px);
   }
 }
 

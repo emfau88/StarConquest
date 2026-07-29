@@ -23,7 +23,7 @@ The current slice includes:
 - fullscreen toggle with a mobile orientation-lock attempt;
 - dynamic mission HUD, visual connect/cut tutorial cues, pause, restart,
   next-sector flow, lightweight sound effects and result screen;
-- compact campaign map with direct access to all five sectors;
+- compact campaign map with persistent sector unlocks and best star ratings;
 - three difficulty-themed sector backgrounds, generated HUD icons and a
   faction-colored capture burst;
 - faction-specific transport and star-system artwork, including distinct

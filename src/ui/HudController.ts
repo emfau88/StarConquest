@@ -5,6 +5,7 @@ import {
   type Locale,
   type StringKey,
 } from "../i18n/strings";
+import type { CampaignProgressSnapshot } from "../storage/CampaignProgress";
 import { ActionControlsHud } from "./hud/ActionControlsHud";
 import { CampaignMapOverlay } from "./hud/CampaignMapOverlay";
 import { ResultOverlay } from "./hud/ResultOverlay";
@@ -119,8 +120,11 @@ export class HudController {
     this.result.hide();
   }
 
-  showCampaignMap(currentLevelIndex: number): void {
-    this.campaignMap.show(currentLevelIndex);
+  showCampaignMap(
+    currentLevelIndex: number,
+    progress: CampaignProgressSnapshot,
+  ): void {
+    this.campaignMap.show(currentLevelIndex, progress);
   }
 
   hideCampaignMap(): void {

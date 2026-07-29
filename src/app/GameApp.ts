@@ -37,6 +37,7 @@ import {
   type PlatformAdapter,
 } from "../platform/PlatformAdapter";
 import { SafeStorage } from "../storage/SafeStorage";
+import { CampaignProgress } from "../storage/CampaignProgress";
 import { HudController } from "../ui/HudController";
 
 const MAX_DELTA_SECONDS = 0.1;
@@ -72,6 +73,7 @@ export class GameApp {
   private currentLevel: LevelDefinition = LEVELS[0];
   private simulation = new GameSimulation(this.currentLevel);
   private readonly storage = new SafeStorage();
+  private readonly progress = new CampaignProgress(this.storage);
   private readonly audio = new AudioController(this.storage);
   private readonly platform: PlatformAdapter = createPlatformAdapter();
   private readonly locale: Locale = resolveLocale(navigator.language);
@@ -386,10 +388,12 @@ export class GameApp {
       case "won": {
         this.audio.play("win");
         this.platform.gameplayStop();
+        const stars = this.starRating(event.elapsedSeconds);
+        this.progress.recordWin(this.currentLevelIndex, stars);
         this.hud.showResult(
           "won",
           event.elapsedSeconds,
-          this.starRating(event.elapsedSeconds),
+          stars,
           this.currentLevel,
           this.currentLevelIndex < LEVELS.length - 1,
         );
@@ -495,7 +499,8 @@ export class GameApp {
     if (
       !Number.isInteger(levelIndex) ||
       levelIndex < 0 ||
-      levelIndex >= LEVELS.length
+      levelIndex >= LEVELS.length ||
+      !this.progress.isUnlocked(levelIndex)
     ) {
       return;
     }
@@ -532,7 +537,10 @@ export class GameApp {
     this.paused = true;
     this.gesture = null;
     this.platform.gameplayStop();
-    this.hud.showCampaignMap(this.currentLevelIndex);
+    this.hud.showCampaignMap(
+      this.currentLevelIndex,
+      this.progress.snapshot(),
+    );
   }
 
   private closeCampaignMap(): void {
