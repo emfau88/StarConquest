@@ -38,6 +38,32 @@ HELION_SYSTEM_TIERS = (
     "medium",
     "large",
 )
+CORE_SYSTEM_OWNERS = (
+    "player",
+    "enemy",
+    "neutral",
+)
+CORE_SYSTEM_TIERS = (
+    "small",
+    "medium",
+    "large",
+)
+
+
+def save_runtime_webp(
+    image: Image.Image,
+    destination: Path,
+    maximum_size: tuple[int, int],
+    quality: int = 88,
+) -> None:
+    image = image.convert("RGBA")
+    image.thumbnail(maximum_size, Image.Resampling.LANCZOS)
+    image.save(
+        destination,
+        "WEBP",
+        quality=quality,
+        method=6,
+    )
 
 
 def remove_magenta_fringe(image: Image.Image) -> Image.Image:
@@ -78,11 +104,11 @@ def alpha_column_runs(image: Image.Image) -> list[tuple[int, int]]:
 
 def resize_capture_texture() -> None:
     source = ROOT / "assets/source/vfx/capture-burst-additive.png"
-    destination = ROOT / "public/assets/vfx/capture-burst.png"
+    destination = ROOT / "public/assets/vfx/capture-burst.webp"
     with Image.open(source) as image:
         image = image.convert("RGB")
         image.thumbnail((512, 512), Image.Resampling.LANCZOS)
-        image.save(destination, optimize=True)
+        image.save(destination, "WEBP", quality=86, method=6)
 
 
 def split_hud_icons() -> None:
@@ -213,11 +239,26 @@ def split_quasar_systems() -> None:
                 system,
                 ((side - system.width) // 2, (side - system.height) // 2),
             )
-            square.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            square.save(
-                destination / f"system-{owner}-quasar.png",
-                optimize=True,
+            save_runtime_webp(
+                square,
+                destination / f"system-{owner}-quasar.webp",
+                (512, 512),
             )
+
+
+def optimize_core_systems() -> None:
+    source_directory = ROOT / "assets/source/runtime-originals/systems"
+    destination = ROOT / "public/assets/systems"
+
+    for owner in CORE_SYSTEM_OWNERS:
+        for tier in CORE_SYSTEM_TIERS:
+            filename = f"system-{owner}-{tier}.png"
+            with Image.open(source_directory / filename) as image:
+                save_runtime_webp(
+                    image,
+                    destination / f"system-{owner}-{tier}.webp",
+                    (640, 640),
+                )
 
 
 def split_progression_icons() -> None:
@@ -291,21 +332,33 @@ def split_helion_assets() -> None:
                 system,
                 ((side - system.width) // 2, (side - system.height) // 2),
             )
-            square.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            square.save(
-                system_destination / f"system-enemy2-{tier}.png",
-                optimize=True,
+            save_runtime_webp(
+                square,
+                system_destination / f"system-enemy2-{tier}.webp",
+                (512, 512),
             )
 
     with Image.open(
         source_directory / "transport-helion-transparent.png"
     ) as ship:
-        ship = ship.convert("RGBA")
-        ship = ship.resize((768, 512), Image.Resampling.LANCZOS)
-        ship.save(
-            ship_destination / "transport-enemy2.png",
-            optimize=True,
+        save_runtime_webp(
+            ship,
+            ship_destination / "transport-enemy2.webp",
+            (256, 256),
         )
+
+
+def optimize_core_transport_ships() -> None:
+    source_directory = ROOT / "assets/source/runtime-originals/ships"
+    destination = ROOT / "public/assets/ships"
+
+    for owner in ("player", "enemy"):
+        with Image.open(source_directory / f"transport-{owner}.png") as ship:
+            save_runtime_webp(
+                ship,
+                destination / f"transport-{owner}.webp",
+                (256, 256),
+            )
 
 
 if __name__ == "__main__":
@@ -313,6 +366,8 @@ if __name__ == "__main__":
     split_hud_icons()
     resize_backgrounds()
     split_tutorial_gestures()
+    optimize_core_systems()
     split_quasar_systems()
     split_progression_icons()
+    optimize_core_transport_ships()
     split_helion_assets()

@@ -8,16 +8,16 @@ asset for every possible state.
 
 ## Complete three-size family
 
-- Player: `system-player-small.png`, `system-player-medium.png`,
-  `system-player-large.png`.
-- Enemy: `system-enemy-small.png`, `system-enemy-medium.png`,
-  `system-enemy-large.png`.
-- Neutral: `system-neutral-small.png`, `system-neutral-medium.png`,
-  `system-neutral-large.png`.
-- Helion Compact: `system-enemy2-small.png`, `system-enemy2-medium.png`,
-  `system-enemy2-large.png`.
-- Class-specific Quasars: `system-player-quasar.png` and
-  `system-enemy-quasar.png`.
+- Player: `system-player-small.webp`, `system-player-medium.webp`,
+  `system-player-large.webp`.
+- Enemy: `system-enemy-small.webp`, `system-enemy-medium.webp`,
+  `system-enemy-large.webp`.
+- Neutral: `system-neutral-small.webp`, `system-neutral-medium.webp`,
+  `system-neutral-large.webp`.
+- Helion Compact: `system-enemy2-small.webp`, `system-enemy2-medium.webp`,
+  `system-enemy2-large.webp`.
+- Class-specific Quasars: `system-player-quasar.webp` and
+  `system-enemy-quasar.webp`.
 
 Runtime class mapping:
 
@@ -32,8 +32,10 @@ Runtime class mapping:
 
 The three source generations used the built-in ImageGen workflow. Each asset
 was generated front-on on a flat chroma-key background, then converted locally
-to an alpha PNG with soft matte and despill. Chroma-key source images are kept
-under `assets/source/systems/`.
+to a transparent source PNG with soft matte and despill. Runtime WebP files are
+limited to 640 pixels because the renderer never displays them above 536
+physical pixels at its supported DPR cap. Sources are kept under
+`assets/source/systems/` and `assets/source/runtime-originals/`.
 
 All three prompts specify:
 

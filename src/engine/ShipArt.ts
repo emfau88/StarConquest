@@ -3,29 +3,26 @@ import type { Owner } from "../core/types";
 const assetUrl = (filename: string): string =>
   `${import.meta.env.BASE_URL}assets/ships/${filename}`;
 
-export const createTransportShipArt = (): Readonly<
-  Record<Owner, HTMLImageElement | null>
-> => {
-  const player = createImage(assetUrl("transport-player.png"));
-  const enemy = createImage(assetUrl("transport-enemy.png"));
-  const enemy2 = createImage(assetUrl("transport-enemy2.png"));
+export class TransportShipArtLibrary {
+  private readonly images = new Map<Owner, HTMLImageElement>();
 
-  return Object.freeze({
-    player,
-    enemy,
-    enemy2,
-    neutral: null,
-  });
-};
+  get(owner: Owner): HTMLImageElement | null {
+    if (owner === "neutral") {
+      return null;
+    }
+    const cached = this.images.get(owner);
+    if (cached) {
+      return cached;
+    }
+    const image = new Image();
+    image.decoding = "async";
+    image.src = assetUrl(`transport-${owner}.webp`);
+    this.images.set(owner, image);
+    return image;
+  }
+}
 
 export const isShipArtReady = (
   image: HTMLImageElement | null,
 ): image is HTMLImageElement =>
   image !== null && image.complete && image.naturalWidth > 0;
-
-const createImage = (source: string): HTMLImageElement => {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = source;
-  return image;
-};

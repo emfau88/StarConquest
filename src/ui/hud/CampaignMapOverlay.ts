@@ -39,6 +39,10 @@ export class CampaignMapOverlay {
     "#campaign-map-title",
     HTMLHeadingElement,
   );
+  private readonly artwork = requireElement(
+    ".campaign-map__art",
+    HTMLImageElement,
+  );
   private readonly nodes = Array.from(
     document.querySelectorAll<HTMLButtonElement>("[data-level-index]"),
   );
@@ -127,6 +131,12 @@ export class CampaignMapOverlay {
     currentLevelIndex: number,
     progress: CampaignProgressSnapshot,
   ): void {
+    if (!this.artwork.hasAttribute("src")) {
+      const source = this.artwork.dataset.src;
+      if (source) {
+        this.artwork.src = source;
+      }
+    }
     this.nodeViews.forEach((view, index) => {
       const { button, statusIcon, stars, starIcons } = view;
       const isCurrent = index === currentLevelIndex;

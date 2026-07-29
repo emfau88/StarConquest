@@ -20,13 +20,13 @@ import {
   pointOnLink,
 } from "./link-geometry";
 import {
-  createTransportShipArt,
   isShipArtReady,
+  TransportShipArtLibrary,
 } from "./ShipArt";
 import { SYSTEM_RADII } from "./system-geometry";
 import {
-  createSystemArt,
   isSystemArtReady,
+  SystemArtLibrary,
 } from "./SystemArt";
 
 interface Star {
@@ -46,7 +46,7 @@ const BACKDROP_URLS: Readonly<Record<SectorTheme, string>> = Object.freeze({
     `${import.meta.env.BASE_URL}assets/backgrounds/sector-nexus.webp`,
 });
 const CAPTURE_BURST_URL =
-  `${import.meta.env.BASE_URL}assets/vfx/capture-burst.png`;
+  `${import.meta.env.BASE_URL}assets/vfx/capture-burst.webp`;
 const TUTORIAL_GESTURE_URLS = Object.freeze({
   connect:
     `${import.meta.env.BASE_URL}assets/tutorial/connect-gesture.png`,
@@ -86,25 +86,17 @@ const buildStars = (): Star[] => {
 
 export class CanvasRenderer {
   private readonly stars = buildStars();
-  private readonly backdropImages: Readonly<
+  private readonly backdropImages: Partial<
     Record<SectorTheme, HTMLImageElement>
-  > = {
-    "azure-frontier": loadImage(BACKDROP_URLS["azure-frontier"]),
-    "quasar-rift": loadImage(BACKDROP_URLS["quasar-rift"]),
-    "nexus-void": loadImage(BACKDROP_URLS["nexus-void"]),
-  };
-  private readonly captureBurstImage = new Image();
-  private readonly tutorialGestureImages = {
-    connect: loadImage(TUTORIAL_GESTURE_URLS.connect),
-    cut: loadImage(TUTORIAL_GESTURE_URLS.cut),
-  };
-  private readonly transportShipArt = createTransportShipArt();
-  private readonly systemArt = createSystemArt();
+  > = {};
+  private captureBurstImage: HTMLImageElement | null = null;
+  private readonly tutorialGestureImages: Partial<
+    Record<TutorialCue["kind"], HTMLImageElement>
+  > = {};
+  private readonly transportShipArt = new TransportShipArtLibrary();
+  private readonly systemArt = new SystemArtLibrary();
 
-  constructor(private readonly viewport: CanvasViewport) {
-    this.captureBurstImage.decoding = "async";
-    this.captureBurstImage.src = CAPTURE_BURST_URL;
-  }
+  constructor(private readonly viewport: CanvasViewport) {}
 
   render(scene: SceneSnapshot): void {
     const context = this.viewport.context;
@@ -117,13 +109,42 @@ export class CanvasRenderer {
     this.drawWorld(context, scene);
   }
 
+  private getBackdropImage(theme: SectorTheme): HTMLImageElement {
+    const cached = this.backdropImages[theme];
+    if (cached) {
+      return cached;
+    }
+    const image = loadImage(BACKDROP_URLS[theme]);
+    this.backdropImages[theme] = image;
+    return image;
+  }
+
+  private getCaptureBurstImage(): HTMLImageElement {
+    if (!this.captureBurstImage) {
+      this.captureBurstImage = loadImage(CAPTURE_BURST_URL);
+    }
+    return this.captureBurstImage;
+  }
+
+  private getTutorialGestureImage(
+    kind: TutorialCue["kind"],
+  ): HTMLImageElement {
+    const cached = this.tutorialGestureImages[kind];
+    if (cached) {
+      return cached;
+    }
+    const image = loadImage(TUTORIAL_GESTURE_URLS[kind]);
+    this.tutorialGestureImages[kind] = image;
+    return image;
+  }
+
   private drawBackdrop(
     context: CanvasRenderingContext2D,
     elapsedSeconds: number,
     theme: SectorTheme,
   ): void {
     const { cssWidth, cssHeight, safeRect } = this.viewport.getMetrics();
-    const backdropImage = this.backdropImages[theme];
+    const backdropImage = this.getBackdropImage(theme);
     const fallback = context.createLinearGradient(0, 0, cssWidth, cssHeight);
     fallback.addColorStop(0, "#087cca");
     fallback.addColorStop(0.48, "#0b44a3");
@@ -389,7 +410,7 @@ export class CanvasRenderer {
     context.closePath();
     context.fill();
 
-    const artwork = this.transportShipArt[owner];
+    const artwork = this.transportShipArt.get(owner);
     if (isShipArtReady(artwork)) {
       context.shadowColor = color;
       context.shadowBlur = 9;
@@ -692,16 +713,17 @@ export class CanvasRenderer {
     const fadeOut = Math.max(0, 1 - Math.max(0, progress - 0.45) / 0.55);
     const burstAlpha = fadeIn * fadeOut;
     const size = 84 + eased * 132;
+    const captureBurstImage = this.getCaptureBurstImage();
 
     if (
-      this.captureBurstImage.complete &&
-      this.captureBurstImage.naturalWidth > 0
+      captureBurstImage.complete &&
+      captureBurstImage.naturalWidth > 0
     ) {
       context.save();
       context.globalCompositeOperation = "screen";
       context.globalAlpha = burstAlpha * 0.68;
       context.drawImage(
-        this.captureBurstImage,
+        captureBurstImage,
         effect.position.x - size / 2,
         effect.position.y - size / 2,
         size,
@@ -758,7 +780,7 @@ export class CanvasRenderer {
     const dy = cue.target.y - cue.source.y;
     const angle = Math.atan2(dy, dx);
     const pulse = 0.5 + Math.sin(elapsedSeconds * 3.2) * 0.5;
-    const image = this.tutorialGestureImages[cue.kind];
+    const image = this.getTutorialGestureImage(cue.kind);
 
     context.save();
     context.globalAlpha = 0.72 + pulse * 0.18;
@@ -867,7 +889,7 @@ export class CanvasRenderer {
     const pulse =
       1 + Math.sin(elapsedSeconds * 2.1 + phaseOffset) * 0.035;
     const drawRadius = radius * pulse;
-    const artwork = this.systemArt[system.owner][system.className];
+    const artwork = this.systemArt.get(system.owner, system.className);
     const hasArtwork = isSystemArtReady(artwork);
     const energyRatio = Math.max(
       0,

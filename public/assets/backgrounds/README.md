@@ -1,6 +1,6 @@
 # Runtime background assets
 
-## starconquest-bright-nebula.png
+## Legacy source
 
 Generated with the built-in ImageGen workflow on 28 July 2026.
 
@@ -19,8 +19,9 @@ Final prompt summary:
 > restrained planets and asteroids at the extreme edges. Background only; no
 > UI, text, systems, routes, beams or ships.
 
-The generated image remains a backdrop only. Interactive systems, routes,
-ships and effects are rendered code-native in Canvas 2D.
+The original `starconquest-bright-nebula.png` is preserved under
+`assets/source/backgrounds/`, but is no longer copied into production because
+the three sector backgrounds supersede it.
 
 ## Sector backgrounds and campaign map
 

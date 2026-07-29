@@ -93,6 +93,8 @@ Die technische Basis ist vorhanden:
 - sechs spielbare, aufeinander aufbauende Level;
 - automatisierte Simulations- und Legacy-Tests;
 - feste 60-Hz-Simulationsschritte unabhängig von der Render-Bildrate;
+- bedarfsgesteuertes Runtime-Asset-Laden; Produktions-Build aktuell rund
+  1,5 MB bei 43 Dateien;
 - funktionierender GitHub-Pages-Build.
 
 Noch nicht releasefähig sind vor allem:

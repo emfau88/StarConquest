@@ -6,47 +6,41 @@ import type {
 const assetUrl = (filename: string): string =>
   `${import.meta.env.BASE_URL}assets/systems/${filename}`;
 
-type SystemArtSet = Readonly<Record<SystemClass, HTMLImageElement>>;
-
-export const createSystemArt = (): Readonly<Record<Owner, SystemArtSet>> => {
-  const player = createFactionArt("player");
-  const enemy = createFactionArt("enemy");
-  const enemy2 = createFactionArt("enemy2");
-  const neutral = createFactionArt("neutral");
-
-  return Object.freeze({
-    player,
-    enemy,
-    enemy2,
-    neutral,
-  });
+const systemFilename = (
+  owner: Owner,
+  className: SystemClass,
+): string => {
+  if (
+    className === "QUASAR" &&
+    (owner === "player" || owner === "enemy")
+  ) {
+    return `system-${owner}-quasar.webp`;
+  }
+  const tier =
+    className === "PULSAR"
+      ? "small"
+      : className === "GIANT"
+        ? "medium"
+        : "large";
+  return `system-${owner}-${tier}.webp`;
 };
+
+export class SystemArtLibrary {
+  private readonly images = new Map<string, HTMLImageElement>();
+
+  get(owner: Owner, className: SystemClass): HTMLImageElement {
+    const filename = systemFilename(owner, className);
+    const cached = this.images.get(filename);
+    if (cached) {
+      return cached;
+    }
+    const image = new Image();
+    image.decoding = "async";
+    image.src = assetUrl(filename);
+    this.images.set(filename, image);
+    return image;
+  }
+}
 
 export const isSystemArtReady = (image: HTMLImageElement): boolean =>
   image.complete && image.naturalWidth > 0;
-
-const createFactionArt = (
-  faction: Owner,
-): SystemArtSet => {
-  const small = createImage(assetUrl(`system-${faction}-small.png`));
-  const medium = createImage(assetUrl(`system-${faction}-medium.png`));
-  const large = createImage(assetUrl(`system-${faction}-large.png`));
-  const quasar =
-    faction === "player" || faction === "enemy"
-      ? createImage(assetUrl(`system-${faction}-quasar.png`))
-      : large;
-
-  return Object.freeze({
-    PULSAR: small,
-    GIANT: medium,
-    QUASAR: quasar,
-    NEXUS: large,
-  });
-};
-
-const createImage = (source: string): HTMLImageElement => {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = source;
-  return image;
-};
