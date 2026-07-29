@@ -217,6 +217,7 @@ Bereits umgesetzt:
 - heller, freundlicher Runtime-Hintergrund;
 - vereinfachte Routen und finale Fraktions-Transportschiffe;
 - überarbeitete Boost-, Cut- und Capture-Darstellung;
+- klare Angriffswarnungen und getrennte Sieg-/Niederlage-Darstellung;
 - modulares Polished-Casual-HUD;
 - mittlerer System-Kontroll-Batch für Spieler, Gegner und Neutral;
 - kleine und große Systemvarianten für alle drei Fraktionen;
@@ -226,7 +227,7 @@ Bereits umgesetzt:
 
 Noch offen:
 
-- vollständiger Treffer-, Gefahr-, Sieg- und Niederlage-Pass;
+- vollständiger Treffer-Pass und weiterer Ergebnis-Feinschliff;
 - Effektbudget und Performanceprüfung auf echten Mobilgeräten.
 
 Aufgaben:

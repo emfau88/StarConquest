@@ -49,6 +49,8 @@ export class ResultOverlay {
     hasNextLevel: boolean,
   ): void {
     const won = status === "won";
+    this.overlay.classList.toggle("is-won", won);
+    this.overlay.classList.toggle("is-lost", !won);
     this.eyebrow.textContent = translate(
       this.locale,
       won ? "wonEyebrow" : "lostEyebrow",
@@ -67,9 +69,12 @@ export class ResultOverlay {
     this.summary.textContent = won
       ? `${localizeLevelText(level.title, this.locale)} ` +
         `${translate(this.locale, "resultSummary")} ${formatTime(elapsedSeconds)}`
-      : translate(this.locale, "battleHint");
+      : translate(this.locale, "lostSummary");
     this.nextButton.hidden = !won || !hasNextLevel;
     this.overlay.hidden = false;
+    (won && hasNextLevel ? this.nextButton : this.retryButton).focus({
+      preventScroll: true,
+    });
   }
 
   hide(): void {

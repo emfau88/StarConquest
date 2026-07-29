@@ -12,6 +12,7 @@ import type {
   Owner,
   Point,
   StarSystemView,
+  SystemThreatView,
 } from "./types";
 
 interface StarSystemState extends StarSystemView {
@@ -33,6 +34,7 @@ export type SimulationEvent =
   | {
       kind: "capture";
       owner: Owner;
+      previousOwner: Owner;
       targetId: string;
       position: Point;
     }
@@ -188,6 +190,34 @@ export class GameSimulation {
 
   getSystem(id: string): StarSystemView | undefined {
     return this.systems.find((system) => system.id === id);
+  }
+
+  getThreats(owner: Owner): readonly SystemThreatView[] {
+    return this.systems
+      .filter((system) => system.owner === owner)
+      .map((system) => {
+        const incoming = this.links.filter(
+          (link) =>
+            link.targetId === system.id && link.owner !== owner,
+        );
+        const incomingEnergy = incoming.reduce(
+          (total, link) => total + link.unitsInTransit,
+          0,
+        );
+        return {
+          systemId: system.id,
+          severity: clamp(
+            0.3 +
+              (incomingEnergy / Math.max(6, system.energy)) * 0.5 +
+              Math.max(0, incoming.length - 1) * 0.15,
+            0.3,
+            1,
+          ),
+          incomingCount: incoming.length,
+        };
+      })
+      .filter(({ incomingCount }) => incomingCount > 0)
+      .map(({ systemId, severity }) => ({ systemId, severity }));
   }
 
   drainEvents(): SimulationEvent[] {
@@ -381,6 +411,7 @@ export class GameSimulation {
       return;
     }
 
+    const previousOwner = target.owner;
     target.owner = owner;
     target.energy = Math.min(
       target.capacity,
@@ -389,6 +420,7 @@ export class GameSimulation {
     this.events.push({
       kind: "capture",
       owner,
+      previousOwner,
       targetId: target.id,
       position: { ...target.position },
     });

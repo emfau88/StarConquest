@@ -649,6 +649,18 @@ button {
   backdrop-filter: blur(5px);
 }
 
+.result-overlay.is-won {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(66, 211, 178, 0.2), transparent 42%),
+    rgba(3, 9, 20, 0.58);
+}
+
+.result-overlay.is-lost {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(205, 71, 91, 0.2), transparent 42%),
+    rgba(10, 5, 18, 0.66);
+}
+
 .result-card {
   position: relative;
   width: min(420px, 92vw);
@@ -663,6 +675,17 @@ button {
     0 0 0 6px rgba(82, 191, 255, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
   text-align: center;
+}
+
+.result-overlay.is-lost .result-card {
+  border-color: rgba(255, 139, 126, 0.48);
+  background:
+    radial-gradient(circle at 50% 0, rgba(215, 73, 91, 0.2), transparent 42%),
+    linear-gradient(145deg, rgba(89, 30, 65, 0.98), rgba(25, 18, 55, 0.98));
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.48),
+    0 0 0 6px rgba(255, 104, 95, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .result-card__emblem {
@@ -681,6 +704,31 @@ button {
   font-weight: 850;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.result-overlay.is-lost .result-card__emblem {
+  border-color: rgba(255, 199, 188, 0.8);
+  background:
+    linear-gradient(45deg, transparent 43%, #ffe1d8 44% 56%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, #ffe1d8 44% 56%, transparent 57%),
+    rgba(150, 42, 67, 0.88);
+  box-shadow:
+    0 0 0 4px rgba(255, 104, 95, 0.1),
+    0 0 22px rgba(255, 104, 95, 0.34);
+}
+
+.result-overlay.is-lost .result-card__emblem::before,
+.result-overlay.is-lost .result-card__emblem::after {
+  display: none;
+}
+
+.result-overlay.is-lost .result-card__eyebrow {
+  color: #ffad9e;
+}
+
+.result-overlay.is-lost .result-card__stars {
+  color: #a797b7;
+  text-shadow: none;
 }
 
 .result-card h1 {

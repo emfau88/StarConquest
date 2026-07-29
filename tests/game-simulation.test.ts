@@ -475,6 +475,11 @@ test("hostile incoming links survive a third-party capture", () => {
           link.owner === "enemy" && link.targetId === "contested",
       ),
   );
+  const threat = simulation
+    .getThreats("player")
+    .find((candidate) => candidate.systemId === "contested");
+  assert.ok(threat);
+  assert.ok(threat.severity >= 0.3 && threat.severity <= 1);
 });
 
 test("captured sources collapse old links into a final payload", () => {
@@ -537,9 +542,12 @@ test("a player link grows, attacks and wins the duel", () => {
 
   assert.equal(simulation.getSystem("enemy")?.owner, "player");
   assert.equal(simulation.status, "won");
-  assert.ok(
-    simulation.drainEvents().some((event) => event.kind === "capture"),
-  );
+  const capture = simulation
+    .drainEvents()
+    .find((event) => event.kind === "capture");
+  assert.ok(capture);
+  assert.equal(capture.owner, "player");
+  assert.equal(capture.previousOwner, "enemy");
 });
 
 test("cutting an active link removes it and launches stored energy", () => {

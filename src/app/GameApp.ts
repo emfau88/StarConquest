@@ -367,6 +367,10 @@ export class GameApp {
             this.tutorialStage = 1;
             this.hud.setStatusKey("cutHint");
           }
+        } else if (
+          this.simulation.getSystem(event.targetId)?.owner === "player"
+        ) {
+          this.hud.setStatusKey("underAttack");
         }
         break;
       case "capture":
@@ -386,6 +390,8 @@ export class GameApp {
             this.tutorialStage = 2;
             this.hud.setStatusKey("battleHint");
           }
+        } else if (event.previousOwner === "player") {
+          this.hud.setStatusKey("systemLost");
         }
         break;
       case "cut":
@@ -649,6 +655,7 @@ export class GameApp {
       cutTrail:
         this.gesture?.kind === "cut" ? this.gesture.trail : [],
       cutPreview: this.cutPreview(),
+      threats: this.simulation.getThreats("player"),
       effects: this.effects,
       tutorialCue: this.tutorialCue(),
     };

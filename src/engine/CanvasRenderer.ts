@@ -7,6 +7,7 @@ import type {
   SectorTheme,
   StarSystemView,
   SystemClass,
+  SystemThreatView,
   TutorialCue,
   VisualEffect,
 } from "../core/types";
@@ -258,6 +259,18 @@ export class CanvasRenderer {
         scene.elapsedSeconds,
         system.id === scene.focusedSystemId,
       );
+    }
+
+    for (const threat of scene.threats) {
+      const system = systems.get(threat.systemId);
+      if (system) {
+        this.drawThreatIndicator(
+          context,
+          system,
+          threat,
+          scene.elapsedSeconds,
+        );
+      }
     }
 
     if (scene.tutorialCue) {
@@ -712,7 +725,7 @@ export class CanvasRenderer {
     const fadeIn = Math.min(1, progress * 10);
     const fadeOut = Math.max(0, 1 - Math.max(0, progress - 0.45) / 0.55);
     const burstAlpha = fadeIn * fadeOut;
-    const size = 84 + eased * 132;
+    const size = 64 + eased * 88;
     const captureBurstImage = this.getCaptureBurstImage();
 
     if (
@@ -721,7 +734,7 @@ export class CanvasRenderer {
     ) {
       context.save();
       context.globalCompositeOperation = "screen";
-      context.globalAlpha = burstAlpha * 0.68;
+      context.globalAlpha = burstAlpha * 0.5;
       context.drawImage(
         captureBurstImage,
         effect.position.x - size / 2,
@@ -732,12 +745,12 @@ export class CanvasRenderer {
       context.restore();
     }
 
-    const ringRadius = 30 + eased * 92;
-    context.globalAlpha = fadeOut * 0.78;
+    const ringRadius = 26 + eased * 58;
+    context.globalAlpha = fadeOut * 0.7;
     context.strokeStyle = color;
     context.shadowColor = color;
-    context.shadowBlur = 16;
-    context.lineWidth = 5 - progress * 3.2;
+    context.shadowBlur = 12;
+    context.lineWidth = 4 - progress * 2.2;
     context.beginPath();
     context.arc(
       effect.position.x,
@@ -749,12 +762,12 @@ export class CanvasRenderer {
     context.stroke();
 
     context.lineWidth = 2;
-    context.globalAlpha = burstAlpha * 0.7;
-    for (let index = 0; index < 6; index += 1) {
+    context.globalAlpha = burstAlpha * 0.58;
+    for (let index = 0; index < 4; index += 1) {
       const angle =
-        effect.id * 0.73 + index * (Math.PI / 3) + progress * 0.28;
-      const distance = 42 + eased * (48 + (index % 3) * 6);
-      const particleSize = 2.4 + (1 - progress) * (index % 2 ? 2 : 3.5);
+        effect.id * 0.73 + index * (Math.PI / 2) + progress * 0.24;
+      const distance = 32 + eased * (34 + (index % 2) * 6);
+      const particleSize = 2 + (1 - progress) * (index % 2 ? 1.5 : 2.5);
       const x = effect.position.x + Math.cos(angle) * distance;
       const y = effect.position.y + Math.sin(angle) * distance;
       context.save();
@@ -1037,6 +1050,53 @@ export class CanvasRenderer {
     context.shadowBlur = 0;
 
     this.drawTierPips(context, system.className, radius, color);
+    context.restore();
+  }
+
+  private drawThreatIndicator(
+    context: CanvasRenderingContext2D,
+    system: StarSystemView,
+    threat: SystemThreatView,
+    elapsedSeconds: number,
+  ): void {
+    const pulse =
+      0.5 + Math.sin(elapsedSeconds * 5.2 + system.id.length) * 0.5;
+    const radius =
+      SYSTEM_RADII[system.className] + 25 + pulse * 3;
+    const color = "#ff8a70";
+
+    context.save();
+    context.translate(system.position.x, system.position.y);
+    context.globalAlpha = 0.52 + threat.severity * 0.32;
+    context.strokeStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 8 + threat.severity * 7;
+    context.lineWidth = 3.5;
+    context.setLineDash([9, 11]);
+    context.lineDashOffset = elapsedSeconds * 24;
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.stroke();
+    context.setLineDash([]);
+
+    const markerY = -radius - 16;
+    context.fillStyle = "rgba(63, 18, 31, 0.94)";
+    context.strokeStyle = "#ffd4c8";
+    context.lineWidth = 2;
+    context.shadowBlur = 10;
+    context.beginPath();
+    context.moveTo(0, markerY - 10);
+    context.lineTo(11, markerY + 9);
+    context.lineTo(-11, markerY + 9);
+    context.closePath();
+    context.fill();
+    context.stroke();
+    context.shadowBlur = 0;
+    context.fillStyle = "#fff7f3";
+    context.font = "900 14px Inter, system-ui, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText("!", 0, markerY + 3);
     context.restore();
   }
 

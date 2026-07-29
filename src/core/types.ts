@@ -61,6 +61,11 @@ export interface CutPreview {
   prominentBoost: boolean;
 }
 
+export interface SystemThreatView {
+  systemId: string;
+  severity: number;
+}
+
 export interface TutorialCue {
   kind: "connect" | "cut";
   source: Point;
@@ -78,6 +83,7 @@ export interface SceneSnapshot {
   dragPreview: DragPreview | null;
   cutTrail: readonly Point[];
   cutPreview: CutPreview | null;
+  threats: readonly SystemThreatView[];
   effects: readonly VisualEffect[];
   tutorialCue: TutorialCue | null;
 }

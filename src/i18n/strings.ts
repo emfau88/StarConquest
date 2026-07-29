@@ -22,6 +22,8 @@ const STRINGS = {
     connectHint: "Drag from your blue system to another star",
     cutHint: "Swipe across your blue link to launch its stored energy",
     battleHint: "Build routes, reinforce your network and capture every hostile system",
+    underAttack: "Your network is under attack — reinforce the marked system",
+    systemLost: "System lost — stabilize the nearest blue system",
     paused: "Simulation paused",
     selected: "System selected",
     insufficient: "That system needs more energy",
@@ -35,6 +37,7 @@ const STRINGS = {
     retry: "Play again",
     nextSector: "Next sector",
     resultSummary: "completed in",
+    lostSummary: "Regroup, protect threatened systems and try a shorter route",
   },
   de: {
     sectorLabel: "Sektor",
@@ -57,6 +60,8 @@ const STRINGS = {
     connectHint: "Ziehe vom blauen System zu einem anderen Stern",
     cutHint: "Wische durch deine blaue Verbindung, um Energie zu starten",
     battleHint: "Baue Routen, verstärke dein Netz und erobere alle feindlichen Systeme",
+    underAttack: "Dein Netz wird angegriffen – verstärke das markierte System",
+    systemLost: "System verloren – stabilisiere das nächste blaue System",
     paused: "Simulation pausiert",
     selected: "System ausgewählt",
     insufficient: "Dieses System braucht mehr Energie",
@@ -70,6 +75,7 @@ const STRINGS = {
     retry: "Nochmal spielen",
     nextSector: "Nächster Sektor",
     resultSummary: "abgeschlossen in",
+    lostSummary: "Sammle dich, schütze bedrohte Systeme und wähle eine kürzere Route",
   },
 } as const;
 

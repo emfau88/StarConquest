@@ -23,6 +23,7 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Link-Ladung und Schnittausbeute direkt im Spielfeld sichtbar machen.
 - [x] Runtime-Grafiken komprimieren und nur bei tatsächlichem Bedarf laden.
 - [x] Gegner-KI um Verstärkung, Verteidigungspriorität und Cuts erweitern.
+- [x] Gefahr, Capture sowie Sieg und Niederlage klarer und ruhiger inszenieren.
 
 ## Danach
 
