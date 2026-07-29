@@ -8,11 +8,12 @@ export const createTransportShipArt = (): Readonly<
 > => {
   const player = createImage(assetUrl("transport-player.png"));
   const enemy = createImage(assetUrl("transport-enemy.png"));
+  const enemy2 = createImage(assetUrl("transport-enemy2.png"));
 
   return Object.freeze({
     player,
     enemy,
-    enemy2: enemy,
+    enemy2,
     neutral: null,
   });
 };

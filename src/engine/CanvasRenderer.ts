@@ -426,7 +426,12 @@ export class CanvasRenderer {
     context.closePath();
     context.fill();
 
-    context.fillStyle = owner === "player" ? "#153c78" : "#55233a";
+    context.fillStyle =
+      owner === "player"
+        ? "#153c78"
+        : owner === "enemy2"
+          ? "#725013"
+          : "#55233a";
     context.beginPath();
     context.ellipse(3, 0, 3.2, 1.9, 0, 0, Math.PI * 2);
     context.fill();

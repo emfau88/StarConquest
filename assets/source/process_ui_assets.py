@@ -33,6 +33,11 @@ PROGRESSION_ICON_NAMES = (
     "completed",
     "star",
 )
+HELION_SYSTEM_TIERS = (
+    "small",
+    "medium",
+    "large",
+)
 
 
 def remove_magenta_fringe(image: Image.Image) -> Image.Image:
@@ -51,6 +56,24 @@ def remove_magenta_fringe(image: Image.Image) -> Image.Image:
     cleaned = Image.new("RGBA", image.size)
     cleaned.putdata(pixels)
     return cleaned
+
+
+def alpha_column_runs(image: Image.Image) -> list[tuple[int, int]]:
+    alpha = image.getchannel("A")
+    active_columns = [
+        alpha.crop((x, 0, x + 1, image.height)).getbbox() is not None
+        for x in range(image.width)
+    ]
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for x, active in enumerate((*active_columns, False)):
+        if active and start is None:
+            start = x
+        elif not active and start is not None:
+            if x - start > 8:
+                runs.append((start, x))
+            start = None
+    return runs
 
 
 def resize_capture_texture() -> None:
@@ -235,6 +258,56 @@ def split_progression_icons() -> None:
             square.save(destination / f"{name}.png", optimize=True)
 
 
+def split_helion_assets() -> None:
+    source_directory = ROOT / "assets/source/factions/helion"
+    system_destination = ROOT / "public/assets/systems"
+    ship_destination = ROOT / "public/assets/ships"
+
+    with Image.open(
+        source_directory / "helion-systems-transparent.png"
+    ) as sheet:
+        sheet = sheet.convert("RGBA")
+        column_runs = alpha_column_runs(sheet)
+        if len(column_runs) != len(HELION_SYSTEM_TIERS):
+            raise RuntimeError(
+                "Generated Helion sheet does not contain three separated systems"
+            )
+
+        for tier, (left, right) in zip(
+            HELION_SYSTEM_TIERS,
+            column_runs,
+            strict=True,
+        ):
+            cell = sheet.crop((left, 0, right, sheet.height))
+            bounds = cell.getchannel("A").getbbox()
+            if bounds is None:
+                raise RuntimeError(f"Generated Helion system is empty: {tier}")
+
+            system = cell.crop(bounds)
+            padding = max(24, round(max(system.size) * 0.06))
+            side = max(system.size) + padding * 2
+            square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+            square.alpha_composite(
+                system,
+                ((side - system.width) // 2, (side - system.height) // 2),
+            )
+            square.thumbnail((512, 512), Image.Resampling.LANCZOS)
+            square.save(
+                system_destination / f"system-enemy2-{tier}.png",
+                optimize=True,
+            )
+
+    with Image.open(
+        source_directory / "transport-helion-transparent.png"
+    ) as ship:
+        ship = ship.convert("RGBA")
+        ship = ship.resize((768, 512), Image.Resampling.LANCZOS)
+        ship.save(
+            ship_destination / "transport-enemy2.png",
+            optimize=True,
+        )
+
+
 if __name__ == "__main__":
     resize_capture_texture()
     split_hud_icons()
@@ -242,3 +315,4 @@ if __name__ == "__main__":
     split_tutorial_gestures()
     split_quasar_systems()
     split_progression_icons()
+    split_helion_assets()

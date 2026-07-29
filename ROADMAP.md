@@ -11,7 +11,7 @@ fünf Kampagnenmissionen.
 | Bereich | Status | Aktueller Stand |
 |---|---|---|
 | Vision und Art Direction | Weitgehend abgeschlossen | Polished Casual, helle Farbwelt und Styleframe 03 sind festgelegt; finaler Name und Logo fehlen |
-| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Fraktions-Transportschiffe und vollständige System-Größenfamilie sind integriert |
+| Gameplay Art Pass | In Arbeit | Hintergrund, Routen, finale Transporter, vollständige System-Größenfamilie und eine runtime-fertige orange Helion-Fraktion sind integriert |
 | HUD und Mobile-Grundlage | In Arbeit | Modulares HUD, 48-Pixel-Touchziele, Safe Areas, Querformat und Fullscreen-Grundlage vorhanden |
 | Onboarding und Progression | In Arbeit | Visuelles Gesten-Tutorial, Ergebnisdialog, Next Sector sowie Kampagnenkarte mit persistenter Freischaltung und Sternwertung vorhanden |
 | Kampagne und Balance | In Arbeit | Fünf spielbare Missionen mit Simulationsprüfung; drei weitere Missionen und menschliche Balance-Testläufe fehlen |

@@ -27,7 +27,8 @@ The current slice includes:
 - three difficulty-themed sector backgrounds, generated HUD icons and a
   faction-colored capture burst;
 - faction-specific transport and star-system artwork, including distinct
-  Quasar and Nexus silhouettes, with Canvas fallbacks;
+  Quasar and Nexus silhouettes plus a runtime-ready orange Helion faction,
+  with Canvas fallbacks;
 - automated simulation tests and GitHub Pages deployment.
 
 The legacy source remains frozen in `reference/legacy-build/`. Its protected

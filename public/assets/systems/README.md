@@ -14,6 +14,8 @@ asset for every possible state.
   `system-enemy-large.png`.
 - Neutral: `system-neutral-small.png`, `system-neutral-medium.png`,
   `system-neutral-large.png`.
+- Helion Compact: `system-enemy2-small.png`, `system-enemy2-medium.png`,
+  `system-enemy2-large.png`.
 - Class-specific Quasars: `system-player-quasar.png` and
   `system-enemy-quasar.png`.
 
@@ -25,6 +27,9 @@ Runtime class mapping:
 - `NEXUS`: existing heavy large-tier command station;
 - neutral Quasars fall back to the neutral large tier until one is used by a
   campaign level.
+- Helion Quasars currently use the large solar-citadel silhouette. The faction
+  is runtime-ready for a later campaign mission but is not injected into the
+  balanced five-sector slice yet.
 
 The three source generations used the built-in ImageGen workflow. Each asset
 was generated front-on on a flat chroma-key background, then converted locally

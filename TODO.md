@@ -15,6 +15,8 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Ein finales blaues Transportschiff erstellen.
 - [x] Ein finales rotes Transportschiff erstellen.
 - [x] Beide Schiffe auf Routen animieren und auf Mobile prüfen.
+- [x] Orange Helion-Systemfamilie und Transporter für spätere Sektoren
+  runtime-fertig integrieren.
 
 ## Danach
 

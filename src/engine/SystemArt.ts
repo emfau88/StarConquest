@@ -11,12 +11,13 @@ type SystemArtSet = Readonly<Record<SystemClass, HTMLImageElement>>;
 export const createSystemArt = (): Readonly<Record<Owner, SystemArtSet>> => {
   const player = createFactionArt("player");
   const enemy = createFactionArt("enemy");
+  const enemy2 = createFactionArt("enemy2");
   const neutral = createFactionArt("neutral");
 
   return Object.freeze({
     player,
     enemy,
-    enemy2: enemy,
+    enemy2,
     neutral,
   });
 };
@@ -25,15 +26,15 @@ export const isSystemArtReady = (image: HTMLImageElement): boolean =>
   image.complete && image.naturalWidth > 0;
 
 const createFactionArt = (
-  faction: "player" | "enemy" | "neutral",
+  faction: Owner,
 ): SystemArtSet => {
   const small = createImage(assetUrl(`system-${faction}-small.png`));
   const medium = createImage(assetUrl(`system-${faction}-medium.png`));
   const large = createImage(assetUrl(`system-${faction}-large.png`));
   const quasar =
-    faction === "neutral"
-      ? large
-      : createImage(assetUrl(`system-${faction}-quasar.png`));
+    faction === "player" || faction === "enemy"
+      ? createImage(assetUrl(`system-${faction}-quasar.png`))
+      : large;
 
   return Object.freeze({
     PULSAR: small,
