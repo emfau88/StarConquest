@@ -78,7 +78,8 @@ Die technische Basis ist vorhanden:
 - modularer Vite-/TypeScript-Aufbau;
 - Canvas-2D-Rendering mit skalierbarer 800×450-Welt;
 - modular getrenntes HUD für Topbar, Steuerung, Status und Ergebnisfenster;
-- Energieproduktion, Links, Transfer, Eroberung und einfache Gegner-KI;
+- Energieproduktion, Links, Transfer und Eroberung;
+- deterministische Gegner-KI für Verstärkung, Verteidigung, Angriff und Cut;
 - Boost, Cut, Sieg und Niederlage;
 - heller Runtime-Hintergrund im festgelegten Polished-Casual-Stil;
 - dünne Energierouten mit je einem finalen Transportschiff für Spieler und Gegner;

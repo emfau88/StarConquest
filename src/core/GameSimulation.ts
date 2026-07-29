@@ -38,6 +38,7 @@ export type SimulationEvent =
     }
   | {
       kind: "cut";
+      owner: Owner;
       position: Point;
       targetPosition: Point;
       prominentBoost: boolean;
@@ -115,6 +116,7 @@ const distance = (a: Point, b: Point): number =>
 
 const HOSTILE_OWNERS = ["enemy", "enemy2"] as const;
 type HostileOwner = (typeof HOSTILE_OWNERS)[number];
+const AI_CUT_FRACTION = 0.22;
 
 export class GameSimulation {
   private systems: StarSystemState[] = [];
@@ -122,6 +124,10 @@ export class GameSimulation {
   private events: SimulationEvent[] = [];
   private nextLinkId = 1;
   private aiElapsedSeconds = 0;
+  private hostileActionCounts: Record<HostileOwner, number> = {
+    enemy: 0,
+    enemy2: 0,
+  };
 
   elapsedSeconds = 0;
   status: GameStatus = "playing";
@@ -148,6 +154,7 @@ export class GameSimulation {
     this.events = [];
     this.nextLinkId = 1;
     this.aiElapsedSeconds = 0;
+    this.hostileActionCounts = { enemy: 0, enemy2: 0 };
     this.elapsedSeconds = 0;
     this.status = "playing";
   }
@@ -240,10 +247,18 @@ export class GameSimulation {
   }
 
   cutPlayerLink(linkId: string, cutFraction: number): boolean {
+    return this.cutLink(linkId, cutFraction, "player");
+  }
+
+  private cutLink(
+    linkId: string,
+    cutFraction: number,
+    owner: Owner,
+  ): boolean {
     const link = this.links.find(
       (candidate) =>
         candidate.id === linkId &&
-        candidate.owner === "player" &&
+        candidate.owner === owner &&
         candidate.state === "active",
     );
     if (!link) {
@@ -272,6 +287,7 @@ export class GameSimulation {
     this.removeLink(link);
     this.events.push({
       kind: "cut",
+      owner,
       position: { ...source.position },
       targetPosition: { ...target.position },
       prominentBoost: outcome.prominentBoost,
@@ -389,30 +405,36 @@ export class GameSimulation {
       return { ok: false, reason: "invalid-target" };
     }
     if (this.hasDuplicateLink(sourceId, targetId)) {
-      this.events.push({
-        kind: "invalid",
-        position: { ...target.position },
-        reason: "duplicate-link",
-      });
+      if (owner === "player") {
+        this.events.push({
+          kind: "invalid",
+          position: { ...target.position },
+          reason: "duplicate-link",
+        });
+      }
       return { ok: false, reason: "duplicate-link" };
     }
 
     const cost = this.formationCost(sourceId, targetId);
     if (cost === null || source.energy <= cost + 1) {
-      this.events.push({
-        kind: "invalid",
-        position: { ...source.position },
-        reason: "insufficient-energy",
-      });
+      if (owner === "player") {
+        this.events.push({
+          kind: "invalid",
+          position: { ...source.position },
+          reason: "insufficient-energy",
+        });
+      }
       return { ok: false, reason: "insufficient-energy" };
     }
 
     if (this.outgoingLinkCount(source.id) >= source.maxOutgoingLinks) {
-      this.events.push({
-        kind: "invalid",
-        position: { ...source.position },
-        reason: "link-limit",
-      });
+      if (owner === "player") {
+        this.events.push({
+          kind: "invalid",
+          position: { ...source.position },
+          reason: "link-limit",
+        });
+      }
       return { ok: false, reason: "link-limit" };
     }
 
@@ -450,15 +472,175 @@ export class GameSimulation {
 
   private performHostileActions(): void {
     for (const owner of HOSTILE_OWNERS) {
+      if (this.status !== "playing") {
+        break;
+      }
       this.performFactionAction(owner);
     }
   }
 
   private performFactionAction(owner: HostileOwner): void {
-    const factionSources = this.systems
+    const hasFactionSystems = this.systems.some(
+      (system) => system.owner === owner,
+    );
+    if (!hasFactionSystems) {
+      return;
+    }
+    this.hostileActionCounts[owner] += 1;
+    if (this.tryReinforceThreatenedSystem(owner)) {
+      return;
+    }
+    if (this.tryCutHostileRoute(owner)) {
+      return;
+    }
+    this.tryCreateHostileAttack(owner);
+  }
+
+  private tryReinforceThreatenedSystem(owner: HostileOwner): boolean {
+    const threatenedSystems = this.systems
       .filter((system) => system.owner === owner)
+      .map((system) => {
+        const incomingThreats = this.links.filter(
+          (link) =>
+            link.targetId === system.id && link.owner !== owner,
+        );
+        const incomingEnergy = incomingThreats.reduce(
+          (total, link) => total + Math.max(3, link.unitsInTransit),
+          0,
+        );
+        return {
+          system,
+          incomingThreats,
+          urgency:
+            incomingEnergy / Math.max(1, system.energy) +
+            (1 - system.energy / system.capacity),
+        };
+      })
+      .filter(({ incomingThreats }) => incomingThreats.length > 0)
+      .sort(
+        (a, b) =>
+          b.urgency - a.urgency ||
+          a.system.id.localeCompare(b.system.id),
+      );
+
+    for (const { system: target } of threatenedSystems) {
+      const alreadyReinforced = this.links.some(
+        (link) =>
+          link.owner === owner &&
+          link.targetId === target.id &&
+          link.sourceId !== target.id,
+      );
+      if (alreadyReinforced) {
+        continue;
+      }
+      const sources = this.systems
+        .filter(
+          (source) =>
+            source.owner === owner &&
+            source !== target &&
+            this.outgoingLinkCount(source.id) <
+              source.maxOutgoingLinks &&
+            !this.hasDuplicateLink(source.id, target.id),
+        )
+        .map((source) => ({
+          source,
+          cost: this.formationCost(source.id, target.id),
+        }))
+        .filter(
+          (
+            candidate,
+          ): candidate is {
+            source: StarSystemState;
+            cost: number;
+          } =>
+            candidate.cost !== null &&
+            candidate.source.energy > candidate.cost + 1,
+        )
+        .sort(
+          (a, b) =>
+            b.source.energy -
+              b.cost -
+              (a.source.energy - a.cost) ||
+            a.source.id.localeCompare(b.source.id),
+        );
+      const source = sources[0]?.source;
+      if (source && this.createLink(source.id, target.id, owner).ok) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private tryCutHostileRoute(owner: HostileOwner): boolean {
+    const cadence = Math.max(2, 7 - this.level.difficulty);
+    const candidates = this.links
+      .filter(
+        (link) => link.owner === owner && link.state === "active",
+      )
+      .map((link) => {
+        const target = this.findSystem(link.targetId);
+        return target && target.owner !== owner
+          ? {
+              link,
+              target,
+              outcome: calculateCutOutcome(
+                link.unitsInTransit,
+                AI_CUT_FRACTION,
+              ),
+            }
+          : null;
+      })
+      .filter(
+        (
+          candidate,
+        ): candidate is {
+          link: EnergyLinkState;
+          target: StarSystemState;
+          outcome: CutOutcome;
+        } => candidate !== null,
+      )
+      .sort(
+        (a, b) =>
+          b.outcome.forwardEnergy / Math.max(1, b.target.energy) -
+            a.outcome.forwardEnergy / Math.max(1, a.target.energy) ||
+          a.link.id.localeCompare(b.link.id),
+      );
+
+    for (const candidate of candidates) {
+      const canCapture =
+        candidate.outcome.forwardEnergy >= candidate.target.energy;
+      const worthwhilePressure =
+        this.hostileActionCounts[owner] % cadence === 0 &&
+        candidate.outcome.forwardEnergy >=
+          Math.max(4, candidate.target.energy * 0.75);
+      if (
+        (canCapture || worthwhilePressure) &&
+        this.cutLink(candidate.link.id, AI_CUT_FRACTION, owner)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private tryCreateHostileAttack(owner: HostileOwner): boolean {
+    const factionSources = this.systems
+      .filter(
+        (system) =>
+          system.owner === owner &&
+          this.outgoingLinkCount(system.id) <
+            system.maxOutgoingLinks,
+      )
       .sort((a, b) => b.energy - a.energy);
     const distanceWeight = owner === "enemy2" ? 0.006 : 0.012;
+    const defensiveTargets = new Set(
+      this.links
+        .filter((link) => {
+          const target = this.findSystem(link.targetId);
+          return target?.owner === owner && link.owner !== owner;
+        })
+        .map((link) => link.sourceId),
+    );
 
     for (const source of factionSources) {
       const targets = this.systems
@@ -466,22 +648,29 @@ export class GameSimulation {
           (system) =>
             system !== source &&
             system.owner !== owner &&
-            !this.hasDuplicateLink(source.id, system.id),
+            !this.hasDuplicateLink(source.id, system.id) &&
+            source.energy >
+              (this.formationCost(source.id, system.id) ??
+                Number.POSITIVE_INFINITY) +
+                1,
         )
         .sort((a, b) => {
           const aScore =
             a.energy +
-            distance(source.position, a.position) * distanceWeight;
+            distance(source.position, a.position) * distanceWeight -
+            (defensiveTargets.has(a.id) ? 24 : 0);
           const bScore =
             b.energy +
-            distance(source.position, b.position) * distanceWeight;
-          return aScore - bScore;
+            distance(source.position, b.position) * distanceWeight -
+            (defensiveTargets.has(b.id) ? 24 : 0);
+          return aScore - bScore || a.id.localeCompare(b.id);
         });
       const target = targets[0];
       if (target && this.createLink(source.id, target.id, owner).ok) {
-        return;
+        return true;
       }
     }
+    return false;
   }
 
   private evaluateOutcome(): void {

@@ -88,6 +88,35 @@ const runExpansionBot = (
 
     const systems = simulation.getSystems();
     const links = simulation.getLinks();
+    const systemsById = new Map(
+      systems.map((system) => [system.id, system]),
+    );
+    const cutCandidate = links
+      .filter(
+        (link) =>
+          link.owner === "player" && link.state === "active",
+      )
+      .map((link) => {
+        const target = systemsById.get(link.targetId);
+        const outcome = simulation.previewPlayerCut(link.id, 0.2);
+        return target && target.owner !== "player" && outcome
+          ? { link, target, outcome }
+          : null;
+      })
+      .filter((candidate) => candidate !== null)
+      .sort(
+        (a, b) =>
+          b.outcome.forwardEnergy / Math.max(1, b.target.energy) -
+          a.outcome.forwardEnergy / Math.max(1, a.target.energy),
+      )[0];
+    if (
+      cutCandidate &&
+      cutCandidate.outcome.forwardEnergy >=
+        Math.max(3, cutCandidate.target.energy * 0.75)
+    ) {
+      simulation.cutPlayerLink(cutCandidate.link.id, 0.2);
+      continue;
+    }
     const sources = systems
       .filter((system) => system.owner === "player")
       .sort((a, b) => b.energy - a.energy);
@@ -235,7 +264,88 @@ test("Helion systems expand with orange-owned links", () => {
   );
 });
 
-test("a simple deterministic expansion strategy can win every sector", () => {
+test("hostile AI reinforces an owned system under attack", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    difficulty: 4,
+    aiActionIntervalSeconds: 0.5,
+    systems: [
+      {
+        id: "player",
+        owner: "player",
+        className: "QUASAR",
+        position: { x: 100, y: 450 },
+        startEnergy: 80,
+      },
+      {
+        id: "enemy-front",
+        owner: "enemy",
+        className: "PULSAR",
+        position: { x: 500, y: 450 },
+        startEnergy: 10,
+      },
+      {
+        id: "enemy-reserve",
+        owner: "enemy",
+        className: "GIANT",
+        position: { x: 700, y: 450 },
+        startEnergy: 80,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  simulation.createPlayerLink("player", "enemy-front");
+  advance(simulation, 0.6);
+
+  assert.ok(
+    simulation
+      .getLinks()
+      .some(
+        (link) =>
+          link.owner === "enemy" &&
+          link.sourceId === "enemy-reserve" &&
+          link.targetId === "enemy-front",
+      ),
+  );
+});
+
+test("hostile AI uses the same cut rule to finish a pressured target", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    difficulty: 6,
+    tutorialNoCost: false,
+    aiActionIntervalSeconds: 0.4,
+    systems: [
+      {
+        id: "player",
+        owner: "player",
+        className: "GIANT",
+        position: { x: 500, y: 450 },
+        startEnergy: 7,
+      },
+      {
+        id: "enemy",
+        owner: "enemy",
+        className: "QUASAR",
+        position: { x: 300, y: 450 },
+        startEnergy: 80,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  advance(simulation, 2);
+
+  assert.ok(
+    simulation
+      .drainEvents()
+      .some(
+        (event) =>
+          event.kind === "cut" && event.owner === "enemy",
+      ),
+  );
+});
+
+test("a deterministic cut-aware strategy can win every sector", () => {
   for (const level of LEVELS) {
     const simulation = runExpansionBot(level);
     assert.equal(

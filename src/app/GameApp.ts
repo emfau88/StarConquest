@@ -389,18 +389,22 @@ export class GameApp {
         }
         break;
       case "cut":
-        this.audio.play(event.prominentBoost ? "boost" : "cut");
+        if (event.owner === "player") {
+          this.audio.play(event.prominentBoost ? "boost" : "cut");
+        }
         if (event.prominentBoost) {
           this.addEffect(
             "boost",
             event.position,
             event.targetPosition,
-            "player",
+            event.owner,
             0.58,
           );
         }
-        this.tutorialStage = 2;
-        this.hud.setStatusKey("battleHint");
+        if (event.owner === "player") {
+          this.tutorialStage = 2;
+          this.hud.setStatusKey("battleHint");
+        }
         break;
       case "invalid":
         this.addEffect("invalid", event.position);

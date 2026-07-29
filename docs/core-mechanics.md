@@ -109,6 +109,21 @@ Gameplay advances in fixed `1 / 60` second steps, independently of the display
 refresh rate. Long frame gaps are capped before they enter the accumulator so a
 backgrounded tab cannot trigger a large simulation jump when it resumes.
 
+## Hostile AI policy
+
+Enemy factions use the same energy, route-limit, growth, transfer, capture, and
+cut rules as the player. On each action window they:
+
+1. reinforce an owned system that has a hostile incoming route;
+2. cut an active attack near its source when the stored energy can capture or
+   put meaningful pressure on the target;
+3. otherwise attack a weak nearby system, with systems launching attacks
+   against their network receiving a defensive priority.
+
+The decision order is deterministic. Difficulty changes how often a
+non-lethal pressure cut is considered; it never grants hidden energy or faster
+production.
+
 ## Level baseline
 
 `powerLimit` is listed because it exists in the legacy level data, but it is
