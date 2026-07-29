@@ -140,3 +140,24 @@ armor; two concentric segmented rings; eight peaceful docking modules; amber
 maintenance lights and cool-white conduits; advanced but non-military.
 Backdrop: uniform #ff00ff chroma key. Do not use magenta in the subject.
 ```
+
+## Class-specific Quasar pair
+
+Generated with the built-in OpenAI ImageGen workflow on 29 July 2026. The
+approved blue and red large-system sources were supplied as visual references
+only. Existing large assets remain the heavy Nexus silhouettes.
+
+```text
+Use case: stylized-concept
+Asset type: two-cell top-down Quasar system sprite sheet for a polished casual sci-fi strategy game
+Input images: Image 1 and Image 2 are visual style, material, faction-color, and rendering references only. Do not copy their heavy six-sided Nexus silhouettes.
+Primary request: create exactly two matching Quasar-class orbital stations in one horizontal 2-column sheet. Left cell is the player version in cobalt blue, white metal, and bright cyan energy. Right cell is the enemy version in charcoal gunmetal, warm ivory armor, and bright coral-red energy. Both must share exactly the same distinctive Quasar silhouette: a fast-looking circular turbine with four long swept radial fins, a bright open energy core, slim concentric rings, and clear rotational motion language. The silhouette must look lighter, sharper, and more energetic than the heavy hexagonal Nexus references.
+Style: top-down orthographic polished casual 2D/3D game sprite, crisp layered armor, restrained highlights, readable at 120 pixels
+Composition: each complete station centered in its own half at equal scale, generous padding, no overlap, no divider, no cropped parts
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background, completely uniform edge to edge
+Constraints: no text, no letters, no numbers, no ships, no UI, no shadows or reflections on the background; do not use magenta in either station; exactly two station sprites and no additional objects
+```
+
+The selected source is chroma-keyed with a tighter 96-point opaque threshold
+to preserve both luminous energy cores before being split into the two runtime
+PNGs.

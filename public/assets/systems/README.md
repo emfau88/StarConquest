@@ -14,13 +14,17 @@ asset for every possible state.
   `system-enemy-large.png`.
 - Neutral: `system-neutral-small.png`, `system-neutral-medium.png`,
   `system-neutral-large.png`.
+- Class-specific Quasars: `system-player-quasar.png` and
+  `system-enemy-quasar.png`.
 
 Runtime class mapping:
 
 - `PULSAR`: small;
 - `GIANT`: medium;
-- `QUASAR`: large;
-- `NEXUS`: large, rendered at the larger Nexus gameplay radius.
+- `QUASAR`: class-specific four-fin turbine for player and enemy;
+- `NEXUS`: existing heavy large-tier command station;
+- neutral Quasars fall back to the neutral large tier until one is used by a
+  campaign level.
 
 The three source generations used the built-in ImageGen workflow. Each asset
 was generated front-on on a flat chroma-key background, then converted locally

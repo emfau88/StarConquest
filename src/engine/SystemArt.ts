@@ -30,11 +30,15 @@ const createFactionArt = (
   const small = createImage(assetUrl(`system-${faction}-small.png`));
   const medium = createImage(assetUrl(`system-${faction}-medium.png`));
   const large = createImage(assetUrl(`system-${faction}-large.png`));
+  const quasar =
+    faction === "neutral"
+      ? large
+      : createImage(assetUrl(`system-${faction}-quasar.png`));
 
   return Object.freeze({
     PULSAR: small,
     GIANT: medium,
-    QUASAR: large,
+    QUASAR: quasar,
     NEXUS: large,
   });
 };

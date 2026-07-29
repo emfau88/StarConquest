@@ -9,6 +9,7 @@ Produktplanung bleibt in `ROADMAP.md`.
 
 - [x] Neun Planetensystem-Assets: Blau, Rot und Neutral in klein, mittel, groß.
 - [x] Größen-Mapping: Pulsar klein, Giant mittel, Quasar/Nexus groß.
+- [x] Quasar und Nexus durch eigene Silhouetten unterscheiden.
 - [x] Desktop- und Mobile-Lesbarkeit der Größenfamilie prüfen.
 - [ ] Capture-Wechsel aller Größen zwischen Neutral, Blau und Rot visuell testen.
 - [x] Ein finales blaues Transportschiff erstellen.

@@ -96,7 +96,7 @@ Die technische Basis ist vorhanden:
 
 Noch nicht releasefähig sind vor allem:
 
-- endgültige Unterscheidung von Quasar und Nexus über ein viertes Artwork-Tier;
+- persistente Kampagnenfreischaltung und Sternwertung;
 - vollständiges Kampf-/Capture-Game-Feel;
 - persistente Kampagnenfreischaltung, Sternwertung und Progression;
 - Onboarding und UX-Feinschliff;
@@ -218,12 +218,12 @@ Bereits umgesetzt:
 - modulares Polished-Casual-HUD;
 - mittlerer System-Kontroll-Batch für Spieler, Gegner und Neutral;
 - kleine und große Systemvarianten für alle drei Fraktionen;
+- getrennte Quasar- und Nexus-Silhouetten für Spieler und Gegner;
 - ein finales blaues und ein finales rotes Transportschiff;
 - Browserprüfung auf Desktop und Mobile-Landscape.
 
 Noch offen:
 
-- optionales viertes System-Artwork-Tier zur getrennten Quasar-/Nexus-Silhouette;
 - vollständiger Treffer-, Gefahr-, Sieg- und Niederlage-Pass;
 - Effektbudget und Performanceprüfung auf echten Mobilgeräten.
 
@@ -564,7 +564,7 @@ aber Art Direction, UX und Balance sollten nicht übersprungen werden.
 - [x] Mobile Screenshot und Bedienbarkeit prüfen.
 - [x] Kleine und große Systemvarianten erstellen.
 - [x] Finale Transportschiffe für beide Fraktionen integrieren.
-- [ ] Pulsar, Giant, Quasar und Nexus final differenzieren.
+- [x] Pulsar, Giant, Quasar und Nexus final differenzieren.
 - [ ] Finalen Effekt- und Performance-Pass durchführen.
 
 Zwischenstand: Das laufende Spiel zeigt erstmals klar die gewünschte

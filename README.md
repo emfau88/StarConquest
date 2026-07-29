@@ -26,7 +26,8 @@ The current slice includes:
 - compact campaign map with direct access to all five sectors;
 - three difficulty-themed sector backgrounds, generated HUD icons and a
   faction-colored capture burst;
-- faction-specific transport and star-system artwork with Canvas fallbacks;
+- faction-specific transport and star-system artwork, including distinct
+  Quasar and Nexus silhouettes, with Canvas fallbacks;
 - automated simulation tests and GitHub Pages deployment.
 
 The legacy source remains frozen in `reference/legacy-build/`. Its protected

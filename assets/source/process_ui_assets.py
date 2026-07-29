@@ -24,6 +24,10 @@ TUTORIAL_GESTURE_NAMES = (
     "connect-gesture",
     "cut-gesture",
 )
+QUASAR_OWNERS = (
+    "player",
+    "enemy",
+)
 
 
 def resize_capture_texture() -> None:
@@ -134,8 +138,45 @@ def split_tutorial_gestures() -> None:
             square.save(destination / f"{name}.png", optimize=True)
 
 
+def split_quasar_systems() -> None:
+    source = ROOT / "assets/source/systems/system-quasar-pair-transparent.png"
+    destination = ROOT / "public/assets/systems"
+
+    with Image.open(source) as sheet:
+        sheet = sheet.convert("RGBA")
+        cell_width = sheet.width // len(QUASAR_OWNERS)
+
+        for index, owner in enumerate(QUASAR_OWNERS):
+            cell = sheet.crop(
+                (
+                    index * cell_width,
+                    0,
+                    (index + 1) * cell_width,
+                    sheet.height,
+                )
+            )
+            bounds = cell.getchannel("A").getbbox()
+            if bounds is None:
+                raise RuntimeError(f"Generated Quasar system is empty: {owner}")
+
+            system = cell.crop(bounds)
+            padding = max(24, round(max(system.size) * 0.06))
+            side = max(system.size) + padding * 2
+            square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+            square.alpha_composite(
+                system,
+                ((side - system.width) // 2, (side - system.height) // 2),
+            )
+            square.thumbnail((512, 512), Image.Resampling.LANCZOS)
+            square.save(
+                destination / f"system-{owner}-quasar.png",
+                optimize=True,
+            )
+
+
 if __name__ == "__main__":
     resize_capture_texture()
     split_hud_icons()
     resize_backgrounds()
     split_tutorial_gestures()
+    split_quasar_systems()
