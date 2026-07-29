@@ -8,6 +8,7 @@ import type {
   Point,
   SceneSnapshot,
   StarSystemView,
+  TutorialCue,
   VisualEffect,
   VisualEffectKind,
 } from "../core/types";
@@ -355,8 +356,13 @@ export class GameApp {
           0.52,
         );
         if (event.owner === "player") {
-          this.tutorialStage = 2;
-          this.hud.setStatusKey("battleHint");
+          if (this.currentLevelIndex === 0 && this.tutorialStage < 2) {
+            this.tutorialStage = 1;
+            this.hud.setStatusKey("cutHint");
+          } else {
+            this.tutorialStage = 2;
+            this.hud.setStatusKey("battleHint");
+          }
         }
         break;
       case "cut":
@@ -595,7 +601,50 @@ export class GameApp {
       cutTrail:
         this.gesture?.kind === "cut" ? this.gesture.trail : [],
       effects: this.effects,
+      tutorialCue: this.tutorialCue(),
     };
+  }
+
+  private tutorialCue(): TutorialCue | null {
+    if (
+      this.currentLevelIndex !== 0 ||
+      this.tutorialStage >= 2 ||
+      this.simulation.status !== "playing"
+    ) {
+      return null;
+    }
+
+    const systems = this.simulation.getSystems();
+    if (this.tutorialStage === 0) {
+      const source = systems.find((system) => system.owner === "player");
+      const target = systems.find((system) => system.owner === "neutral");
+      return source && target
+        ? {
+            kind: "connect",
+            source: { ...source.position },
+            target: { ...target.position },
+          }
+        : null;
+    }
+
+    const link = this.simulation
+      .getLinks()
+      .find((candidate) =>
+        candidate.owner === "player" && candidate.state === "active"
+      );
+    const source = link
+      ? systems.find((system) => system.id === link.sourceId)
+      : undefined;
+    const target = link
+      ? systems.find((system) => system.id === link.targetId)
+      : undefined;
+    return source && target
+      ? {
+          kind: "cut",
+          source: { ...source.position },
+          target: { ...target.position },
+        }
+      : null;
   }
 
   private dragPreview(): DragPreview | null {

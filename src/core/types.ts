@@ -53,6 +53,12 @@ export interface DragPreview {
   targetId: string | null;
 }
 
+export interface TutorialCue {
+  kind: "connect" | "cut";
+  source: Point;
+  target: Point;
+}
+
 export interface SceneSnapshot {
   theme: SectorTheme;
   systems: readonly StarSystemView[];
@@ -64,4 +70,5 @@ export interface SceneSnapshot {
   dragPreview: DragPreview | null;
   cutTrail: readonly Point[];
   effects: readonly VisualEffect[];
+  tutorialCue: TutorialCue | null;
 }

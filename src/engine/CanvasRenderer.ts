@@ -6,6 +6,7 @@ import type {
   SectorTheme,
   StarSystemView,
   SystemClass,
+  TutorialCue,
   VisualEffect,
 } from "../core/types";
 import {
@@ -45,6 +46,12 @@ const BACKDROP_URLS: Readonly<Record<SectorTheme, string>> = Object.freeze({
 });
 const CAPTURE_BURST_URL =
   `${import.meta.env.BASE_URL}assets/vfx/capture-burst.png`;
+const TUTORIAL_GESTURE_URLS = Object.freeze({
+  connect:
+    `${import.meta.env.BASE_URL}assets/tutorial/connect-gesture.png`,
+  cut:
+    `${import.meta.env.BASE_URL}assets/tutorial/cut-gesture.png`,
+});
 
 const loadImage = (url: string): HTMLImageElement => {
   const image = new Image();
@@ -86,6 +93,10 @@ export class CanvasRenderer {
     "nexus-void": loadImage(BACKDROP_URLS["nexus-void"]),
   };
   private readonly captureBurstImage = new Image();
+  private readonly tutorialGestureImages = {
+    connect: loadImage(TUTORIAL_GESTURE_URLS.connect),
+    cut: loadImage(TUTORIAL_GESTURE_URLS.cut),
+  };
   private readonly transportShipArt = createTransportShipArt();
   private readonly systemArt = createSystemArt();
 
@@ -224,6 +235,14 @@ export class CanvasRenderer {
         system,
         scene.elapsedSeconds,
         system.id === scene.focusedSystemId,
+      );
+    }
+
+    if (scene.tutorialCue) {
+      this.drawTutorialCue(
+        context,
+        scene.tutorialCue,
+        scene.elapsedSeconds,
       );
     }
 
@@ -659,6 +678,112 @@ export class CanvasRenderer {
       );
       context.restore();
     }
+  }
+
+  private drawTutorialCue(
+    context: CanvasRenderingContext2D,
+    cue: TutorialCue,
+    elapsedSeconds: number,
+  ): void {
+    const dx = cue.target.x - cue.source.x;
+    const dy = cue.target.y - cue.source.y;
+    const angle = Math.atan2(dy, dx);
+    const pulse = 0.5 + Math.sin(elapsedSeconds * 3.2) * 0.5;
+    const image = this.tutorialGestureImages[cue.kind];
+
+    context.save();
+    context.globalAlpha = 0.72 + pulse * 0.18;
+    context.strokeStyle = cue.kind === "connect" ? "#b9f2ff" : "#ffd77a";
+    context.shadowColor = cue.kind === "connect" ? "#51cfff" : "#ffbd57";
+    context.shadowBlur = 12;
+    context.lineWidth = 3;
+    context.setLineDash([12, 13]);
+    context.lineDashOffset = -elapsedSeconds * 36;
+
+    if (cue.kind === "connect") {
+      context.beginPath();
+      context.moveTo(cue.source.x, cue.source.y);
+      context.lineTo(cue.target.x, cue.target.y);
+      context.stroke();
+
+      context.setLineDash([]);
+      context.lineWidth = 4;
+      context.beginPath();
+      context.arc(
+        cue.target.x,
+        cue.target.y,
+        48 + pulse * 8,
+        0,
+        Math.PI * 2,
+      );
+      context.stroke();
+
+      this.drawTutorialGestureImage(
+        context,
+        image,
+        {
+          x: cue.source.x + dx * 0.53,
+          y: cue.source.y + dy * 0.53,
+        },
+        angle - Math.PI,
+        90 + pulse * 6,
+      );
+    } else {
+      const routePoint = {
+        x: cue.source.x + dx * 0.3,
+        y: cue.source.y + dy * 0.3,
+      };
+      const length = Math.max(1, Math.hypot(dx, dy));
+      const perpendicular = {
+        x: -dy / length,
+        y: dx / length,
+      };
+      const travel = (pulse - 0.5) * 28;
+      const gesturePoint = {
+        x: routePoint.x + perpendicular.x * travel,
+        y: routePoint.y + perpendicular.y * travel,
+      };
+
+      context.setLineDash([]);
+      context.lineWidth = 5;
+      context.beginPath();
+      context.moveTo(
+        routePoint.x - perpendicular.x * 42,
+        routePoint.y - perpendicular.y * 42,
+      );
+      context.lineTo(
+        routePoint.x + perpendicular.x * 42,
+        routePoint.y + perpendicular.y * 42,
+      );
+      context.stroke();
+
+      this.drawTutorialGestureImage(
+        context,
+        image,
+        gesturePoint,
+        angle + Math.PI / 4,
+        96 + pulse * 7,
+      );
+    }
+
+    context.restore();
+  }
+
+  private drawTutorialGestureImage(
+    context: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    position: Point,
+    rotation: number,
+    size: number,
+  ): void {
+    if (!image.complete || image.naturalWidth <= 0) {
+      return;
+    }
+    context.save();
+    context.translate(position.x, position.y);
+    context.rotate(rotation);
+    context.drawImage(image, -size / 2, -size / 2, size, size);
+    context.restore();
   }
 
   private drawSystem(

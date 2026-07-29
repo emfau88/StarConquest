@@ -22,7 +22,7 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] „Next Sector“ im Ergebnisdialog ergänzen.
 - [x] Kampagnenkarte mit direkter Levelauswahl ergänzen.
 - [ ] Persistente Level-Freischaltung ergänzen.
-- [ ] Tutorial für Verbinden, Erobern und Boost-Cut abschließen.
+- [x] Kompaktes Tutorial für Verbinden, Erobern und Boost-Cut abschließen.
 - [ ] Progression und Sterne über mehrere Level speichern.
 
 ## Später – nur mit echter Spielfunktion

@@ -21,8 +21,8 @@ The current slice includes:
 - mouse and touch gestures: drag to connect, swipe across a link to cut;
 - responsive 16:9 canvas, mobile safe areas and a landscape orientation hint;
 - fullscreen toggle with a mobile orientation-lock attempt;
-- dynamic mission HUD, tutorial prompts, pause, restart, next-sector flow,
-  lightweight sound effects and result screen;
+- dynamic mission HUD, visual connect/cut tutorial cues, pause, restart,
+  next-sector flow, lightweight sound effects and result screen;
 - compact campaign map with direct access to all five sectors;
 - three difficulty-themed sector backgrounds, generated HUD icons and a
   faction-colored capture burst;

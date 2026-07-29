@@ -20,6 +20,10 @@ BACKGROUND_NAMES = (
     "sector-nexus",
     "campaign-map",
 )
+TUTORIAL_GESTURE_NAMES = (
+    "connect-gesture",
+    "cut-gesture",
+)
 
 
 def resize_capture_texture() -> None:
@@ -96,7 +100,42 @@ def resize_backgrounds() -> None:
             )
 
 
+def split_tutorial_gestures() -> None:
+    source = ROOT / "assets/source/tutorial/tutorial-gestures-transparent.png"
+    destination = ROOT / "public/assets/tutorial"
+    destination.mkdir(parents=True, exist_ok=True)
+
+    with Image.open(source) as sheet:
+        sheet = sheet.convert("RGBA")
+        cell_width = sheet.width // len(TUTORIAL_GESTURE_NAMES)
+
+        for index, name in enumerate(TUTORIAL_GESTURE_NAMES):
+            cell = sheet.crop(
+                (
+                    index * cell_width,
+                    0,
+                    (index + 1) * cell_width,
+                    sheet.height,
+                )
+            )
+            bounds = cell.getchannel("A").getbbox()
+            if bounds is None:
+                raise RuntimeError(f"Generated tutorial gesture is empty: {name}")
+
+            gesture = cell.crop(bounds)
+            padding = max(20, round(max(gesture.size) * 0.08))
+            side = max(gesture.size) + padding * 2
+            square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+            square.alpha_composite(
+                gesture,
+                ((side - gesture.width) // 2, (side - gesture.height) // 2),
+            )
+            square.thumbnail((256, 256), Image.Resampling.LANCZOS)
+            square.save(destination / f"{name}.png", optimize=True)
+
+
 if __name__ == "__main__":
     resize_capture_texture()
     split_hud_icons()
     resize_backgrounds()
+    split_tutorial_gestures()
