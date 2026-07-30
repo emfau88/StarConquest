@@ -28,6 +28,21 @@ Scene/backdrop: perfectly flat uniform solid #00ff18 chroma-key green from edge 
 Constraints: no text, no letters, no numbers, no logos, no UI frame, no stars, no space background, no exhaust trail, no drop shadow or reflection on the backdrop; no green anywhere in the subject; crisp opaque shapes suitable for background removal.
 ```
 
+## Quasar system
+
+```text
+Use case: stylized-concept
+Asset type: one production-ready 2D game sprite for StarConquest, a HELION faction QUASAR star-system node
+Input images: use the existing Helion Giant and Nexus as the exact faction style reference and the blue player Quasar only as a tier reference
+Primary request: match the Helion ivory ceramic armor, dark navy mechanical insets, polished gold framing, hot amber/orange energy, and crisp premium mobile-game rendering. Create a compact four-point solar-lens or diamond-cross silhouette around one brilliant orange-white circular core. It must look more advanced than the three-arm Helion Giant but clearly less massive and less sprawling than the six-point Helion Nexus.
+Composition: one perfectly centered, front-facing/top-down, symmetrical object on a square canvas. Keep the occupied footprint around 80-85 percent of the Helion Nexus with generous empty space.
+Scene/backdrop: perfectly flat uniform solid #00ff18 chroma-key green.
+Constraints: no text, UI, ships, stars, environment, detached particles, cast shadow, reflection, or green in the subject. Keep the glow tight and the silhouette readable at small game size.
+```
+
+The Quasar source was converted with an 8/90 soft matte, green despill, and no
+edge contraction before being exported as a 512-pixel runtime WebP.
+
 The chroma-key sources were converted locally to alpha PNGs with a soft matte
 and green despill. `assets/source/process_ui_assets.py` creates the three
 512-pixel system textures and the 768 × 512 transport texture.

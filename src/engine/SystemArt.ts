@@ -12,7 +12,7 @@ const systemFilename = (
 ): string => {
   if (
     className === "QUASAR" &&
-    (owner === "player" || owner === "enemy")
+    owner !== "neutral"
   ) {
     return `system-${owner}-quasar.webp`;
   }

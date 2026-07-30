@@ -76,6 +76,8 @@ const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
 });
 const FLEET_SHIP_SPEED_PIXELS_PER_SECOND = 205;
 const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
+const SYSTEM_ARTWORK_SCALE = 2.84;
+const SYSTEM_HALO_SCALE = 1.72;
 
 const buildStars = (): Star[] => {
   let seed = 0x51a7c0;
@@ -1657,14 +1659,14 @@ export class CanvasRenderer {
       radius * 0.18,
       0,
       0,
-      radius * 1.95,
+      radius * SYSTEM_HALO_SCALE,
     );
     halo.addColorStop(0, `${color}68`);
     halo.addColorStop(0.4, `${color}22`);
     halo.addColorStop(1, `${color}00`);
     context.fillStyle = halo;
     context.beginPath();
-    context.arc(0, 0, radius * 1.95, 0, Math.PI * 2);
+    context.arc(0, 0, radius * SYSTEM_HALO_SCALE, 0, Math.PI * 2);
     context.fill();
 
     if (hasArtwork) {
@@ -1837,11 +1839,11 @@ export class CanvasRenderer {
     color: string,
     focused: boolean,
   ): void {
-    const size = radius * 3.12 * pulse;
+    const size = radius * SYSTEM_ARTWORK_SCALE * pulse;
 
     context.save();
     context.shadowColor = color;
-    context.shadowBlur = focused ? 26 : 14;
+    context.shadowBlur = focused ? 22 : 10;
     context.drawImage(artwork, -size / 2, -size / 2, size, size);
     context.restore();
 

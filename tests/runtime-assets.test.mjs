@@ -16,6 +16,7 @@ const requiredAssets = [
   ),
   join("systems", "system-player-quasar.webp"),
   join("systems", "system-enemy-quasar.webp"),
+  join("systems", "system-enemy2-quasar.webp"),
   ...fleetOwners.flatMap((owner) =>
     fleetRoles.map((role) =>
       join("ships", `${role}-${owner}.webp`)

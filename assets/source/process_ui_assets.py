@@ -357,6 +357,33 @@ def split_helion_assets() -> None:
         )
 
 
+def optimize_helion_quasar() -> None:
+    source = (
+        ROOT
+        / "assets/source/factions/helion/system-enemy2-quasar-transparent.png"
+    )
+    destination = ROOT / "public/assets/systems/system-enemy2-quasar.webp"
+
+    with Image.open(source) as image:
+        image = image.convert("RGBA")
+        visible_alpha = image.getchannel("A").point(
+            lambda alpha: 255 if alpha > 12 else 0
+        )
+        bounds = visible_alpha.getbbox()
+        if bounds is None:
+            raise RuntimeError("Generated Helion Quasar system is empty")
+
+        system = image.crop(bounds)
+        padding = max(24, round(max(system.size) * 0.06))
+        side = max(system.size) + padding * 2
+        square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        square.alpha_composite(
+            system,
+            ((side - system.width) // 2, (side - system.height) // 2),
+        )
+        save_runtime_webp(square, destination, (512, 512))
+
+
 def optimize_core_transport_ships() -> None:
     source_directory = ROOT / "assets/source/runtime-originals/ships"
     destination = ROOT / "public/assets/ships"
@@ -396,3 +423,4 @@ if __name__ == "__main__":
     optimize_core_transport_ships()
     optimize_generated_fleet_ships()
     split_helion_assets()
+    optimize_helion_quasar()
