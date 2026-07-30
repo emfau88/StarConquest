@@ -6,6 +6,11 @@ import {
   GAME_RULES,
   SYSTEM_CLASS_SPECS,
 } from "./game-rules";
+import {
+  combatFrontFraction,
+  findHostileReciprocalLink,
+  pointBetweenSystems,
+} from "./link-combat";
 import type {
   EnergyLinkView,
   GameStatus,
@@ -60,6 +65,12 @@ export type SimulationEvent =
       position: Point;
       targetPosition: Point;
     }
+  | {
+      kind: "front-broken";
+      owner: Owner;
+      position: Point;
+      targetPosition: Point;
+    }
   | { kind: "won"; elapsedSeconds: number }
   | { kind: "lost"; elapsedSeconds: number };
 
@@ -76,6 +87,8 @@ export interface CutOutcome {
   forwardEnergy: number;
   returnedEnergy: number;
   prominentBoost: boolean;
+  frontlineResistance?: number;
+  projectedTargetEnergy?: number;
 }
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
@@ -119,6 +132,10 @@ const distance = (a: Point, b: Point): number =>
 const HOSTILE_OWNERS = ["enemy", "enemy2"] as const;
 type HostileOwner = (typeof HOSTILE_OWNERS)[number];
 const AI_CUT_FRACTION = 0.22;
+const FRONT_ATTRITION_PER_SECOND =
+  GAME_RULES.baseFlowPerSecond *
+  GAME_RULES.frontAttritionMultiplier;
+const FRONT_BREAK_EPSILON = 0.05;
 
 export class GameSimulation {
   private systems: StarSystemState[] = [];
@@ -271,9 +288,27 @@ export class GameSimulation {
         candidate.owner === "player" &&
         candidate.state === "active",
     );
-    return link
-      ? calculateCutOutcome(link.unitsInTransit, cutFraction)
-      : null;
+    if (!link) {
+      return null;
+    }
+    const outcome = calculateCutOutcome(
+      link.unitsInTransit,
+      cutFraction,
+    );
+    const reciprocal = findHostileReciprocalLink(link, this.links);
+    return reciprocal
+      ? {
+          ...outcome,
+          frontlineResistance: reciprocal.unitsInTransit,
+          projectedTargetEnergy: Math.max(
+            0,
+            outcome.forwardEnergy - reciprocal.unitsInTransit,
+          ),
+        }
+      : {
+          ...outcome,
+          projectedTargetEnergy: outcome.forwardEnergy,
+        };
   }
 
   cutPlayerLink(linkId: string, cutFraction: number): boolean {
@@ -316,7 +351,37 @@ export class GameSimulation {
         (target.position.y - source.position.y) *
           normalizedCutFraction,
     };
-    this.applyTransfer(link.owner, target, outcome.forwardEnergy);
+    let targetPayload = outcome.forwardEnergy;
+    const reciprocal = findHostileReciprocalLink(link, this.links);
+    if (reciprocal) {
+      targetPayload = Math.max(
+        0,
+        outcome.forwardEnergy - reciprocal.unitsInTransit,
+      );
+      reciprocal.unitsInTransit = Math.max(
+        0,
+        reciprocal.unitsInTransit - outcome.forwardEnergy,
+      );
+      reciprocal.intensity = linkIntensityForEnergy(
+        reciprocal.unitsInTransit,
+      );
+      if (reciprocal.unitsInTransit <= FRONT_BREAK_EPSILON) {
+        const frontFraction = combatFrontFraction(link, reciprocal);
+        const frontPosition = pointBetweenSystems(
+          source,
+          target,
+          frontFraction,
+        );
+        this.removeLink(reciprocal);
+        this.events.push({
+          kind: "front-broken",
+          owner: link.owner,
+          position: frontPosition,
+          targetPosition: { ...target.position },
+        });
+      }
+    }
+    this.applyTransfer(link.owner, target, targetPayload);
     if (source.owner === link.owner) {
       source.energy = Math.min(
         source.capacity,
@@ -360,9 +425,41 @@ export class GameSimulation {
 
       if (source.owner !== link.owner) {
         const finalPayload = link.unitsInTransit;
+        let targetPayload = finalPayload;
+        const reciprocal = findHostileReciprocalLink(
+          link,
+          this.links,
+        );
+        if (reciprocal) {
+          targetPayload = Math.max(
+            0,
+            finalPayload - reciprocal.unitsInTransit,
+          );
+          reciprocal.unitsInTransit = Math.max(
+            0,
+            reciprocal.unitsInTransit - finalPayload,
+          );
+          reciprocal.intensity = linkIntensityForEnergy(
+            reciprocal.unitsInTransit,
+          );
+          if (reciprocal.unitsInTransit <= FRONT_BREAK_EPSILON) {
+            const frontPosition = pointBetweenSystems(
+              source,
+              target,
+              combatFrontFraction(link, reciprocal),
+            );
+            this.removeLink(reciprocal);
+            this.events.push({
+              kind: "front-broken",
+              owner: link.owner,
+              position: frontPosition,
+              targetPosition: { ...target.position },
+            });
+          }
+        }
         link.unitsInTransit = 0;
         this.removeLink(link);
-        this.applyTransfer(link.owner, target, finalPayload);
+        this.applyTransfer(link.owner, target, targetPayload);
         this.events.push({
           kind: "link-collapsed",
           owner: link.owner,
@@ -383,24 +480,184 @@ export class GameSimulation {
           link.growProgress = 1;
           link.state = "active";
         }
+      }
+    }
+
+    const processedLinkIds = new Set<string>();
+    for (const link of [...this.links]) {
+      if (processedLinkIds.has(link.id)) {
+        continue;
+      }
+      const source = this.findSystem(link.sourceId);
+      const target = this.findSystem(link.targetId);
+      if (!source || !target) {
         continue;
       }
 
-      const pressure = clamp(source.energy / source.capacity, 0, 1);
-      const flowPerSecond =
-        GAME_RULES.baseFlowPerSecond *
-        (GAME_RULES.pressureFloorMultiplier +
-          pressure * GAME_RULES.pressureMultiplier);
-      const requested = flowPerSecond * deltaSeconds;
-      const delivered = Math.min(link.unitsInTransit, requested);
-      link.unitsInTransit -= delivered;
-      this.applyTransfer(link.owner, target, delivered);
+      const reciprocal = findHostileReciprocalLink(link, this.links);
+      if (reciprocal) {
+        processedLinkIds.add(link.id);
+        processedLinkIds.add(reciprocal.id);
+        const reciprocalSource = this.findSystem(reciprocal.sourceId);
+        if (!reciprocalSource) {
+          continue;
+        }
+        if (link.state === "active" && reciprocal.state === "active") {
+          this.updateContestedPair(
+            link,
+            reciprocal,
+            source,
+            reciprocalSource,
+            deltaSeconds,
+          );
+        } else {
+          if (link.state === "active") {
+            this.feedFormingFront(link, source, deltaSeconds);
+          }
+          if (reciprocal.state === "active") {
+            this.feedFormingFront(
+              reciprocal,
+              reciprocalSource,
+              deltaSeconds,
+            );
+          }
+        }
+        continue;
+      }
 
-      const pumped = Math.min(source.energy, requested);
-      source.energy -= pumped;
-      link.unitsInTransit += pumped;
-      link.intensity = linkIntensityForEnergy(link.unitsInTransit);
+      processedLinkIds.add(link.id);
+      if (link.state === "active") {
+        this.updateActiveLink(link, source, target, deltaSeconds);
+      }
     }
+  }
+
+  private routeFlowPerSecond(source: StarSystemState): number {
+    const pressure = clamp(source.energy / source.capacity, 0, 1);
+    return (
+      GAME_RULES.baseFlowPerSecond *
+      (GAME_RULES.pressureFloorMultiplier +
+        pressure * GAME_RULES.pressureMultiplier)
+    );
+  }
+
+  private frontSupplyPerSecond(source: StarSystemState): number {
+    const availableStrength = clamp(
+      source.energy / GAME_RULES.frontSupplyEnergyScale,
+      0,
+      GAME_RULES.frontSupplyEnergyCap,
+    );
+    return (
+      GAME_RULES.baseFlowPerSecond *
+      (GAME_RULES.frontSupplyFloorMultiplier + availableStrength)
+    );
+  }
+
+  private pumpIntoLink(
+    link: EnergyLinkState,
+    source: StarSystemState,
+    requested: number,
+  ): number {
+    const pumped = Math.min(source.energy, Math.max(0, requested));
+    source.energy -= pumped;
+    link.unitsInTransit += pumped;
+    link.intensity = linkIntensityForEnergy(link.unitsInTransit);
+    return pumped;
+  }
+
+  private updateActiveLink(
+    link: EnergyLinkState,
+    source: StarSystemState,
+    target: StarSystemState,
+    deltaSeconds: number,
+  ): void {
+    const requested = this.routeFlowPerSecond(source) * deltaSeconds;
+    const delivered = Math.min(link.unitsInTransit, requested);
+    link.unitsInTransit -= delivered;
+    this.applyTransfer(link.owner, target, delivered);
+    this.pumpIntoLink(link, source, requested);
+  }
+
+  private feedFormingFront(
+    link: EnergyLinkState,
+    source: StarSystemState,
+    deltaSeconds: number,
+  ): void {
+    const reserveCapacity =
+      link.formationCost +
+      GAME_RULES.formingFrontReserve -
+      link.unitsInTransit;
+    if (reserveCapacity <= 0) {
+      return;
+    }
+    this.pumpIntoLink(
+      link,
+      source,
+      Math.min(
+        reserveCapacity,
+        this.frontSupplyPerSecond(source) * deltaSeconds,
+      ),
+    );
+  }
+
+  private updateContestedPair(
+    forward: EnergyLinkState,
+    reverse: EnergyLinkState,
+    forwardSource: StarSystemState,
+    reverseSource: StarSystemState,
+    deltaSeconds: number,
+  ): void {
+    this.pumpIntoLink(
+      forward,
+      forwardSource,
+      this.frontSupplyPerSecond(forwardSource) * deltaSeconds,
+    );
+    this.pumpIntoLink(
+      reverse,
+      reverseSource,
+      this.frontSupplyPerSecond(reverseSource) * deltaSeconds,
+    );
+
+    const attrition = Math.min(
+      forward.unitsInTransit,
+      reverse.unitsInTransit,
+      FRONT_ATTRITION_PER_SECOND * deltaSeconds,
+    );
+    forward.unitsInTransit = Math.max(
+      0,
+      forward.unitsInTransit - attrition,
+    );
+    reverse.unitsInTransit = Math.max(
+      0,
+      reverse.unitsInTransit - attrition,
+    );
+    forward.intensity = linkIntensityForEnergy(forward.unitsInTransit);
+    reverse.intensity = linkIntensityForEnergy(reverse.unitsInTransit);
+
+    const forwardBroken =
+      forward.unitsInTransit <= FRONT_BREAK_EPSILON;
+    const reverseBroken =
+      reverse.unitsInTransit <= FRONT_BREAK_EPSILON;
+    if (forwardBroken === reverseBroken) {
+      return;
+    }
+
+    const winner = forwardBroken ? reverse : forward;
+    const loser = forwardBroken ? forward : reverse;
+    const winnerSource = forwardBroken ? reverseSource : forwardSource;
+    const loserSource = forwardBroken ? forwardSource : reverseSource;
+    const frontPosition = pointBetweenSystems(
+      winnerSource,
+      loserSource,
+      combatFrontFraction(winner, loser),
+    );
+    this.removeLink(loser);
+    this.events.push({
+      kind: "front-broken",
+      owner: winner.owner,
+      position: frontPosition,
+      targetPosition: { ...loserSource.position },
+    });
   }
 
   private applyTransfer(
@@ -622,14 +879,30 @@ export class GameSimulation {
       )
       .map((link) => {
         const target = this.findSystem(link.targetId);
+        const baseOutcome = calculateCutOutcome(
+          link.unitsInTransit,
+          AI_CUT_FRACTION,
+        );
+        const reciprocal = findHostileReciprocalLink(link, this.links);
+        const outcome: CutOutcome = reciprocal
+          ? {
+              ...baseOutcome,
+              frontlineResistance: reciprocal.unitsInTransit,
+              projectedTargetEnergy: Math.max(
+                0,
+                baseOutcome.forwardEnergy -
+                  reciprocal.unitsInTransit,
+              ),
+            }
+          : {
+              ...baseOutcome,
+              projectedTargetEnergy: baseOutcome.forwardEnergy,
+            };
         return target && target.owner !== owner
           ? {
               link,
               target,
-              outcome: calculateCutOutcome(
-                link.unitsInTransit,
-                AI_CUT_FRACTION,
-              ),
+              outcome,
             }
           : null;
       })
@@ -644,20 +917,29 @@ export class GameSimulation {
       )
       .sort(
         (a, b) =>
-          b.outcome.forwardEnergy / Math.max(1, b.target.energy) -
-            a.outcome.forwardEnergy / Math.max(1, a.target.energy) ||
+          (b.outcome.projectedTargetEnergy ?? 0) /
+              Math.max(1, b.target.energy) -
+            (a.outcome.projectedTargetEnergy ?? 0) /
+              Math.max(1, a.target.energy) ||
           a.link.id.localeCompare(b.link.id),
       );
 
     for (const candidate of candidates) {
+      const projectedTargetEnergy =
+        candidate.outcome.projectedTargetEnergy ??
+        candidate.outcome.forwardEnergy;
+      const canBreakFront =
+        (candidate.outcome.frontlineResistance ?? 0) > 0 &&
+        candidate.outcome.forwardEnergy >=
+          (candidate.outcome.frontlineResistance ?? 0);
       const canCapture =
-        candidate.outcome.forwardEnergy >= candidate.target.energy;
+        projectedTargetEnergy >= candidate.target.energy;
       const worthwhilePressure =
         this.hostileActionCounts[owner] % cadence === 0 &&
-        candidate.outcome.forwardEnergy >=
+        projectedTargetEnergy >=
           Math.max(4, candidate.target.energy * 0.75);
       if (
-        (canCapture || worthwhilePressure) &&
+        (canBreakFront || canCapture || worthwhilePressure) &&
         this.cutLink(candidate.link.id, AI_CUT_FRACTION, owner)
       ) {
         return true;

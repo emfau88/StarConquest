@@ -13,7 +13,7 @@ export interface LinkCurve {
 type LinkLaneView = Pick<
   EnergyLinkView,
   "id" | "sourceId" | "targetId"
->;
+> & Partial<Pick<EnergyLinkView, "owner">>;
 
 const RECIPROCAL_LANE_OFFSET = 10;
 
@@ -21,13 +21,20 @@ export function getLinkLaneOffset(
   link: LinkLaneView,
   links: readonly LinkLaneView[],
 ): number {
-  const hasReciprocalLink = links.some(
+  const reciprocalLink = links.find(
     (candidate) =>
       candidate.id !== link.id &&
       candidate.sourceId === link.targetId &&
       candidate.targetId === link.sourceId,
   );
-  if (!hasReciprocalLink) {
+  if (!reciprocalLink) {
+    return 0;
+  }
+  if (
+    link.owner !== undefined &&
+    reciprocalLink.owner !== undefined &&
+    link.owner !== reciprocalLink.owner
+  ) {
     return 0;
   }
   return RECIPROCAL_LANE_OFFSET;

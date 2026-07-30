@@ -85,18 +85,33 @@ const tryCutRoute = (
     .filter((value) => value !== null)
     .sort(
       (a, b) =>
-        b.outcome.forwardEnergy / Math.max(1, b.target.energy) -
-          a.outcome.forwardEnergy / Math.max(1, a.target.energy) ||
+        (b.outcome.projectedTargetEnergy ??
+          b.outcome.forwardEnergy) /
+            Math.max(1, b.target.energy) -
+          (a.outcome.projectedTargetEnergy ??
+            a.outcome.forwardEnergy) /
+            Math.max(1, a.target.energy) ||
         a.link.id.localeCompare(b.link.id),
     )[0];
 
+  const projectedTargetEnergy =
+    candidate?.outcome.projectedTargetEnergy ??
+    candidate?.outcome.forwardEnergy ??
+    0;
+  const canBreakFront = Boolean(
+    candidate &&
+      (candidate.outcome.frontlineResistance ?? 0) > 0 &&
+      candidate.outcome.forwardEnergy >=
+        (candidate.outcome.frontlineResistance ?? 0),
+  );
   return Boolean(
     candidate &&
-      candidate.outcome.forwardEnergy >=
-        Math.max(
-          3,
-          candidate.target.energy * profile.cutPressureRatio,
-        ) &&
+      (canBreakFront ||
+        projectedTargetEnergy >=
+          Math.max(
+            3,
+            candidate.target.energy * profile.cutPressureRatio,
+          )) &&
       simulation.cutPlayerLink(candidate.link.id, 0.2),
   );
 };

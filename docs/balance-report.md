@@ -1,6 +1,6 @@
 # StarConquest balance report
 
-Stand: 29. Juli 2026
+Stand: 30. Juli 2026
 
 ## Reproduzierbare Simulationsbasis
 
@@ -18,21 +18,22 @@ Sie erhalten keine zusätzliche Energie und kennen keine versteckten Zustände.
 
 | Sektor | Learner | Regular | Expert | 3 / 2 Sterne |
 |---:|---:|---:|---:|---:|
-| 1 | Sieg 23,3 s / 0 Cuts | Sieg 11,4 s / 0 Cuts | Sieg 11,8 s / 0 Cuts | 75 / 130 s |
-| 2 | Sieg 42,5 s / 4 Cuts | Sieg 34,7 s / 6 Cuts | Sieg 28,5 s / 8 Cuts | 100 / 170 s |
-| 3 | Sieg 36,9 s / 1 Cut | Sieg 34,7 s / 5 Cuts | Sieg 21,5 s / 6 Cuts | 115 / 190 s |
-| 4 | Sieg 81,8 s / 11 Cuts | Sieg 43,7 s / 7 Cuts | Sieg 31,5 s / 9 Cuts | 140 / 230 s |
-| 5 | Sieg 84,6 s / 12 Cuts | Sieg 54,5 s / 13 Cuts | Sieg 36,5 s / 12 Cuts | 165 / 270 s |
-| 6 | Niederlage 74,7 s / 8 Cuts | Sieg 56,3 s / 11 Cuts | Sieg 51,5 s / 18 Cuts | 195 / 320 s |
-| 7 | Sieg 98,6 s / 13 Cuts | Sieg 47,3 s / 10 Cuts | Sieg 38,5 s / 15 Cuts | 225 / 360 s |
-| 8 | Sieg 156,3 s / 22 Cuts | Sieg 67,1 s / 14 Cuts | Sieg 70,5 s / 27 Cuts | 255 / 400 s |
+| 1 | Sieg 14,9 s / 0 Cuts | Sieg 11,3 s / 0 Cuts | Sieg 11,7 s / 0 Cuts | 75 / 130 s |
+| 2 | Sieg 62,1 s / 7 Cuts | Sieg 49,1 s / 6 Cuts | Sieg 41,5 s / 8 Cuts | 100 / 170 s |
+| 3 | Sieg 36,9 s / 1 Cut | Sieg 31,1 s / 4 Cuts | Sieg 25,5 s / 5 Cuts | 115 / 190 s |
+| 4 | Sieg 62,1 s / 7 Cuts | Sieg 45,5 s / 8 Cuts | Sieg 36,5 s / 9 Cuts | 140 / 230 s |
+| 5 | Sieg 94,9 s / 11 Cuts | Sieg 47,3 s / 12 Cuts | Sieg 39,5 s / 14 Cuts | 165 / 270 s |
+| 6 | Niederlage 110,9 s / 15 Cuts | Sieg 51,4 s / 8 Cuts | Sieg 54,5 s / 21 Cuts | 195 / 320 s |
+| 7 | Sieg 92,8 s / 10 Cuts | Sieg 61,3 s / 14 Cuts | Sieg 41,5 s / 12 Cuts | 225 / 360 s |
+| 8 | Sieg 179,2 s / 24 Cuts | Sieg 65,3 s / 12 Cuts | Sieg 46,5 s / 15 Cuts | 255 / 400 s |
 
 ## Bewertung
 
 - Level 1 bleibt deutlich zugänglich.
 - Level 2 und 3 liegen zeitlich nah beieinander; Level 3 belohnt den neu
   gelernten Cut bewusst mit einem kürzeren Durchbruch.
-- Ab Level 4 steigen Dauer, Frontwechsel und Cut-Anzahl klar.
+- Ab Level 4 steigen Dauer und Frontwechsel klar. Gegengerichtete Angriffe
+  bilden nun echte Begegnungsfronten; Cuts müssen diese zuerst brechen.
 - Level 6 bestraft das langsame Learner-Profil, bleibt für Regular und Expert
   stabil lösbar.
 - Level 7 führt beide Gegner gleichzeitig ein. Der zusätzliche eigene

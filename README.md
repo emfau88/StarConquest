@@ -1,7 +1,8 @@
 # StarConquest rebuild
 
 StarConquest is a touch-first browser strategy game about connecting star
-systems, routing energy and cutting links at the right moment.
+systems, sending fleets through energy corridors and timing decisive fleet
+surges.
 
 ## Playable campaign slice
 
@@ -21,7 +22,10 @@ The current slice includes:
 
 - production, link growth, energy transfer, capture, win and defeat across all
   eight levels;
-- mouse and touch gestures: drag to connect, swipe across a link to cut;
+- mouse and touch gestures: drag to connect, swipe across a corridor to surge
+  its forward fleet and recall its rear formation;
+- reciprocal hostile fleets meet at a visible shared front whose outcome
+  depends on the energy available at both source systems;
 - responsive 16:9 canvas, mobile safe areas and a landscape orientation hint;
 - fullscreen toggle with a mobile orientation-lock attempt;
 - dynamic mission HUD, visual connect/cut tutorial cues, pause, restart,

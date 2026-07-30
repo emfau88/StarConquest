@@ -34,7 +34,12 @@ export interface EnergyLinkView {
   unitsInTransit: number;
 }
 
-export type VisualEffectKind = "capture" | "boost" | "cut" | "invalid";
+export type VisualEffectKind =
+  | "capture"
+  | "boost"
+  | "cut"
+  | "front-break"
+  | "invalid";
 
 export interface VisualEffect {
   id: number;
@@ -62,6 +67,8 @@ export interface CutPreview {
   forwardEnergy: number;
   returnedEnergy: number;
   prominentBoost: boolean;
+  frontlineResistance?: number;
+  projectedTargetEnergy?: number;
 }
 
 export interface SystemThreatView {

@@ -82,7 +82,7 @@ test("fixed-step clock produces consistent simulation time across frame rates", 
   assert.ok(Math.abs(runClock(144) - 2) < 1 / 60);
 });
 
-test("routes stay straight and reciprocal links use separate lanes", () => {
+test("hostile reciprocal routes share a front while friendly routes use lanes", () => {
   const source = {
     id: "alpha",
     owner: "player" as const,
@@ -103,11 +103,13 @@ test("routes stay straight and reciprocal links use separate lanes", () => {
     id: "forward",
     sourceId: source.id,
     targetId: target.id,
+    owner: "player" as const,
   };
   const reverse = {
     id: "reverse",
     sourceId: target.id,
     targetId: source.id,
+    owner: "enemy" as const,
   };
 
   const singleCurve = getLinkCurve(forward, source, target);
@@ -127,10 +129,173 @@ test("routes stay straight and reciprocal links use separate lanes", () => {
     source,
     getLinkLaneOffset(reverse, links),
   );
-  assert.equal(forwardCurve.source.y, 210);
-  assert.equal(reverseCurve.source.y, 190);
-  assert.deepEqual(forwardCurve.control, { x: 300, y: 210 });
-  assert.deepEqual(reverseCurve.control, { x: 300, y: 190 });
+  assert.equal(forwardCurve.source.y, 200);
+  assert.equal(reverseCurve.source.y, 200);
+  assert.deepEqual(forwardCurve.control, { x: 300, y: 200 });
+  assert.deepEqual(reverseCurve.control, { x: 300, y: 200 });
+
+  const friendlyReverse = {
+    ...reverse,
+    id: "friendly-reverse",
+    owner: "player" as const,
+  };
+  const friendlyLinks = [forward, friendlyReverse];
+  const friendlyForwardCurve = getLinkCurve(
+    forward,
+    source,
+    target,
+    getLinkLaneOffset(forward, friendlyLinks),
+  );
+  const friendlyReverseCurve = getLinkCurve(
+    friendlyReverse,
+    target,
+    source,
+    getLinkLaneOffset(friendlyReverse, friendlyLinks),
+  );
+  assert.equal(friendlyForwardCurve.source.y, 210);
+  assert.equal(friendlyReverseCurve.source.y, 190);
+});
+
+const createReciprocalDuel = (
+  playerEnergy: number,
+  enemyEnergy: number,
+): GameSimulation => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    id: "reciprocal-duel",
+    aiActionIntervalSeconds: 0.1,
+    systems: [
+      {
+        ...DUEL_LEVEL.systems[0],
+        className: "NEXUS",
+        startEnergy: playerEnergy,
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        className: "NEXUS",
+        startEnergy: enemyEnergy,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  simulation.update(0.1);
+  level.aiActionIntervalSeconds = 999;
+  assert.ok(
+    simulation
+      .getLinks()
+      .some((link) => link.owner === "enemy"),
+  );
+  assert.equal(
+    simulation.createPlayerLink("player", "enemy").ok,
+    true,
+  );
+  return simulation;
+};
+
+const advanceUntilReciprocalLinksAreActive = (
+  simulation: GameSimulation,
+): void => {
+  for (let step = 0; step < 60; step += 1) {
+    if (
+      simulation.getLinks().length === 2 &&
+      simulation
+        .getLinks()
+        .every((link) => link.state === "active")
+    ) {
+      return;
+    }
+    simulation.update(0.05);
+  }
+  assert.fail("reciprocal links did not become active");
+};
+
+test("equal reciprocal attacks meet at a stable front", () => {
+  const simulation = createReciprocalDuel(45, 45);
+  advance(simulation, 6);
+
+  assert.equal(simulation.getLinks().length, 2);
+  assert.ok(
+    simulation
+      .getLinks()
+      .every((link) => link.state === "active"),
+  );
+  assert.equal(simulation.getSystem("player")?.owner, "player");
+  assert.equal(simulation.getSystem("enemy")?.owner, "enemy");
+  assert.ok(
+    !simulation
+      .drainEvents()
+      .some((event) => event.kind === "capture"),
+  );
+});
+
+test("a stronger source breaks a weaker reciprocal front", () => {
+  const simulation = createReciprocalDuel(100, 12);
+  advance(simulation, 2);
+
+  const links = simulation.getLinks();
+  assert.equal(links.length, 1);
+  assert.equal(links[0]?.owner, "player");
+  assert.ok(
+    simulation
+      .drainEvents()
+      .some(
+        (event) =>
+          event.kind === "front-broken" &&
+          event.owner === "player",
+      ),
+  );
+});
+
+test("a fleet surge must defeat the opposing front before hitting a planet", () => {
+  const simulation = createReciprocalDuel(45, 45);
+  advanceUntilReciprocalLinksAreActive(simulation);
+  const playerLink = simulation
+    .getLinks()
+    .find((link) => link.owner === "player");
+  const enemyLink = simulation
+    .getLinks()
+    .find((link) => link.owner === "enemy");
+  assert.ok(playerLink);
+  assert.ok(enemyLink);
+  const targetEnergyBefore =
+    simulation.getSystem("enemy")?.energy ?? 0;
+  const enemyFrontBefore = enemyLink.unitsInTransit;
+  const preview = simulation.previewPlayerCut(playerLink.id, 0.5);
+  assert.ok(preview);
+  assert.equal(preview.frontlineResistance, enemyFrontBefore);
+  assert.equal(preview.projectedTargetEnergy, 0);
+
+  assert.equal(simulation.cutPlayerLink(playerLink.id, 0.5), true);
+  assert.equal(
+    simulation.getSystem("enemy")?.energy,
+    targetEnergyBefore,
+  );
+  const remainingEnemyLink = simulation
+    .getLinks()
+    .find((link) => link.owner === "enemy");
+  assert.ok(remainingEnemyLink);
+  assert.ok(remainingEnemyLink.unitsInTransit < enemyFrontBefore);
+});
+
+test("surplus fleet-surge energy crosses a broken front", () => {
+  const simulation = createReciprocalDuel(100, 12);
+  advanceUntilReciprocalLinksAreActive(simulation);
+  const playerLink = simulation
+    .getLinks()
+    .find((link) => link.owner === "player");
+  assert.ok(playerLink);
+  const targetEnergyBefore =
+    simulation.getSystem("enemy")?.energy ?? 0;
+  const preview = simulation.previewPlayerCut(playerLink.id, 0);
+  assert.ok(preview);
+  assert.ok((preview.projectedTargetEnergy ?? 0) > 0);
+
+  assert.equal(simulation.cutPlayerLink(playerLink.id, 0), true);
+  assert.ok(
+    (simulation.getSystem("enemy")?.energy ?? 0) <
+      targetEnergyBefore,
+  );
+  assert.equal(simulation.getLinks().length, 0);
 });
 
 test("compact system artwork preserves the original touch targets", () => {
@@ -187,13 +352,28 @@ const runExpansionBot = (
       .filter((candidate) => candidate !== null)
       .sort(
         (a, b) =>
-          b.outcome.forwardEnergy / Math.max(1, b.target.energy) -
-          a.outcome.forwardEnergy / Math.max(1, a.target.energy),
+          (b.outcome.projectedTargetEnergy ??
+            b.outcome.forwardEnergy) /
+              Math.max(1, b.target.energy) -
+          (a.outcome.projectedTargetEnergy ??
+            a.outcome.forwardEnergy) /
+              Math.max(1, a.target.energy),
       )[0];
+    const projectedTargetEnergy =
+      cutCandidate?.outcome.projectedTargetEnergy ??
+      cutCandidate?.outcome.forwardEnergy ??
+      0;
+    const canBreakFront = Boolean(
+      cutCandidate &&
+        (cutCandidate.outcome.frontlineResistance ?? 0) > 0 &&
+        cutCandidate.outcome.forwardEnergy >=
+          (cutCandidate.outcome.frontlineResistance ?? 0),
+    );
     if (
       cutCandidate &&
-      cutCandidate.outcome.forwardEnergy >=
-        Math.max(3, cutCandidate.target.energy * 0.75)
+      (canBreakFront ||
+        projectedTargetEnergy >=
+          Math.max(3, cutCandidate.target.energy * 0.75))
     ) {
       simulation.cutPlayerLink(cutCandidate.link.id, 0.2);
       continue;

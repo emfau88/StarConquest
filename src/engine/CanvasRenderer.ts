@@ -12,6 +12,10 @@ import type {
   VisualEffect,
 } from "../core/types";
 import {
+  combatFrontFraction,
+  findHostileReciprocalLink,
+} from "../core/link-combat";
+import {
   CanvasViewport,
   LOGICAL_HEIGHT,
   LOGICAL_WIDTH,
@@ -235,10 +239,32 @@ export class CanvasRenderer {
     context.rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
     context.clip();
 
+    const drawnLinkIds = new Set<string>();
     for (const link of scene.links) {
+      if (drawnLinkIds.has(link.id)) {
+        continue;
+      }
       const source = systems.get(link.sourceId);
       const target = systems.get(link.targetId);
       if (source && target) {
+        const reciprocal = findHostileReciprocalLink(
+          link,
+          scene.links,
+        );
+        if (reciprocal) {
+          drawnLinkIds.add(link.id);
+          drawnLinkIds.add(reciprocal.id);
+          this.drawContestedRoute(
+            context,
+            link,
+            reciprocal,
+            source,
+            target,
+            scene.elapsedSeconds,
+          );
+          continue;
+        }
+        drawnLinkIds.add(link.id);
         this.drawLink(
           context,
           link,
@@ -297,6 +323,176 @@ export class CanvasRenderer {
     }
 
     context.restore();
+  }
+
+  private drawContestedRoute(
+    context: CanvasRenderingContext2D,
+    forward: EnergyLinkView,
+    reverse: EnergyLinkView,
+    source: StarSystemView,
+    target: StarSystemView,
+    elapsedSeconds: number,
+  ): void {
+    const curve = getLinkCurve(forward, source, target);
+    const bothActive =
+      forward.state === "active" && reverse.state === "active";
+    const frontFraction = bothActive
+      ? combatFrontFraction(forward, reverse)
+      : 0.5;
+    const forwardReach =
+      forward.state === "active"
+        ? frontFraction
+        : frontFraction * forward.growProgress;
+    const reverseReach =
+      reverse.state === "active"
+        ? frontFraction
+        : 1 - (1 - frontFraction) * reverse.growProgress;
+    const forwardColor = OWNER_COLORS[forward.owner];
+    const reverseColor = OWNER_COLORS[reverse.owner];
+
+    context.save();
+    context.lineCap = "round";
+    context.strokeStyle = "rgba(2, 10, 30, 0.84)";
+    context.lineWidth = 8;
+    this.strokeLinkRange(context, curve, 0, 1);
+
+    this.drawFrontSegment(
+      context,
+      curve,
+      0,
+      forwardReach,
+      forwardColor,
+      forward.intensity,
+    );
+    this.drawFrontSegment(
+      context,
+      curve,
+      1,
+      reverseReach,
+      reverseColor,
+      reverse.intensity,
+    );
+
+    this.drawFrontShips(
+      context,
+      curve,
+      0,
+      forwardReach,
+      forward,
+      elapsedSeconds,
+      false,
+    );
+    this.drawFrontShips(
+      context,
+      curve,
+      1,
+      reverseReach,
+      reverse,
+      elapsedSeconds,
+      true,
+    );
+
+    if (bothActive) {
+      const front = pointOnLink(curve, frontFraction);
+      const pulse = 0.5 + Math.sin(elapsedSeconds * 11) * 0.5;
+      context.globalAlpha = 0.74 + pulse * 0.2;
+      context.fillStyle = "#fff5c7";
+      context.strokeStyle = "#ffffff";
+      context.shadowColor = "#ffcf66";
+      context.shadowBlur = 10 + pulse * 7;
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.arc(front.x, front.y, 4.5 + pulse * 1.8, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+
+      const tangent = this.tangentOnLink(curve, frontFraction);
+      const tangentLength = Math.max(1, Math.hypot(tangent.x, tangent.y));
+      const normalX = -tangent.y / tangentLength;
+      const normalY = tangent.x / tangentLength;
+      context.globalAlpha = 0.5;
+      context.strokeStyle = "#ffd76c";
+      context.lineWidth = 2;
+      for (let index = -1; index <= 1; index += 2) {
+        const sparkLength = 7 + pulse * 5;
+        context.beginPath();
+        context.moveTo(
+          front.x + normalX * index * 3,
+          front.y + normalY * index * 3,
+        );
+        context.lineTo(
+          front.x + normalX * index * sparkLength,
+          front.y + normalY * index * sparkLength,
+        );
+        context.stroke();
+      }
+    }
+    context.restore();
+  }
+
+  private drawFrontSegment(
+    context: CanvasRenderingContext2D,
+    curve: ReturnType<typeof getLinkCurve>,
+    start: number,
+    end: number,
+    color: string,
+    intensity: number,
+  ): void {
+    context.shadowColor = color;
+    context.shadowBlur = 6;
+    context.strokeStyle = `${color}58`;
+    context.lineWidth = 4 + intensity;
+    this.strokeLinkRange(context, curve, start, end);
+    context.shadowBlur = 1;
+    context.strokeStyle = `${color}ed`;
+    context.lineWidth = 2 + intensity * 0.55;
+    this.strokeLinkRange(context, curve, start, end);
+  }
+
+  private drawFrontShips(
+    context: CanvasRenderingContext2D,
+    curve: ReturnType<typeof getLinkCurve>,
+    routeStart: number,
+    routeEnd: number,
+    link: EnergyLinkView,
+    elapsedSeconds: number,
+    reverseDirection: boolean,
+  ): void {
+    const routeLength = Math.abs(routeEnd - routeStart);
+    if (routeLength < 0.1 || link.unitsInTransit <= 0.25) {
+      return;
+    }
+    const shipCount = Math.min(
+      2,
+      Math.max(1, Math.ceil(link.unitsInTransit / 12)),
+    );
+    const padding = Math.min(0.055, routeLength * 0.2);
+    const start = reverseDirection
+      ? routeStart - padding
+      : routeStart + padding;
+    const end = reverseDirection
+      ? routeEnd + padding
+      : routeEnd - padding;
+    const speed = 0.18 + link.intensity * 0.07;
+    const color = OWNER_COLORS[link.owner];
+
+    for (let index = 0; index < shipCount; index += 1) {
+      const phase =
+        (index / shipCount + elapsedSeconds * speed) % 1;
+      const fraction = start + (end - start) * phase;
+      const point = pointOnLink(curve, fraction);
+      const tangent = this.tangentOnLink(curve, fraction);
+      this.drawTransportShip(
+        context,
+        point,
+        Math.atan2(tangent.y, tangent.x) +
+          (reverseDirection ? Math.PI : 0),
+        link.owner,
+        color,
+        link.intensity,
+        true,
+      );
+    }
   }
 
   private drawLink(
@@ -523,6 +719,27 @@ export class CanvasRenderer {
     context.stroke();
   }
 
+  private strokeLinkRange(
+    context: CanvasRenderingContext2D,
+    curve: ReturnType<typeof getLinkCurve>,
+    startFraction: number,
+    endFraction: number,
+  ): void {
+    const start = Math.max(0, Math.min(1, startFraction));
+    const end = Math.max(0, Math.min(1, endFraction));
+    const distance = Math.abs(end - start);
+    const segments = Math.max(2, Math.ceil(32 * distance));
+    context.beginPath();
+    const startPoint = pointOnLink(curve, start);
+    context.moveTo(startPoint.x, startPoint.y);
+    for (let index = 1; index <= segments; index += 1) {
+      const fraction = start + (end - start) * (index / segments);
+      const point = pointOnLink(curve, fraction);
+      context.lineTo(point.x, point.y);
+    }
+    context.stroke();
+  }
+
   private drawDragPreview(
     context: CanvasRenderingContext2D,
     scene: SceneSnapshot,
@@ -616,6 +833,38 @@ export class CanvasRenderer {
       preview.target,
       "#ffd65a",
     );
+    if (
+      preview.frontlineResistance !== undefined &&
+      preview.frontlineResistance > 0
+    ) {
+      context.save();
+      context.fillStyle = "rgba(22, 7, 20, 0.88)";
+      context.strokeStyle = "#ff8178";
+      context.shadowColor = "#ff685f";
+      context.shadowBlur = 10;
+      context.lineWidth = 2.5;
+      context.beginPath();
+      context.arc(
+        preview.target.x,
+        preview.target.y,
+        18,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#fff4ee";
+      context.shadowBlur = 0;
+      context.font = "800 13px Inter, system-ui, sans-serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(
+        displayEnergy(preview.frontlineResistance),
+        preview.target.x,
+        preview.target.y + 0.5,
+      );
+      context.restore();
+    }
     context.font = "800 18px Inter, system-ui, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -773,6 +1022,38 @@ export class CanvasRenderer {
         Math.PI * 2,
       );
       context.fill();
+    } else if (effect.kind === "front-break") {
+      const radius = 9 + progress * 22;
+      context.strokeStyle = "#fff3bd";
+      context.fillStyle = color;
+      context.lineWidth = 3.5 - progress * 1.5;
+      context.shadowColor = color;
+      context.shadowBlur = 16 - progress * 8;
+      context.beginPath();
+      context.arc(
+        effect.position.x,
+        effect.position.y,
+        radius,
+        0,
+        Math.PI * 2,
+      );
+      context.stroke();
+      context.globalAlpha = alpha * 0.65;
+      for (let index = 0; index < 6; index += 1) {
+        const angle = (Math.PI * 2 * index) / 6;
+        const inner = 7 + progress * 10;
+        const outer = 15 + progress * 34;
+        context.beginPath();
+        context.moveTo(
+          effect.position.x + Math.cos(angle) * inner,
+          effect.position.y + Math.sin(angle) * inner,
+        );
+        context.lineTo(
+          effect.position.x + Math.cos(angle) * outer,
+          effect.position.y + Math.sin(angle) * outer,
+        );
+        context.stroke();
+      }
     } else if (effect.kind === "cut") {
       const radius = 18 + progress * 42;
       context.strokeStyle = "#ffd65a";

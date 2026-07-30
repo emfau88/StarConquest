@@ -3,8 +3,8 @@
 ## Product promise
 
 StarConquest is a short, web-first strategy puzzle. The player connects owned
-star systems, moves energy through those links, captures opposing systems, and
-cuts a link at the right moment to send the energy already inside it forward.
+star systems, moves fleet energy through flux lanes, captures opposing systems,
+and severs a lane at the right moment to commit its front formation as a surge.
 
 The rebuild may change presentation, code structure, wording, menus, audio, and
 effects. It must not accidentally change the rules in this document.
@@ -17,9 +17,11 @@ effects. It must not accidentally change the rules in this document.
 4. An active link continuously pumps energy from its source toward its target.
 5. Friendly targets are reinforced; hostile or neutral targets lose energy.
 6. A target at zero energy changes ownership.
-7. Cutting an owned link sends the energy in front of the cut immediately to
-   the target and returns the energy behind the cut to the source.
-8. The level ends when all hostile systems are captured or all player systems
+7. Reciprocal hostile links meet at a shared front instead of passing through
+   one another.
+8. Severing an owned link commits the energy in front of the cut and recalls
+   the energy behind it.
+9. The level ends when all hostile systems are captured or all player systems
    are lost.
 
 ## System classes
@@ -65,6 +67,31 @@ During each active simulation step:
 This produces a continuous tube-like flow while a healthy source is able to
 keep the link charged.
 
+## Reciprocal fleet fronts
+
+If hostile links exist in both directions between the same two systems, their
+fleets form one contested corridor:
+
+- neither link can damage the opposing endpoint while the front exists;
+- both sources continuously feed the fight from their current energy reserve;
+- a source with more available energy supplies the front faster;
+- equal pressure holds near the midpoint, while an advantage visibly pushes
+  the front toward the weaker source;
+- when one formation is depleted, its link breaks and the surviving link can
+  resume its attack on the target during the next simulation step.
+
+Front supply uses the same public source energy as every other action. It does
+not create hidden combat power:
+
+```text
+front supply per second =
+  6.5 * (0.35 + clamp(source energy / 80, 0, 1.15))
+```
+
+This reciprocal-front rule is an intentional post-legacy design change. It
+aligns the network mechanic with the fleet presentation and prevents two
+visibly colliding formations from passing through each other.
+
 ## Reinforcement, attack, and capture
 
 - Same owner: transferred energy is added up to the target capacity.
@@ -92,7 +119,10 @@ energy sent forward = in-transit energy × (1 - t)
 energy returned = in-transit energy × t
 ```
 
-- Forward energy is applied to the target immediately.
+- Without an opposing front, forward energy is applied to the target
+  immediately.
+- With an opposing front, forward energy first depletes that formation. Only
+  surplus energy after the front breaks reaches the target.
 - Returned energy goes back to the source, capped by source capacity.
 - If the source is no longer owned by the link owner, the returned portion is
   lost.
@@ -115,8 +145,8 @@ Enemy factions use the same energy, route-limit, growth, transfer, capture, and
 cut rules as the player. On each action window they:
 
 1. reinforce an owned system that has a hostile incoming route;
-2. cut an active attack near its source when the stored energy can capture or
-   put meaningful pressure on the target;
+2. sever an active attack near its source when the stored energy can break an
+   opposing front, capture, or put meaningful pressure on the target;
 3. otherwise attack a weak nearby system, with systems launching attacks
    against their network receiving a defensive priority.
 
@@ -179,4 +209,7 @@ The executable reference tests must prove:
 - active hostile flow removes energy from the target;
 - crossing zero captures the target;
 - a cut divides in-transit energy into forward and returned portions;
-- a near-source cut sends most energy forward and can capture immediately.
+- a near-source cut sends most energy forward and can capture immediately;
+- reciprocal hostile links meet without damaging either endpoint;
+- stronger source reserves break weaker fronts;
+- a cut must deplete a reciprocal front before surplus reaches the target.

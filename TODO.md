@@ -21,6 +21,8 @@ Produktplanung bleibt in `ROADMAP.md`.
 - [x] Stille Energieverluste bei Routenlimit und Capture beseitigen.
 - [x] Fixed-Timestep-Simulation für konsistentes Verhalten ergänzen.
 - [x] Link-Ladung und Schnittausbeute direkt im Spielfeld sichtbar machen.
+- [x] Gegengerichtete feindliche Flotten an einer quellenabhängigen Front
+  aufeinandertreffen lassen.
 - [x] Runtime-Grafiken komprimieren und nur bei tatsächlichem Bedarf laden.
 - [x] Gegner-KI um Verstärkung, Verteidigungspriorität und Cuts erweitern.
 - [x] Gefahr, Capture sowie Sieg und Niederlage klarer und ruhiger inszenieren.

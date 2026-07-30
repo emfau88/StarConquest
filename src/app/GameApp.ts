@@ -3,6 +3,11 @@ import {
   GameSimulation,
   type SimulationEvent,
 } from "../core/GameSimulation";
+import {
+  combatFrontFraction,
+  findHostileReciprocalLink,
+  pointBetweenSystems,
+} from "../core/link-combat";
 import type {
   CutPreview,
   DragPreview,
@@ -432,6 +437,15 @@ export class GameApp {
           0.36,
         );
         break;
+      case "front-broken":
+        this.addEffect(
+          "front-break",
+          event.position,
+          event.targetPosition,
+          event.owner,
+          0.42,
+        );
+        break;
       case "won": {
         this.audio.play("win");
         this.platform.gameplayStop();
@@ -689,12 +703,26 @@ export class GameApp {
     const target = link
       ? this.simulation.getSystem(link.targetId)
       : undefined;
+    const reciprocal = link
+      ? findHostileReciprocalLink(
+          link,
+          this.simulation.getLinks(),
+        )
+      : undefined;
+    const surgeTarget =
+      link && reciprocal && source && target
+        ? pointBetweenSystems(
+            source,
+            target,
+            combatFrontFraction(link, reciprocal),
+          )
+        : target?.position;
     return outcome && source && target
       ? {
           linkId: candidate.linkId,
           position: candidate.position,
           source: { ...source.position },
-          target: { ...target.position },
+          target: { ...(surgeTarget ?? target.position) },
           fraction: candidate.fraction,
           ...outcome,
         }
