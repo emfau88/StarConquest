@@ -1,55 +1,70 @@
-# StarConquest rebuild
+# StarConquest
 
-StarConquest is a touch-first browser strategy game about connecting star
-systems, sending fleets through energy corridors and timing decisive fleet
-surges.
+StarConquest is a touch-first browser strategy game about drawing energy
+corridors between star systems, building fleet pressure and cutting routes at
+the right moment to launch a decisive surge.
 
-## Playable campaign slice
+[Play the campaign on GitHub Pages](https://emfau88.github.io/StarConquest/)
 
-The rebuild currently contains eight playable sectors with a steady learning
-curve:
+![A Helion fleet pushing several active fronts in sector six](docs/screenshots/helion-front.webp)
 
-- **First Contact** introduces connecting and neutral expansion;
-- **Pressure Line** adds two expanding enemy outposts;
-- **Cut the Current** makes boost cuts the central tactic;
-- **Twin Fronts** asks the player to prioritize two attack lanes;
-- **Heavy Orbit** combines Pulsars, Giants, Quasars and a fortified Nexus;
-- **Helion Run** introduces the long-range orange Helion faction;
-- **Three Powers** creates a shifting conflict between three factions;
-- **Nexus Siege** closes the campaign with two fortified enemy networks.
+## The game
 
-The current slice includes:
+- Draw routes from your systems to reinforce allies or attack hostile worlds.
+- Cut a charged corridor to send its forward fleet surging toward the target
+  while the rear formation retreats.
+- Contest reciprocal attacks at a shared battle front whose position reflects
+  the strength of both source systems.
+- Capture Pulsars, Giants, Quasars and fortified Nexus systems across eight
+  progressively denser sectors.
+- Face two visually and tactically distinct hostile factions, including the
+  long-range orange Helion Compact.
+- Play with mouse or touch in a responsive landscape layout with persistent
+  campaign unlocks and best star ratings.
 
-- production, link growth, energy transfer, capture, win and defeat across all
-  eight levels;
-- mouse and touch gestures: drag to connect, swipe across a corridor to surge
-  its forward fleet and recall its rear formation;
-- reciprocal hostile fleets meet at a visible shared front whose outcome
-  depends on the energy available at both source systems;
-- responsive 16:9 canvas, mobile safe areas and a landscape orientation hint;
-- fullscreen toggle with a mobile orientation-lock attempt;
-- dynamic mission HUD, visual connect/cut tutorial cues, pause, restart,
-  next-sector flow, lightweight sound effects and result screen;
-- compact campaign map with persistent sector unlocks and best star ratings;
-- three difficulty-themed sector backgrounds, generated HUD icons and a
-  faction-colored capture burst;
-- faction-specific transport and star-system artwork, including distinct
-  Quasar and Nexus silhouettes plus the playable orange Helion faction,
-  with Canvas fallbacks;
-- automated simulation tests, a repeatable three-profile balance run and
-  GitHub Pages deployment.
+## From first contact to sector command
 
-The legacy source remains frozen in `reference/legacy-build/`. Its protected
-gameplay contract is documented in `docs/core-mechanics.md`.
+| Guided opening | Persistent campaign |
+| --- | --- |
+| ![The connect gesture tutorial in the first sector](docs/screenshots/first-contact.webp) | ![The eight-sector StarConquest campaign map](docs/screenshots/campaign-map.webp) |
+| The first sector teaches route creation directly on the battlefield. | Completed sectors, unlocks and best ratings remain available between sessions. |
 
-## Commands
+## Campaign
+
+1. **First Contact:** connect systems and expand through neutral space.
+2. **Pressure Line:** react to two independently expanding enemy outposts.
+3. **Cut the Current:** learn to turn stored route energy into a fleet surge.
+4. **Twin Fronts:** prioritize between simultaneous attack lanes.
+5. **Heavy Orbit:** manage every system class around a fortified Nexus.
+6. **Helion Run:** counter the long routes of the Helion Compact.
+7. **Three Powers:** survive a shifting conflict between three factions.
+8. **Nexus Siege:** break two fortified hostile networks.
+
+## Controls
+
+- **Connect or attack:** drag from one owned system to another system.
+- **Cut and surge:** swipe across an active corridor.
+- **Manage the run:** use the HUD for the campaign map, restart, audio,
+  fullscreen and pause.
+
+## Development
+
+StarConquest uses TypeScript, Vite and a custom Canvas 2D renderer. Gameplay is
+driven by a fixed-timestep simulation and covered by automated mechanics,
+campaign, balance and runtime-asset tests.
 
 ```powershell
+npm.cmd install
 npm.cmd run dev
 npm.cmd test
 npm.cmd run balance:sim
 npm.cmd run build
 ```
 
-Every push to `main` tests and publishes the production build through GitHub
-Pages.
+The legacy source is frozen in [`reference/legacy-build/`](reference/legacy-build/).
+The protected gameplay contract is documented in
+[`docs/core-mechanics.md`](docs/core-mechanics.md), with the latest automated
+balance report in [`docs/balance-report.md`](docs/balance-report.md).
+
+Every push to `main` validates and publishes the production build through
+GitHub Pages.
