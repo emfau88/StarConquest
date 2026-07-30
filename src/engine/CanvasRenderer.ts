@@ -604,6 +604,18 @@ export class CanvasRenderer {
     const color = preview.prominentBoost ? "#ffd65a" : "#c7efff";
 
     context.save();
+    this.drawCutFlow(
+      context,
+      preview.position,
+      preview.source,
+      "#56d8ff",
+    );
+    this.drawCutFlow(
+      context,
+      preview.position,
+      preview.target,
+      "#ffd65a",
+    );
     context.font = "800 18px Inter, system-ui, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -640,6 +652,67 @@ export class CanvasRenderer {
       Math.PI * 2,
     );
     context.stroke();
+    context.restore();
+  }
+
+  private drawCutFlow(
+    context: CanvasRenderingContext2D,
+    from: Point,
+    to: Point,
+    color: string,
+  ): void {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 1) {
+      return;
+    }
+
+    const directionX = dx / distance;
+    const directionY = dy / distance;
+    const startDistance = Math.min(18, distance * 0.12);
+    const endDistance = Math.max(startDistance, distance - 22);
+    const arrowDistance =
+      startDistance + (endDistance - startDistance) * 0.52;
+    const arrowX = from.x + directionX * arrowDistance;
+    const arrowY = from.y + directionY * arrowDistance;
+    const normalX = -directionY;
+    const normalY = directionX;
+
+    context.save();
+    context.globalAlpha = 0.92;
+    context.strokeStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 12;
+    context.lineCap = "round";
+    context.lineWidth = 7;
+    context.beginPath();
+    context.moveTo(
+      from.x + directionX * startDistance,
+      from.y + directionY * startDistance,
+    );
+    context.lineTo(
+      from.x + directionX * endDistance,
+      from.y + directionY * endDistance,
+    );
+    context.stroke();
+
+    context.fillStyle = color;
+    context.beginPath();
+    context.moveTo(
+      arrowX + directionX * 11,
+      arrowY + directionY * 11,
+    );
+    context.lineTo(
+      arrowX - directionX * 8 + normalX * 7,
+      arrowY - directionY * 8 + normalY * 7,
+    );
+    context.lineTo(
+      arrowX - directionX * 8 - normalX * 7,
+      arrowY - directionY * 8 - normalY * 7,
+    );
+    context.closePath();
+    context.fill();
     context.restore();
   }
 

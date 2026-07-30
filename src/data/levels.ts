@@ -168,12 +168,12 @@ export const LEVELS = [
       de: "Stromschnitt",
     },
     objective: {
-      en: "Use boost cuts to break through the relay chain",
-      de: "Durchbrich die Relaiskette mit gezielten Boost-Schnitten",
+      en: "Use fleet surges to break through the relay chain",
+      de: "Durchbrich die Relaiskette mit gezielten Flottenstößen",
     },
     openingHint: {
-      en: "Cut an active blue route near its source to launch its energy",
-      de: "Schneide eine aktive blaue Route nahe der Quelle für einen Boost",
+      en: "Sever a charged flux lane near its source: the front commits, the rear recalls",
+      de: "Trenne einen geladenen Korridor nahe der Quelle: vorn Vorstoß, hinten Rückruf",
     },
     tutorialNoCost: false,
     threeStarSeconds: 115,
@@ -412,8 +412,8 @@ export const LEVELS = [
       de: "Brich die langen Helion-Routen und erobere ihre Sonnenzitadelle",
     },
     openingHint: {
-      en: "Orange Helion systems reach far; use boost cuts to beat their timing",
-      de: "Orange Helion-Systeme greifen weit aus – komm ihnen mit Boost-Schnitten zuvor",
+      en: "Orange Helion systems reach far; counter them with well-timed fleet surges",
+      de: "Orange Helion-Systeme greifen weit aus – kontere sie mit gut getimten Flottenstößen",
     },
     tutorialNoCost: false,
     threeStarSeconds: 195,

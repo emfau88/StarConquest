@@ -56,6 +56,9 @@ export interface DragPreview {
 export interface CutPreview {
   linkId: string;
   position: Point;
+  source: Point;
+  target: Point;
+  fraction: number;
   forwardEnergy: number;
   returnedEnergy: number;
   prominentBoost: boolean;

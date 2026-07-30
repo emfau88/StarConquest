@@ -698,5 +698,9 @@ test("cutting an active link removes it and launches stored energy", () => {
   assert.equal(simulation.getLinks().length, 0);
   assert.ok((simulation.getSystem("player")?.energy ?? 0) > sourceBefore);
   assert.ok((simulation.getSystem("enemy")?.energy ?? 0) < targetBefore);
-  assert.ok(simulation.drainEvents().some((event) => event.kind === "cut"));
+  const cutEvent = simulation
+    .drainEvents()
+    .find((event) => event.kind === "cut");
+  assert.ok(cutEvent);
+  assert.deepEqual(cutEvent.position, { x: 260, y: 450 });
 });

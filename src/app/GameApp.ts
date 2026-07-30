@@ -680,10 +680,22 @@ export class GameApp {
       candidate.linkId,
       candidate.fraction,
     );
-    return outcome
+    const link = this.simulation
+      .getLinks()
+      .find((candidateLink) => candidateLink.id === candidate.linkId);
+    const source = link
+      ? this.simulation.getSystem(link.sourceId)
+      : undefined;
+    const target = link
+      ? this.simulation.getSystem(link.targetId)
+      : undefined;
+    return outcome && source && target
       ? {
           linkId: candidate.linkId,
           position: candidate.position,
+          source: { ...source.position },
+          target: { ...target.position },
+          fraction: candidate.fraction,
           ...outcome,
         }
       : null;

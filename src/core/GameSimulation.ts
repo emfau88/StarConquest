@@ -305,6 +305,17 @@ export class GameSimulation {
       link.unitsInTransit,
       cutFraction,
     );
+    const normalizedCutFraction = clamp(cutFraction, 0, 1);
+    const cutPosition = {
+      x:
+        source.position.x +
+        (target.position.x - source.position.x) *
+          normalizedCutFraction,
+      y:
+        source.position.y +
+        (target.position.y - source.position.y) *
+          normalizedCutFraction,
+    };
     this.applyTransfer(link.owner, target, outcome.forwardEnergy);
     if (source.owner === link.owner) {
       source.energy = Math.min(
@@ -318,7 +329,7 @@ export class GameSimulation {
     this.events.push({
       kind: "cut",
       owner,
-      position: { ...source.position },
+      position: cutPosition,
       targetPosition: { ...target.position },
       prominentBoost: outcome.prominentBoost,
     });
