@@ -29,6 +29,13 @@ the right moment to launch a decisive surge.
 | ![The connect gesture tutorial in the first sector](docs/screenshots/first-contact.webp) | ![The eight-sector StarConquest campaign map](docs/screenshots/campaign-map.webp) |
 | The first sector teaches route creation directly on the battlefield. | Completed sectors, unlocks and best ratings remain available between sessions. |
 
+### Pressure Line in motion
+
+![Blue and red fleets contesting several routes in sector two](docs/screenshots/pressure-line.webp)
+
+By sector two, both hostile outposts expand independently while the player
+races to secure the central Giant and maintain a stable energy network.
+
 ## Campaign
 
 1. **First Contact:** connect systems and expand through neutral space.
