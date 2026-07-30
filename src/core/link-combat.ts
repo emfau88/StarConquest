@@ -7,7 +7,7 @@ import type {
 type ReciprocalLinkView = Pick<
   EnergyLinkView,
   "id" | "sourceId" | "targetId" | "owner" | "unitsInTransit"
->;
+> & Partial<Pick<EnergyLinkView, "combatFrontFraction">>;
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.max(minimum, Math.min(maximum, value));
@@ -26,7 +26,7 @@ export const findHostileReciprocalLink = <
       candidate.owner !== link.owner,
   );
 
-export const combatFrontFraction = (
+export const combatFrontTargetFraction = (
   forward: ReciprocalLinkView,
   reverse: ReciprocalLinkView,
 ): number => {
@@ -37,6 +37,19 @@ export const combatFrontFraction = (
     (forwardStrength - reverseStrength) /
     Math.max(12, combinedStrength);
   return clamp(0.5 + advantage * 0.28, 0.24, 0.76);
+};
+
+export const combatFrontFraction = (
+  forward: ReciprocalLinkView,
+  reverse: ReciprocalLinkView,
+): number => {
+  if (Number.isFinite(forward.combatFrontFraction)) {
+    return clamp(forward.combatFrontFraction ?? 0.5, 0, 1);
+  }
+  if (Number.isFinite(reverse.combatFrontFraction)) {
+    return 1 - clamp(reverse.combatFrontFraction ?? 0.5, 0, 1);
+  }
+  return combatFrontTargetFraction(forward, reverse);
 };
 
 export const pointBetweenSystems = (

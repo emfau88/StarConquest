@@ -3,21 +3,24 @@ import type { Owner } from "../core/types";
 const assetUrl = (filename: string): string =>
   `${import.meta.env.BASE_URL}assets/ships/${filename}`;
 
-export class TransportShipArtLibrary {
-  private readonly images = new Map<Owner, HTMLImageElement>();
+export type ShipRole = "transport" | "interceptor" | "cruiser";
 
-  get(owner: Owner): HTMLImageElement | null {
+export class FleetShipArtLibrary {
+  private readonly images = new Map<string, HTMLImageElement>();
+
+  get(owner: Owner, role: ShipRole): HTMLImageElement | null {
     if (owner === "neutral") {
       return null;
     }
-    const cached = this.images.get(owner);
+    const key = `${owner}:${role}`;
+    const cached = this.images.get(key);
     if (cached) {
       return cached;
     }
     const image = new Image();
     image.decoding = "async";
-    image.src = assetUrl(`transport-${owner}.webp`);
-    this.images.set(owner, image);
+    image.src = assetUrl(`${role}-${owner}.webp`);
+    this.images.set(key, image);
     return image;
   }
 }

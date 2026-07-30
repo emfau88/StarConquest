@@ -48,6 +48,15 @@ CORE_SYSTEM_TIERS = (
     "medium",
     "large",
 )
+FLEET_SHIP_ROLES = (
+    "interceptor",
+    "cruiser",
+)
+FLEET_SHIP_OWNERS = (
+    "player",
+    "enemy",
+    "enemy2",
+)
 
 
 def save_runtime_webp(
@@ -361,6 +370,21 @@ def optimize_core_transport_ships() -> None:
             )
 
 
+def optimize_generated_fleet_ships() -> None:
+    source_directory = ROOT / "assets/source/ships"
+    destination = ROOT / "public/assets/ships"
+
+    for owner in FLEET_SHIP_OWNERS:
+        for role in FLEET_SHIP_ROLES:
+            source = source_directory / f"{role}-{owner}-transparent.png"
+            with Image.open(source) as ship:
+                save_runtime_webp(
+                    ship,
+                    destination / f"{role}-{owner}.webp",
+                    (256, 256),
+                )
+
+
 if __name__ == "__main__":
     resize_capture_texture()
     split_hud_icons()
@@ -370,4 +394,5 @@ if __name__ == "__main__":
     split_quasar_systems()
     split_progression_icons()
     optimize_core_transport_ships()
+    optimize_generated_fleet_ships()
     split_helion_assets()

@@ -43,6 +43,7 @@ export const GAME_RULES = Object.freeze({
   frontSupplyEnergyCap: 1.15,
   frontAttritionMultiplier: 1.5,
   formingFrontReserve: 24,
+  frontPushPixelsPerSecond: 92,
   captureEnergyFloor: 5,
   linkGrowPixelsPerSecond: 220,
   prominentBoostCutFraction: 0.38,

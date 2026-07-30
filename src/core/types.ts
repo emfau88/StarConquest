@@ -32,6 +32,9 @@ export interface EnergyLinkView {
   state: "growing" | "active";
   growProgress: number;
   unitsInTransit: number;
+  flowPerSecond: number;
+  ageSeconds: number;
+  combatFrontFraction?: number;
 }
 
 export type VisualEffectKind =

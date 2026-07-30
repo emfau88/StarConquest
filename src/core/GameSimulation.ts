@@ -8,6 +8,7 @@ import {
 } from "./game-rules";
 import {
   combatFrontFraction,
+  combatFrontTargetFraction,
   findHostileReciprocalLink,
   pointBetweenSystems,
 } from "./link-combat";
@@ -139,6 +140,7 @@ const FRONT_ATTRITION_PER_SECOND =
   GAME_RULES.baseFlowPerSecond *
   GAME_RULES.frontAttritionMultiplier;
 const FRONT_BREAK_EPSILON = 0.05;
+const FRONT_CONTACT_EPSILON = 0.002;
 
 export class GameSimulation {
   private systems: StarSystemState[] = [];
@@ -426,6 +428,8 @@ export class GameSimulation {
 
   private updateLinks(deltaSeconds: number): void {
     for (const link of [...this.links]) {
+      link.ageSeconds += deltaSeconds;
+      link.flowPerSecond = 0;
       const source = this.findSystem(link.sourceId);
       const target = this.findSystem(link.targetId);
       if (!source || !target) {
@@ -512,6 +516,7 @@ export class GameSimulation {
         if (!reciprocalSource) {
           continue;
         }
+        const hasFrontContact = this.ensureFrontContact(link, reciprocal);
         if (link.state === "active" && reciprocal.state === "active") {
           this.updateContestedPair(
             link,
@@ -520,7 +525,7 @@ export class GameSimulation {
             reciprocalSource,
             deltaSeconds,
           );
-        } else {
+        } else if (hasFrontContact) {
           if (link.state === "active") {
             this.feedFormingFront(link, source, deltaSeconds);
           }
@@ -531,6 +536,13 @@ export class GameSimulation {
               deltaSeconds,
             );
           }
+          this.advanceFrontPosition(
+            link,
+            reciprocal,
+            source,
+            reciprocalSource,
+            deltaSeconds,
+          );
         }
         continue;
       }
@@ -585,7 +597,37 @@ export class GameSimulation {
     const delivered = Math.min(link.unitsInTransit, requested);
     link.unitsInTransit -= delivered;
     this.applyTransfer(link.owner, target, delivered);
-    this.pumpIntoLink(link, source, requested);
+    const pumped = this.pumpIntoLink(link, source, requested);
+    link.flowPerSecond =
+      Math.max(delivered, pumped) / Math.max(deltaSeconds, 0.001);
+  }
+
+  private ensureFrontContact(
+    forward: EnergyLinkState,
+    reverse: EnergyLinkState,
+  ): boolean {
+    if (
+      Number.isFinite(forward.combatFrontFraction) ||
+      Number.isFinite(reverse.combatFrontFraction)
+    ) {
+      const current = combatFrontFraction(forward, reverse);
+      forward.combatFrontFraction = current;
+      reverse.combatFrontFraction = 1 - current;
+      return true;
+    }
+
+    const forwardReach =
+      forward.state === "active" ? 1 : forward.growProgress;
+    const reverseReach =
+      reverse.state === "active" ? 0 : 1 - reverse.growProgress;
+    if (forwardReach + FRONT_CONTACT_EPSILON < reverseReach) {
+      return false;
+    }
+
+    const contact = clamp((forwardReach + reverseReach) / 2, 0, 1);
+    forward.combatFrontFraction = contact;
+    reverse.combatFrontFraction = 1 - contact;
+    return true;
   }
 
   private feedFormingFront(
@@ -600,13 +642,53 @@ export class GameSimulation {
     if (reserveCapacity <= 0) {
       return;
     }
-    this.pumpIntoLink(
+    const pumped = this.pumpIntoLink(
       link,
       source,
       Math.min(
         reserveCapacity,
         this.frontSupplyPerSecond(source) * deltaSeconds,
       ),
+    );
+    link.flowPerSecond =
+      pumped / Math.max(deltaSeconds, 0.001);
+  }
+
+  private setFrontFraction(
+    forward: EnergyLinkState,
+    reverse: EnergyLinkState,
+    fraction: number,
+  ): void {
+    const normalized = clamp(fraction, 0, 1);
+    forward.combatFrontFraction = normalized;
+    reverse.combatFrontFraction = 1 - normalized;
+  }
+
+  private advanceFrontPosition(
+    forward: EnergyLinkState,
+    reverse: EnergyLinkState,
+    forwardSource: StarSystemState,
+    reverseSource: StarSystemState,
+    deltaSeconds: number,
+  ): void {
+    const currentFront = combatFrontFraction(forward, reverse);
+    const desiredFront = combatFrontTargetFraction(forward, reverse);
+    const routeLength = Math.max(
+      1,
+      distance(forwardSource.position, reverseSource.position),
+    );
+    const maximumStep =
+      (GAME_RULES.frontPushPixelsPerSecond / routeLength) *
+      deltaSeconds;
+    const frontDelta = clamp(
+      desiredFront - currentFront,
+      -maximumStep,
+      maximumStep,
+    );
+    this.setFrontFraction(
+      forward,
+      reverse,
+      currentFront + frontDelta,
     );
   }
 
@@ -617,16 +699,20 @@ export class GameSimulation {
     reverseSource: StarSystemState,
     deltaSeconds: number,
   ): void {
-    this.pumpIntoLink(
+    const forwardPumped = this.pumpIntoLink(
       forward,
       forwardSource,
       this.frontSupplyPerSecond(forwardSource) * deltaSeconds,
     );
-    this.pumpIntoLink(
+    const reversePumped = this.pumpIntoLink(
       reverse,
       reverseSource,
       this.frontSupplyPerSecond(reverseSource) * deltaSeconds,
     );
+    forward.flowPerSecond =
+      forwardPumped / Math.max(deltaSeconds, 0.001);
+    reverse.flowPerSecond =
+      reversePumped / Math.max(deltaSeconds, 0.001);
 
     const attrition = Math.min(
       forward.unitsInTransit,
@@ -643,6 +729,13 @@ export class GameSimulation {
     );
     forward.intensity = linkIntensityForEnergy(forward.unitsInTransit);
     reverse.intensity = linkIntensityForEnergy(reverse.unitsInTransit);
+    this.advanceFrontPosition(
+      forward,
+      reverse,
+      forwardSource,
+      reverseSource,
+      deltaSeconds,
+    );
 
     const forwardBroken =
       forward.unitsInTransit <= FRONT_BREAK_EPSILON;
@@ -654,19 +747,21 @@ export class GameSimulation {
 
     const winner = forwardBroken ? reverse : forward;
     const loser = forwardBroken ? forward : reverse;
-    const winnerSource = forwardBroken ? reverseSource : forwardSource;
-    const loserSource = forwardBroken ? forwardSource : reverseSource;
     const frontPosition = pointBetweenSystems(
-      winnerSource,
-      loserSource,
-      combatFrontFraction(winner, loser),
+      forwardSource,
+      reverseSource,
+      combatFrontFraction(forward, reverse),
     );
     this.removeLink(loser);
     this.events.push({
       kind: "front-broken",
       owner: winner.owner,
       position: frontPosition,
-      targetPosition: { ...loserSource.position },
+      targetPosition: {
+        ...(forwardBroken
+          ? forwardSource.position
+          : reverseSource.position),
+      },
     });
   }
 
@@ -758,6 +853,8 @@ export class GameSimulation {
       state: "growing",
       growProgress: 0,
       unitsInTransit: cost,
+      flowPerSecond: 0,
+      ageSeconds: 0,
       formationCost: cost,
     };
     this.links.push(link);
@@ -1033,6 +1130,10 @@ export class GameSimulation {
   private removeLink(link: EnergyLinkState | undefined): void {
     if (!link) {
       return;
+    }
+    const reciprocal = findHostileReciprocalLink(link, this.links);
+    if (reciprocal) {
+      delete reciprocal.combatFrontFraction;
     }
     this.links = this.links.filter((candidate) => candidate !== link);
   }

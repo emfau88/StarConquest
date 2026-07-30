@@ -6,6 +6,8 @@ import test from "node:test";
 const publicAssets = join(process.cwd(), "public", "assets");
 const systemOwners = ["player", "enemy", "enemy2", "neutral"];
 const systemTiers = ["small", "medium", "large"];
+const fleetOwners = ["player", "enemy", "enemy2"];
+const fleetRoles = ["transport", "interceptor", "cruiser"];
 const requiredAssets = [
   ...systemOwners.flatMap((owner) =>
     systemTiers.map((tier) =>
@@ -14,9 +16,11 @@ const requiredAssets = [
   ),
   join("systems", "system-player-quasar.webp"),
   join("systems", "system-enemy-quasar.webp"),
-  join("ships", "transport-player.webp"),
-  join("ships", "transport-enemy.webp"),
-  join("ships", "transport-enemy2.webp"),
+  ...fleetOwners.flatMap((owner) =>
+    fleetRoles.map((role) =>
+      join("ships", `${role}-${owner}.webp`)
+    )
+  ),
   join("vfx", "capture-burst.webp"),
 ];
 

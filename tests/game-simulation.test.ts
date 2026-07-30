@@ -10,6 +10,7 @@ import {
   linkIntensityForEnergy,
 } from "../src/core/GameSimulation";
 import { SYSTEM_CLASS_SPECS } from "../src/core/game-rules";
+import { combatFrontFraction } from "../src/core/link-combat";
 import { FixedStepClock } from "../src/engine/FixedStepClock";
 import {
   getLinkCurve,
@@ -226,6 +227,56 @@ test("equal reciprocal attacks meet at a stable front", () => {
       .drainEvents()
       .some((event) => event.kind === "capture"),
   );
+});
+
+test("a counterattack starts at contact and pushes the front without jumping", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    id: "moving-front-duel",
+    aiActionIntervalSeconds: 0.1,
+    systems: DUEL_LEVEL.systems.map((system) => ({
+      ...system,
+      className: "NEXUS",
+      startEnergy: 120,
+    })),
+  };
+  const simulation = new GameSimulation(level);
+  simulation.update(0.1);
+  level.aiActionIntervalSeconds = 999;
+  advance(simulation, 1.4);
+
+  const incoming = simulation
+    .getLinks()
+    .find((link) => link.owner === "enemy");
+  assert.ok(incoming);
+  assert.equal(incoming.state, "active");
+  assert.equal(simulation.createPlayerLink("player", "enemy").ok, true);
+
+  simulation.update(0.05);
+  const counter = simulation
+    .getLinks()
+    .find((link) => link.owner === "player");
+  assert.ok(counter);
+  const initialFront = combatFrontFraction(incoming, counter);
+  assert.ok(initialFront > 0.9);
+
+  simulation.update(0.1);
+  const movedFront = combatFrontFraction(incoming, counter);
+  assert.ok(movedFront < initialFront);
+  assert.ok(initialFront - movedFront < 0.04);
+  assert.ok(movedFront > 0.8);
+});
+
+test("active routes expose visual age and actual throughput", () => {
+  const simulation = new GameSimulation(DUEL_LEVEL);
+  assert.equal(simulation.createPlayerLink("player", "enemy").ok, true);
+  advance(simulation, 1.6);
+
+  const link = simulation.getLinks()[0];
+  assert.ok(link);
+  assert.equal(link.state, "active");
+  assert.ok(link.ageSeconds >= 1.5);
+  assert.ok(link.flowPerSecond > 0);
 });
 
 test("a stronger source breaks a weaker reciprocal front", () => {

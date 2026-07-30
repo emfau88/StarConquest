@@ -26,8 +26,9 @@ import {
   pointOnLink,
 } from "./link-geometry";
 import {
+  FleetShipArtLibrary,
   isShipArtReady,
-  TransportShipArtLibrary,
+  type ShipRole,
 } from "./ShipArt";
 import { SYSTEM_RADII } from "./system-geometry";
 import {
@@ -73,6 +74,8 @@ const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
   enemy2: "#ffb14a",
   neutral: "#b8c8dd",
 });
+const FLEET_SHIP_SPEED_PIXELS_PER_SECOND = 205;
+const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
 
 const buildStars = (): Star[] => {
   let seed = 0x51a7c0;
@@ -99,7 +102,7 @@ export class CanvasRenderer {
   private readonly tutorialGestureImages: Partial<
     Record<TutorialCue["kind"], HTMLImageElement>
   > = {};
-  private readonly transportShipArt = new TransportShipArtLibrary();
+  private readonly fleetShipArt = new FleetShipArtLibrary();
   private readonly systemArt = new SystemArtLibrary();
 
   constructor(private readonly viewport: CanvasViewport) {}
@@ -271,7 +274,6 @@ export class CanvasRenderer {
           source,
           target,
           scene.links,
-          scene.elapsedSeconds,
         );
       }
     }
@@ -334,19 +336,22 @@ export class CanvasRenderer {
     elapsedSeconds: number,
   ): void {
     const curve = getLinkCurve(forward, source, target);
-    const bothActive =
-      forward.state === "active" && reverse.state === "active";
-    const frontFraction = bothActive
+    const hasFront =
+      Number.isFinite(forward.combatFrontFraction) ||
+      Number.isFinite(reverse.combatFrontFraction);
+    const frontFraction = hasFront
       ? combatFrontFraction(forward, reverse)
       : 0.5;
-    const forwardReach =
-      forward.state === "active"
-        ? frontFraction
-        : frontFraction * forward.growProgress;
-    const reverseReach =
-      reverse.state === "active"
-        ? frontFraction
-        : 1 - (1 - frontFraction) * reverse.growProgress;
+    const forwardReach = hasFront
+      ? frontFraction
+      : forward.state === "active"
+        ? 1
+        : forward.growProgress;
+    const reverseReach = hasFront
+      ? frontFraction
+      : reverse.state === "active"
+        ? 0
+        : 1 - reverse.growProgress;
     const forwardColor = OWNER_COLORS[forward.owner];
     const reverseColor = OWNER_COLORS[reverse.owner];
 
@@ -373,59 +378,36 @@ export class CanvasRenderer {
       reverse.intensity,
     );
 
-    this.drawFrontShips(
+    this.drawRouteFleet(
       context,
       curve,
       0,
       forwardReach,
       forward,
-      elapsedSeconds,
       false,
+      true,
+      1,
     );
-    this.drawFrontShips(
+    this.drawRouteFleet(
       context,
       curve,
       1,
       reverseReach,
       reverse,
-      elapsedSeconds,
       true,
+      true,
+      1,
     );
 
-    if (bothActive) {
-      const front = pointOnLink(curve, frontFraction);
-      const pulse = 0.5 + Math.sin(elapsedSeconds * 11) * 0.5;
-      context.globalAlpha = 0.74 + pulse * 0.2;
-      context.fillStyle = "#fff5c7";
-      context.strokeStyle = "#ffffff";
-      context.shadowColor = "#ffcf66";
-      context.shadowBlur = 10 + pulse * 7;
-      context.lineWidth = 1.5;
-      context.beginPath();
-      context.arc(front.x, front.y, 4.5 + pulse * 1.8, 0, Math.PI * 2);
-      context.fill();
-      context.stroke();
-
-      const tangent = this.tangentOnLink(curve, frontFraction);
-      const tangentLength = Math.max(1, Math.hypot(tangent.x, tangent.y));
-      const normalX = -tangent.y / tangentLength;
-      const normalY = tangent.x / tangentLength;
-      context.globalAlpha = 0.5;
-      context.strokeStyle = "#ffd76c";
-      context.lineWidth = 2;
-      for (let index = -1; index <= 1; index += 2) {
-        const sparkLength = 7 + pulse * 5;
-        context.beginPath();
-        context.moveTo(
-          front.x + normalX * index * 3,
-          front.y + normalY * index * 3,
-        );
-        context.lineTo(
-          front.x + normalX * index * sparkLength,
-          front.y + normalY * index * sparkLength,
-        );
-        context.stroke();
-      }
+    if (hasFront) {
+      this.drawBattleBand(
+        context,
+        curve,
+        frontFraction,
+        forward,
+        reverse,
+        elapsedSeconds,
+      );
     }
     context.restore();
   }
@@ -449,40 +431,85 @@ export class CanvasRenderer {
     this.strokeLinkRange(context, curve, start, end);
   }
 
-  private drawFrontShips(
+  private visibleFleetCount(
+    link: EnergyLinkView,
+    maximum: number,
+  ): number {
+    const visualFlow = Math.max(
+      link.flowPerSecond,
+      Math.min(2.4, link.unitsInTransit / 6),
+    );
+    return Math.min(
+      maximum,
+      Math.max(1, 1 + Math.floor(visualFlow / 2.2)),
+    );
+  }
+
+  private roleForFleetSlot(
+    index: number,
+    count: number,
+  ): ShipRole {
+    if (count >= 4 && index === count - 1) {
+      return "cruiser";
+    }
+    return index % 2 === 1 ? "interceptor" : "transport";
+  }
+
+  private drawRouteFleet(
     context: CanvasRenderingContext2D,
     curve: ReturnType<typeof getLinkCurve>,
     routeStart: number,
     routeEnd: number,
     link: EnergyLinkView,
-    elapsedSeconds: number,
     reverseDirection: boolean,
+    isAttacking: boolean,
+    maximumShips: number,
   ): void {
-    const routeLength = Math.abs(routeEnd - routeStart);
-    if (routeLength < 0.1 || link.unitsInTransit <= 0.25) {
+    const routeFraction = Math.abs(routeEnd - routeStart);
+    const routeLength = Math.max(
+      1,
+      Math.hypot(
+        curve.target.x - curve.source.x,
+        curve.target.y - curve.source.y,
+      ),
+    );
+    if (routeFraction < 0.08 || link.unitsInTransit <= 0.25) {
       return;
     }
-    const shipCount = Math.min(
-      2,
-      Math.max(1, Math.ceil(link.unitsInTransit / 12)),
-    );
-    const padding = Math.min(0.055, routeLength * 0.2);
-    const start = reverseDirection
-      ? routeStart - padding
-      : routeStart + padding;
-    const end = reverseDirection
-      ? routeEnd + padding
-      : routeEnd - padding;
-    const speed = 0.18 + link.intensity * 0.07;
+    const shipCount = this.visibleFleetCount(link, maximumShips);
+    const padding = Math.min(0.035, 7 / routeLength);
+    const minimum = Math.min(routeStart, routeEnd) + padding;
+    const maximum = Math.max(routeStart, routeEnd) - padding;
     const color = OWNER_COLORS[link.owner];
 
     for (let index = 0; index < shipCount; index += 1) {
-      const phase =
-        (index / shipCount + elapsedSeconds * speed) % 1;
-      const fraction = start + (end - start) * phase;
+      const travelled =
+        (link.ageSeconds * FLEET_SHIP_SPEED_PIXELS_PER_SECOND +
+          (index * routeLength) / Math.max(1, maximumShips)) %
+        routeLength;
+      const phase = travelled / routeLength;
+      const fraction = reverseDirection ? 1 - phase : phase;
+      if (
+        isAttacking &&
+        link.state === "active" &&
+        !reverseDirection &&
+        routeEnd > 0.97 &&
+        phase > 0.9
+      ) {
+        this.drawDeliveryImpact(
+          context,
+          curve,
+          link.owner,
+          (phase - 0.9) / 0.1,
+          link.intensity,
+        );
+      }
+      if (fraction < minimum || fraction > maximum) {
+        continue;
+      }
       const point = pointOnLink(curve, fraction);
       const tangent = this.tangentOnLink(curve, fraction);
-      this.drawTransportShip(
+      this.drawFleetShip(
         context,
         point,
         Math.atan2(tangent.y, tangent.x) +
@@ -490,9 +517,167 @@ export class CanvasRenderer {
         link.owner,
         color,
         link.intensity,
-        true,
+        isAttacking,
+        this.roleForFleetSlot(index, shipCount),
+        1,
       );
     }
+  }
+
+  private drawDeliveryImpact(
+    context: CanvasRenderingContext2D,
+    curve: ReturnType<typeof getLinkCurve>,
+    owner: Owner,
+    progress: number,
+    intensity: number,
+  ): void {
+    const target = pointOnLink(curve, 1);
+    const normalized = Math.max(0, Math.min(1, progress));
+    const alpha = (1 - normalized) * (0.32 + intensity * 0.22);
+    const color = OWNER_COLORS[owner];
+    context.save();
+    context.globalAlpha = alpha;
+    context.strokeStyle = "#f7fdff";
+    context.fillStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 8;
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.arc(
+      target.x,
+      target.y,
+      8 + normalized * 15,
+      0,
+      Math.PI * 2,
+    );
+    context.stroke();
+    context.globalAlpha = alpha * 0.55;
+    context.beginPath();
+    context.arc(target.x, target.y, 4 + normalized * 7, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  private drawBattleBand(
+    context: CanvasRenderingContext2D,
+    curve: ReturnType<typeof getLinkCurve>,
+    frontFraction: number,
+    forward: EnergyLinkView,
+    reverse: EnergyLinkView,
+    elapsedSeconds: number,
+  ): void {
+    const front = pointOnLink(curve, frontFraction);
+    const tangent = this.tangentOnLink(curve, frontFraction);
+    const angle = Math.atan2(tangent.y, tangent.x);
+    const combinedIntensity = (forward.intensity + reverse.intensity) / 2;
+    const halfWidth = 13 + combinedIntensity * 8;
+    const pulse = 0.5 + Math.sin(elapsedSeconds * 10) * 0.5;
+    const forwardCount = Math.min(
+      3,
+      this.visibleFleetCount(forward, 3),
+    );
+    const reverseCount = Math.min(
+      3,
+      this.visibleFleetCount(reverse, 3),
+    );
+    const forwardColor = OWNER_COLORS[forward.owner];
+    const reverseColor = OWNER_COLORS[reverse.owner];
+
+    context.save();
+    context.translate(front.x, front.y);
+    context.rotate(angle);
+
+    const bandGlow = context.createRadialGradient(0, 0, 1, 0, 0, halfWidth);
+    bandGlow.addColorStop(0, "rgba(255, 249, 213, 0.38)");
+    bandGlow.addColorStop(0.45, "rgba(255, 205, 91, 0.13)");
+    bandGlow.addColorStop(1, "rgba(255, 205, 91, 0)");
+    context.fillStyle = bandGlow;
+    context.beginPath();
+    context.ellipse(0, 0, 11 + pulse * 3, halfWidth, 0, 0, Math.PI * 2);
+    context.fill();
+
+    context.lineCap = "round";
+    context.lineWidth = 2.2;
+    context.shadowBlur = 7;
+    context.globalAlpha = 0.72;
+    context.strokeStyle = forwardColor;
+    context.shadowColor = forwardColor;
+    context.beginPath();
+    context.moveTo(0, -halfWidth);
+    context.lineTo(0, -2);
+    context.stroke();
+    context.strokeStyle = reverseColor;
+    context.shadowColor = reverseColor;
+    context.beginPath();
+    context.moveTo(0, 2);
+    context.lineTo(0, halfWidth);
+    context.stroke();
+
+    const lateralOffsets = [-0.55, 0.55, 0];
+    const drawSide = (
+      link: EnergyLinkView,
+      count: number,
+      direction: 1 | -1,
+    ): void => {
+      const color = OWNER_COLORS[link.owner];
+      for (let index = 0; index < count; index += 1) {
+        const lateral =
+          lateralOffsets[index] * halfWidth +
+          Math.sin(elapsedSeconds * 3.2 + index * 1.9) * 1.4;
+        const longitudinal =
+          direction * (10 + index * 6 + pulse * 1.5);
+        const firePhase =
+          (elapsedSeconds * 1.75 + index * 0.31 +
+            (direction > 0 ? 0.17 : 0)) %
+          1;
+        if (firePhase < 0.2) {
+          context.save();
+          context.globalAlpha = (1 - firePhase / 0.2) * 0.7;
+          context.strokeStyle = "#fff7cf";
+          context.shadowColor = color;
+          context.shadowBlur = 5;
+          context.lineWidth = 1.2;
+          context.beginPath();
+          context.moveTo(longitudinal - direction * 3, lateral);
+          context.lineTo(
+            longitudinal - direction * (10 + firePhase * 18),
+            lateral * 0.58,
+          );
+          context.stroke();
+          context.restore();
+        }
+        this.drawFleetShip(
+          context,
+          { x: longitudinal, y: lateral },
+          direction > 0 ? Math.PI : 0,
+          link.owner,
+          color,
+          link.intensity,
+          true,
+          count >= 3 && index === count - 1
+            ? "cruiser"
+            : this.roleForFleetSlot(index, count),
+          0.54,
+        );
+      }
+    };
+
+    drawSide(forward, forwardCount, -1);
+    drawSide(reverse, reverseCount, 1);
+
+    context.globalAlpha = 0.5 + pulse * 0.3;
+    context.strokeStyle = "#fff2b8";
+    context.shadowColor = "#ffcf66";
+    context.shadowBlur = 7;
+    context.lineWidth = 1.4;
+    for (let index = -1; index <= 1; index += 1) {
+      const sparkOffset = index * halfWidth * 0.3;
+      context.beginPath();
+      context.moveTo(-2 - pulse * 2, sparkOffset - 3);
+      context.lineTo(3 + pulse * 4, sparkOffset + 3);
+      context.stroke();
+    }
+    context.restore();
   }
 
   private drawLink(
@@ -501,7 +686,6 @@ export class CanvasRenderer {
     source: StarSystemView,
     target: StarSystemView,
     links: readonly EnergyLinkView[],
-    elapsedSeconds: number,
   ): void {
     const color = OWNER_COLORS[link.owner];
     const curve = getLinkCurve(
@@ -512,6 +696,13 @@ export class CanvasRenderer {
     );
     const progress = Math.max(0, Math.min(1, link.growProgress));
     const isAttacking = target.owner !== link.owner;
+    const routeLength = Math.max(
+      1,
+      Math.hypot(
+        curve.target.x - curve.source.x,
+        curve.target.y - curve.source.y,
+      ),
+    );
 
     context.save();
     context.lineCap = "round";
@@ -530,19 +721,24 @@ export class CanvasRenderer {
     context.lineWidth = 1.8 + link.intensity * 0.65;
     this.strokeLinkProgress(context, curve, progress);
 
-    const speed = isAttacking
-      ? 0.16 + link.intensity * 0.085
-      : 0.08 + link.intensity * 0.045;
+    const visualFlow = Math.max(
+      link.flowPerSecond,
+      Math.min(2.4, link.unitsInTransit / 6),
+    );
     const chargePulseCount =
       progress > 0.05
-        ? Math.min(12, Math.max(1, Math.ceil(link.unitsInTransit / 8)))
+        ? Math.min(10, Math.max(1, Math.ceil(visualFlow / 1.25)))
         : 0;
     for (let index = 0; index < chargePulseCount; index += 1) {
       const phase =
-        ((index + 0.5) / Math.max(1, chargePulseCount) +
-          elapsedSeconds * speed) %
-        1;
-      const t = 0.045 + Math.max(0, progress - 0.09) * phase;
+        (link.ageSeconds * ENERGY_PULSE_SPEED_PIXELS_PER_SECOND +
+          ((index + 0.5) * routeLength) /
+            Math.max(1, chargePulseCount)) %
+        routeLength;
+      const t = phase / routeLength;
+      if (t > progress - 0.035 || t < 0.035) {
+        continue;
+      }
       const point = pointOnLink(curve, t);
       const tangent = this.tangentOnLink(curve, t);
       context.save();
@@ -563,28 +759,17 @@ export class CanvasRenderer {
       context.restore();
     }
 
-    const shipCount = Math.min(
-      isAttacking ? 3 : 2,
-      Math.max(1, Math.ceil(link.unitsInTransit / 12)),
-    );
     if (progress > 0.18 && link.unitsInTransit > 0.25) {
-      const routeStart = 0.085;
-      const routeEnd = Math.max(routeStart, progress - 0.085);
-      for (let index = 0; index < shipCount; index += 1) {
-        const phase = (index / shipCount + elapsedSeconds * speed) % 1;
-        const t = routeStart + (routeEnd - routeStart) * phase;
-        const point = pointOnLink(curve, t);
-        const tangent = this.tangentOnLink(curve, t);
-        this.drawTransportShip(
-          context,
-          point,
-          Math.atan2(tangent.y, tangent.x),
-          link.owner,
-          color,
-          link.intensity,
-          isAttacking,
-        );
-      }
+      this.drawRouteFleet(
+        context,
+        curve,
+        0,
+        progress,
+        link,
+        false,
+        isAttacking,
+        isAttacking ? 5 : 4,
+      );
     }
 
     context.globalAlpha = 1;
@@ -606,7 +791,7 @@ export class CanvasRenderer {
     };
   }
 
-  private drawTransportShip(
+  private drawFleetShip(
     context: CanvasRenderingContext2D,
     position: Point,
     angle: number,
@@ -614,8 +799,15 @@ export class CanvasRenderer {
     color: string,
     intensity: number,
     isAttacking: boolean,
+    role: ShipRole,
+    presentationScale: number,
   ): void {
-    const scale = 1 + intensity * 0.1 + (isAttacking ? 0.04 : 0);
+    const roleScale =
+      role === "interceptor" ? 0.86 : role === "cruiser" ? 1.12 : 1;
+    const scale =
+      (1 + intensity * 0.08 + (isAttacking ? 0.03 : 0)) *
+      roleScale *
+      presentationScale;
     context.save();
     context.translate(position.x, position.y);
     context.rotate(angle);
@@ -636,7 +828,7 @@ export class CanvasRenderer {
     context.closePath();
     context.fill();
 
-    const artwork = this.transportShipArt.get(owner);
+    const artwork = this.fleetShipArt.get(owner, role);
     if (isShipArtReady(artwork)) {
       context.shadowBlur = 0;
       context.fillStyle = "rgba(1, 8, 24, 0.58)";

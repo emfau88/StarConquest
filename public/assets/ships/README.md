@@ -1,15 +1,17 @@
-# Runtime transport ships
+# Runtime fleet ships
 
-StarConquest currently has one transport function and therefore only one
-visual ship per active faction:
+Each active faction has three visual silhouettes:
 
 - `transport-player.webp`: blue, friendly triangular courier;
 - `transport-enemy.webp`: red, sharper angular courier;
 - `transport-enemy2.webp`: gold/orange Helion solar-prism courier.
+- `interceptor-*.webp`: slim, fast-looking route and battle-front craft;
+- `cruiser-*.webp`: broader line ships used at high visual throughput.
 
-The ships are rendered along energy routes. Direction, spacing, speed,
-quantity, exhaust and boost effects remain code-native. The previous vector
-ship remains available as a loading fallback.
+The variants are deliberately presentational rather than mechanical classes.
+Direction, spacing, speed, quantity, exhaust, impacts and battle-front effects
+remain code-native. The previous vector ship remains available as a loading
+fallback.
 
 The assets were generated with the built-in ImageGen workflow on flat
 chroma-key backgrounds and converted locally to transparent sources with soft
