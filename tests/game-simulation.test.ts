@@ -12,6 +12,15 @@ import {
 import { SYSTEM_CLASS_SPECS } from "../src/core/game-rules";
 import { FixedStepClock } from "../src/engine/FixedStepClock";
 import {
+  getLinkCurve,
+  getLinkLaneOffset,
+  pointOnLink,
+} from "../src/engine/link-geometry";
+import {
+  SYSTEM_RADII,
+  systemHitRadius,
+} from "../src/engine/system-geometry";
+import {
   LEVELS,
   type LevelDefinition,
 } from "../src/data/levels";
@@ -71,6 +80,74 @@ test("fixed-step clock produces consistent simulation time across frame rates", 
 
   assert.ok(Math.abs(runClock(60) - 2) < 0.000_001);
   assert.ok(Math.abs(runClock(144) - 2) < 1 / 60);
+});
+
+test("routes stay straight and reciprocal links use separate lanes", () => {
+  const source = {
+    id: "alpha",
+    owner: "player" as const,
+    className: "PULSAR" as const,
+    position: { x: 100, y: 200 },
+    energy: 20,
+    capacity: 65,
+  };
+  const target = {
+    id: "beta",
+    owner: "enemy" as const,
+    className: "PULSAR" as const,
+    position: { x: 500, y: 200 },
+    energy: 20,
+    capacity: 65,
+  };
+  const forward = {
+    id: "forward",
+    sourceId: source.id,
+    targetId: target.id,
+  };
+  const reverse = {
+    id: "reverse",
+    sourceId: target.id,
+    targetId: source.id,
+  };
+
+  const singleCurve = getLinkCurve(forward, source, target);
+  assert.deepEqual(singleCurve.control, { x: 300, y: 200 });
+  assert.deepEqual(pointOnLink(singleCurve, 0.5), { x: 300, y: 200 });
+
+  const links = [forward, reverse];
+  const forwardCurve = getLinkCurve(
+    forward,
+    source,
+    target,
+    getLinkLaneOffset(forward, links),
+  );
+  const reverseCurve = getLinkCurve(
+    reverse,
+    target,
+    source,
+    getLinkLaneOffset(reverse, links),
+  );
+  assert.equal(forwardCurve.source.y, 210);
+  assert.equal(reverseCurve.source.y, 190);
+  assert.deepEqual(forwardCurve.control, { x: 300, y: 210 });
+  assert.deepEqual(reverseCurve.control, { x: 300, y: 190 });
+});
+
+test("compact system artwork preserves the original touch targets", () => {
+  assert.deepEqual(SYSTEM_RADII, {
+    PULSAR: 34,
+    GIANT: 45,
+    QUASAR: 56,
+    NEXUS: 69,
+  });
+  assert.deepEqual(
+    ["PULSAR", "GIANT", "QUASAR", "NEXUS"].map((className) =>
+      systemHitRadius(
+        className as keyof typeof SYSTEM_RADII,
+      )
+    ),
+    [64, 78, 92, 108],
+  );
 });
 
 const runExpansionBot = (

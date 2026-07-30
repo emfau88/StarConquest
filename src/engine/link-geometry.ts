@@ -10,30 +10,55 @@ export interface LinkCurve {
   target: Point;
 }
 
-const linkDirection = (id: string): number => {
-  let hash = 0;
-  for (const character of id) {
-    hash = (hash * 31 + character.charCodeAt(0)) | 0;
+type LinkLaneView = Pick<
+  EnergyLinkView,
+  "id" | "sourceId" | "targetId"
+>;
+
+const RECIPROCAL_LANE_OFFSET = 10;
+
+export function getLinkLaneOffset(
+  link: LinkLaneView,
+  links: readonly LinkLaneView[],
+): number {
+  const hasReciprocalLink = links.some(
+    (candidate) =>
+      candidate.id !== link.id &&
+      candidate.sourceId === link.targetId &&
+      candidate.targetId === link.sourceId,
+  );
+  if (!hasReciprocalLink) {
+    return 0;
   }
-  return Math.abs(hash) % 2 === 0 ? 1 : -1;
-};
+  return RECIPROCAL_LANE_OFFSET;
+}
 
 export function getLinkCurve(
-  link: Pick<EnergyLinkView, "id">,
+  _link: Pick<EnergyLinkView, "id">,
   source: StarSystemView,
   target: StarSystemView,
+  laneOffset = 0,
 ): LinkCurve {
   const dx = target.position.x - source.position.x;
   const dy = target.position.y - source.position.y;
   const length = Math.max(1, Math.hypot(dx, dy));
-  const bend = Math.min(72, length * 0.12) * linkDirection(link.id);
+  const offsetX = (-dy / length) * laneOffset;
+  const offsetY = (dx / length) * laneOffset;
+  const shiftedSource = {
+    x: source.position.x + offsetX,
+    y: source.position.y + offsetY,
+  };
+  const shiftedTarget = {
+    x: target.position.x + offsetX,
+    y: target.position.y + offsetY,
+  };
   return {
-    source: source.position,
+    source: shiftedSource,
     control: {
-      x: (source.position.x + target.position.x) / 2 + (-dy / length) * bend,
-      y: (source.position.y + target.position.y) / 2 + (dx / length) * bend,
+      x: (shiftedSource.x + shiftedTarget.x) / 2,
+      y: (shiftedSource.y + shiftedTarget.y) / 2,
     },
-    target: target.position,
+    target: shiftedTarget,
   };
 }
 

@@ -18,6 +18,7 @@ import {
 } from "./CanvasViewport";
 import {
   getLinkCurve,
+  getLinkLaneOffset,
   pointOnLink,
 } from "./link-geometry";
 import {
@@ -243,6 +244,7 @@ export class CanvasRenderer {
           link,
           source,
           target,
+          scene.links,
           scene.elapsedSeconds,
         );
       }
@@ -302,60 +304,72 @@ export class CanvasRenderer {
     link: EnergyLinkView,
     source: StarSystemView,
     target: StarSystemView,
+    links: readonly EnergyLinkView[],
     elapsedSeconds: number,
   ): void {
     const color = OWNER_COLORS[link.owner];
-    const curve = getLinkCurve(link, source, target);
+    const curve = getLinkCurve(
+      link,
+      source,
+      target,
+      getLinkLaneOffset(link, links),
+    );
     const progress = Math.max(0, Math.min(1, link.growProgress));
+    const isAttacking = target.owner !== link.owner;
 
     context.save();
     context.lineCap = "round";
-    context.strokeStyle = "rgba(4, 17, 48, 0.72)";
-    context.lineWidth = 9;
+    context.strokeStyle = "rgba(2, 12, 34, 0.76)";
+    context.lineWidth = 6.5;
     this.strokeLinkProgress(context, curve, progress);
 
     context.shadowColor = color;
-    context.shadowBlur = 13;
-    context.strokeStyle = `${color}55`;
-    context.lineWidth = 6 + link.intensity * 1.8;
+    context.shadowBlur = isAttacking ? 7 : 4;
+    context.strokeStyle = `${color}${isAttacking ? "50" : "38"}`;
+    context.lineWidth = 3.6 + link.intensity * 0.9;
     this.strokeLinkProgress(context, curve, progress);
 
-    context.shadowBlur = 2;
+    context.shadowBlur = 1;
     context.strokeStyle = link.state === "growing" ? "#e9fbff" : `${color}e8`;
-    context.lineWidth = 2.4 + link.intensity * 1.15;
+    context.lineWidth = 1.8 + link.intensity * 0.65;
     this.strokeLinkProgress(context, curve, progress);
 
-    const speed = 0.105 + link.intensity * 0.065;
-    const chargeDotCount =
+    const speed = isAttacking
+      ? 0.16 + link.intensity * 0.085
+      : 0.08 + link.intensity * 0.045;
+    const chargePulseCount =
       progress > 0.05
-        ? Math.min(
-            72,
-            Math.max(0, Math.floor(link.unitsInTransit)),
-          )
+        ? Math.min(12, Math.max(1, Math.ceil(link.unitsInTransit / 8)))
         : 0;
-    for (let index = 0; index < chargeDotCount; index += 1) {
+    for (let index = 0; index < chargePulseCount; index += 1) {
       const phase =
-        ((index + 0.5) / Math.max(1, chargeDotCount) +
+        ((index + 0.5) / Math.max(1, chargePulseCount) +
           elapsedSeconds * speed) %
         1;
       const t = 0.045 + Math.max(0, progress - 0.09) * phase;
       const point = pointOnLink(curve, t);
-      context.globalAlpha = 0.2 + link.intensity * 0.34;
+      const tangent = this.tangentOnLink(curve, t);
+      context.save();
+      context.translate(point.x, point.y);
+      context.rotate(Math.atan2(tangent.y, tangent.x));
+      context.globalAlpha =
+        (isAttacking ? 0.34 : 0.24) + link.intensity * 0.24;
       context.fillStyle = "#f4fcff";
       context.beginPath();
-      context.arc(
-        point.x,
-        point.y,
-        0.9 + link.intensity * 0.65,
-        0,
-        Math.PI * 2,
+      context.roundRect(
+        -4 - link.intensity * 1.5,
+        -1.1,
+        8 + link.intensity * 3,
+        2.2,
+        1.1,
       );
       context.fill();
+      context.restore();
     }
 
     const shipCount = Math.min(
-      5,
-      Math.max(1, Math.ceil(link.unitsInTransit / 6)),
+      isAttacking ? 3 : 2,
+      Math.max(1, Math.ceil(link.unitsInTransit / 12)),
     );
     if (progress > 0.18 && link.unitsInTransit > 0.25) {
       const routeStart = 0.085;
@@ -372,6 +386,7 @@ export class CanvasRenderer {
           link.owner,
           color,
           link.intensity,
+          isAttacking,
         );
       }
     }
@@ -402,36 +417,44 @@ export class CanvasRenderer {
     owner: Owner,
     color: string,
     intensity: number,
+    isAttacking: boolean,
   ): void {
-    const scale = 1 + intensity * 0.2;
+    const scale = 1 + intensity * 0.1 + (isAttacking ? 0.04 : 0);
     context.save();
     context.translate(position.x, position.y);
     context.rotate(angle);
     context.scale(scale, scale);
 
-    const exhaust = context.createLinearGradient(-18, 0, -7, 0);
+    const exhaustStart = isAttacking ? -30 : -24;
+    const exhaust = context.createLinearGradient(exhaustStart, 0, -10, 0);
     exhaust.addColorStop(0, `${color}00`);
-    exhaust.addColorStop(0.46, `${color}8a`);
+    exhaust.addColorStop(0.46, `${color}${isAttacking ? "b8" : "82"}`);
     exhaust.addColorStop(1, "#e7fbff");
     context.fillStyle = exhaust;
     context.shadowColor = color;
-    context.shadowBlur = 10;
+    context.shadowBlur = isAttacking ? 10 : 6;
     context.beginPath();
-    context.moveTo(-19, 0);
-    context.lineTo(-7, -3.2);
-    context.lineTo(-7, 3.2);
+    context.moveTo(exhaustStart, 0);
+    context.lineTo(-10, -4);
+    context.lineTo(-10, 4);
     context.closePath();
     context.fill();
 
     const artwork = this.transportShipArt.get(owner);
     if (isShipArtReady(artwork)) {
+      context.shadowBlur = 0;
+      context.fillStyle = "rgba(1, 8, 24, 0.58)";
+      context.beginPath();
+      context.ellipse(0, 0, 43, 22, 0, 0, Math.PI * 2);
+      context.fill();
       context.shadowColor = color;
-      context.shadowBlur = 9;
-      context.drawImage(artwork, -29, -17, 58, 34);
+      context.shadowBlur = isAttacking ? 10 : 7;
+      context.drawImage(artwork, -42, -24, 84, 48);
       context.restore();
       return;
     }
 
+    context.scale(1.55, 1.55);
     context.shadowBlur = 8;
     context.fillStyle = color;
     context.strokeStyle = "rgba(239, 250, 255, 0.9)";
@@ -929,14 +952,14 @@ export class CanvasRenderer {
       radius * 0.18,
       0,
       0,
-      radius * 2.25,
+      radius * 1.95,
     );
     halo.addColorStop(0, `${color}68`);
-    halo.addColorStop(0.42, `${color}28`);
+    halo.addColorStop(0.4, `${color}22`);
     halo.addColorStop(1, `${color}00`);
     context.fillStyle = halo;
     context.beginPath();
-    context.arc(0, 0, radius * 2.25, 0, Math.PI * 2);
+    context.arc(0, 0, radius * 1.95, 0, Math.PI * 2);
     context.fill();
 
     if (hasArtwork) {
@@ -1038,10 +1061,11 @@ export class CanvasRenderer {
     }
 
     context.fillStyle = "#f4f9ff";
-    context.font = `900 ${Math.round(radius * 0.46)}px Inter, system-ui, sans-serif`;
+    const energyFontSize = Math.round(Math.max(18, radius * 0.5));
+    context.font = `900 ${energyFontSize}px Inter, system-ui, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.lineWidth = Math.max(3, radius * 0.07);
+    context.lineWidth = Math.max(3, energyFontSize * 0.14);
     context.strokeStyle = "rgba(2, 12, 36, 0.72)";
     context.strokeText(String(Math.floor(system.energy)), 0, -2);
     context.shadowColor = "#03112c";
@@ -1112,7 +1136,7 @@ export class CanvasRenderer {
 
     context.save();
     context.shadowColor = color;
-    context.shadowBlur = focused ? 34 : 21;
+    context.shadowBlur = focused ? 26 : 14;
     context.drawImage(artwork, -size / 2, -size / 2, size, size);
     context.restore();
 

@@ -24,6 +24,7 @@ import { FixedStepClock } from "../engine/FixedStepClock";
 import {
   distanceToSegment,
   getLinkCurve,
+  getLinkLaneOffset,
   pointOnLink,
 } from "../engine/link-geometry";
 import { systemHitRadius } from "../engine/system-geometry";
@@ -308,7 +309,8 @@ export class GameApp {
       this.simulation.getSystems().map((system) => [system.id, system]),
     );
     let best: CutCandidate | null = null;
-    for (const link of this.simulation.getLinks()) {
+    const links = this.simulation.getLinks();
+    for (const link of links) {
       if (link.owner !== "player" || link.state !== "active") {
         continue;
       }
@@ -317,7 +319,12 @@ export class GameApp {
       if (!source || !target) {
         continue;
       }
-      const curve = getLinkCurve(link, source, target);
+      const curve = getLinkCurve(
+        link,
+        source,
+        target,
+        getLinkLaneOffset(link, links),
+      );
       for (let index = 1; index < CUT_SAMPLE_COUNT; index += 1) {
         const fraction = index / CUT_SAMPLE_COUNT;
         const point = pointOnLink(curve, fraction);
