@@ -419,6 +419,26 @@ export class GameApp {
             0.58,
           );
         }
+        if (event.returnedEnergy > 0.05) {
+          this.addEffect(
+            "route-recall",
+            event.position,
+            event.sourcePosition,
+            event.owner,
+            0.46,
+            event.returnedEnergy,
+          );
+        }
+        if (event.forwardEnergy > 0.05) {
+          this.addEffect(
+            "route-surge",
+            event.position,
+            event.targetPosition,
+            event.owner,
+            0.52,
+            event.forwardEnergy,
+          );
+        }
         if (event.owner === "player") {
           this.tutorialStage = 2;
           this.hud.setStatusKey("battleHint");
@@ -490,6 +510,7 @@ export class GameApp {
     targetPosition?: Point,
     owner?: StarSystemView["owner"],
     duration = 0.45,
+    strength?: number,
   ): void {
     this.effects.push({
       id: this.nextEffectId++,
@@ -497,6 +518,7 @@ export class GameApp {
       position: { ...position },
       targetPosition: targetPosition ? { ...targetPosition } : undefined,
       owner,
+      strength,
       age: 0,
       duration,
     });

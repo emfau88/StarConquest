@@ -981,6 +981,12 @@ export class CanvasRenderer {
 
     if (effect.kind === "capture") {
       this.drawCaptureEffect(context, effect, progress, color);
+    } else if (
+      (effect.kind === "route-surge" ||
+        effect.kind === "route-recall") &&
+      effect.targetPosition
+    ) {
+      this.drawRouteSplitEffect(context, effect, progress, color);
     } else if (effect.kind === "boost" && effect.targetPosition) {
       const beam = context.createLinearGradient(
         effect.position.x,
@@ -1086,6 +1092,159 @@ export class CanvasRenderer {
         radius,
         -0.75,
         Math.PI * 1.55,
+      );
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  private drawRouteSplitEffect(
+    context: CanvasRenderingContext2D,
+    effect: VisualEffect,
+    progress: number,
+    ownerColor: string,
+  ): void {
+    const target = effect.targetPosition;
+    if (!target) {
+      return;
+    }
+    const dx = target.x - effect.position.x;
+    const dy = target.y - effect.position.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 1) {
+      return;
+    }
+
+    const directionX = dx / distance;
+    const directionY = dy / distance;
+    const normalX = -directionY;
+    const normalY = directionX;
+    const isSurge = effect.kind === "route-surge";
+    const routeColor = isSurge ? "#ffd65a" : ownerColor;
+    const fade = 1 - progress;
+    const headProgress = 1 - (1 - progress) ** 2;
+    const strengthScale =
+      0.85 + Math.min(1, Math.max(0, effect.strength ?? 0) / 18) * 0.35;
+    const trailLength = 0.2 + strengthScale * 0.06;
+    const tailProgress = Math.max(0, headProgress - trailLength);
+    const head = {
+      x: effect.position.x + dx * headProgress,
+      y: effect.position.y + dy * headProgress,
+    };
+    const tail = {
+      x: effect.position.x + dx * tailProgress,
+      y: effect.position.y + dy * tailProgress,
+    };
+
+    context.save();
+    context.lineCap = "round";
+    context.globalAlpha = fade * 0.3;
+    context.strokeStyle = routeColor;
+    context.shadowColor = routeColor;
+    context.shadowBlur = 5;
+    context.lineWidth = 2.2;
+    context.setLineDash([9, 12]);
+    context.lineDashOffset = -progress * 45;
+    context.beginPath();
+    context.moveTo(effect.position.x, effect.position.y);
+    context.lineTo(target.x, target.y);
+    context.stroke();
+    context.setLineDash([]);
+
+    const trail = context.createLinearGradient(
+      tail.x,
+      tail.y,
+      head.x,
+      head.y,
+    );
+    trail.addColorStop(0, `${routeColor}00`);
+    trail.addColorStop(0.5, routeColor);
+    trail.addColorStop(1, "#ffffff");
+    context.globalAlpha = Math.min(1, fade * 1.7);
+    context.strokeStyle = trail;
+    context.shadowBlur = 13;
+    context.lineWidth = 5.5 * strengthScale;
+    context.beginPath();
+    context.moveTo(tail.x, tail.y);
+    context.lineTo(head.x, head.y);
+    context.stroke();
+
+    context.globalAlpha = fade * 0.72;
+    context.strokeStyle = routeColor;
+    context.lineWidth = 1.8 * strengthScale;
+    for (let side = -1; side <= 1; side += 2) {
+      const offset = side * 5.5 * strengthScale;
+      const sideTailProgress = Math.max(
+        0,
+        headProgress - trailLength * 0.72,
+      );
+      context.beginPath();
+      context.moveTo(
+        effect.position.x +
+          dx * sideTailProgress +
+          normalX * offset,
+        effect.position.y +
+          dy * sideTailProgress +
+          normalY * offset,
+      );
+      context.lineTo(
+        head.x + normalX * offset * 0.35,
+        head.y + normalY * offset * 0.35,
+      );
+      context.stroke();
+    }
+
+    const arrowLength = 11 * strengthScale;
+    const arrowWidth = 6.5 * strengthScale;
+    context.globalAlpha = Math.min(1, fade * 1.9);
+    context.fillStyle = "#f9feff";
+    context.shadowBlur = 9;
+    context.beginPath();
+    context.moveTo(
+      head.x + directionX * arrowLength,
+      head.y + directionY * arrowLength,
+    );
+    context.lineTo(
+      head.x - directionX * arrowLength * 0.65 +
+        normalX * arrowWidth,
+      head.y - directionY * arrowLength * 0.65 +
+        normalY * arrowWidth,
+    );
+    context.lineTo(
+      head.x - directionX * arrowLength * 0.65 -
+        normalX * arrowWidth,
+      head.y - directionY * arrowLength * 0.65 -
+        normalY * arrowWidth,
+    );
+    context.closePath();
+    context.fill();
+
+    if (progress < 0.38) {
+      context.globalAlpha = (1 - progress / 0.38) * 0.8;
+      context.strokeStyle = routeColor;
+      context.lineWidth = 3;
+      context.beginPath();
+      context.arc(
+        effect.position.x,
+        effect.position.y,
+        8 + progress * 32,
+        0,
+        Math.PI * 2,
+      );
+      context.stroke();
+    }
+    if (progress > 0.72) {
+      const arrival = (progress - 0.72) / 0.28;
+      context.globalAlpha = (1 - arrival) * 0.72;
+      context.strokeStyle = routeColor;
+      context.lineWidth = 2.5;
+      context.beginPath();
+      context.arc(
+        target.x,
+        target.y,
+        6 + arrival * 20,
+        0,
+        Math.PI * 2,
       );
       context.stroke();
     }

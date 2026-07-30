@@ -47,7 +47,10 @@ export type SimulationEvent =
       kind: "cut";
       owner: Owner;
       position: Point;
+      sourcePosition: Point;
       targetPosition: Point;
+      forwardEnergy: number;
+      returnedEnergy: number;
       prominentBoost: boolean;
     }
   | {
@@ -352,8 +355,15 @@ export class GameSimulation {
           normalizedCutFraction,
     };
     let targetPayload = outcome.forwardEnergy;
+    let surgeTargetPosition = { ...target.position };
     const reciprocal = findHostileReciprocalLink(link, this.links);
     if (reciprocal) {
+      const frontPosition = pointBetweenSystems(
+        source,
+        target,
+        combatFrontFraction(link, reciprocal),
+      );
+      surgeTargetPosition = frontPosition;
       targetPayload = Math.max(
         0,
         outcome.forwardEnergy - reciprocal.unitsInTransit,
@@ -366,12 +376,6 @@ export class GameSimulation {
         reciprocal.unitsInTransit,
       );
       if (reciprocal.unitsInTransit <= FRONT_BREAK_EPSILON) {
-        const frontFraction = combatFrontFraction(link, reciprocal);
-        const frontPosition = pointBetweenSystems(
-          source,
-          target,
-          frontFraction,
-        );
         this.removeLink(reciprocal);
         this.events.push({
           kind: "front-broken",
@@ -379,6 +383,9 @@ export class GameSimulation {
           position: frontPosition,
           targetPosition: { ...target.position },
         });
+        if (targetPayload > FRONT_BREAK_EPSILON) {
+          surgeTargetPosition = { ...target.position };
+        }
       }
     }
     this.applyTransfer(link.owner, target, targetPayload);
@@ -395,7 +402,10 @@ export class GameSimulation {
       kind: "cut",
       owner,
       position: cutPosition,
-      targetPosition: { ...target.position },
+      sourcePosition: { ...source.position },
+      targetPosition: surgeTargetPosition,
+      forwardEnergy: outcome.forwardEnergy,
+      returnedEnergy: outcome.returnedEnergy,
       prominentBoost: outcome.prominentBoost,
     });
     this.evaluateOutcome();

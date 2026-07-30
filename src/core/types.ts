@@ -39,6 +39,8 @@ export type VisualEffectKind =
   | "boost"
   | "cut"
   | "front-break"
+  | "route-surge"
+  | "route-recall"
   | "invalid";
 
 export interface VisualEffect {
@@ -47,6 +49,7 @@ export interface VisualEffect {
   position: Point;
   targetPosition?: Point;
   owner?: Owner;
+  strength?: number;
   age: number;
   duration: number;
 }
