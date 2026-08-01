@@ -23,7 +23,6 @@ import type {
 
 interface StarSystemState extends StarSystemView {
   productionPerSecond: number;
-  maxOutgoingLinks: number;
 }
 
 interface EnergyLinkState extends EnergyLinkView {
@@ -172,6 +171,7 @@ export class GameSimulation {
         capacity: spec.capacity,
         productionPerSecond: spec.productionPerSecond,
         maxOutgoingLinks: spec.maxOutgoingLinks,
+        outgoingLinkCount: 0,
       };
     });
     this.links = [];
@@ -858,6 +858,7 @@ export class GameSimulation {
       formationCost: cost,
     };
     this.links.push(link);
+    source.outgoingLinkCount += 1;
     this.events.push({
       kind: "link-created",
       owner,
@@ -874,7 +875,7 @@ export class GameSimulation {
   }
 
   private outgoingLinkCount(sourceId: string): number {
-    return this.links.filter((link) => link.sourceId === sourceId).length;
+    return this.findSystem(sourceId)?.outgoingLinkCount ?? 0;
   }
 
   private performHostileActions(): void {
@@ -1128,12 +1129,19 @@ export class GameSimulation {
   }
 
   private removeLink(link: EnergyLinkState | undefined): void {
-    if (!link) {
+    if (!link || !this.links.includes(link)) {
       return;
     }
     const reciprocal = findHostileReciprocalLink(link, this.links);
     if (reciprocal) {
       delete reciprocal.combatFrontFraction;
+    }
+    const source = this.findSystem(link.sourceId);
+    if (source) {
+      source.outgoingLinkCount = Math.max(
+        0,
+        source.outgoingLinkCount - 1,
+      );
     }
     this.links = this.links.filter((candidate) => candidate !== link);
   }

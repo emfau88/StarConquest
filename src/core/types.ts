@@ -21,6 +21,8 @@ export interface StarSystemView {
   position: Point;
   energy: number;
   capacity: number;
+  maxOutgoingLinks: number;
+  outgoingLinkCount: number;
 }
 
 export interface EnergyLinkView {

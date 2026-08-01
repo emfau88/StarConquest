@@ -91,6 +91,8 @@ test("hostile reciprocal routes share a front while friendly routes use lanes", 
     position: { x: 100, y: 200 },
     energy: 20,
     capacity: 65,
+    maxOutgoingLinks: 1,
+    outgoingLinkCount: 0,
   };
   const target = {
     id: "beta",
@@ -99,6 +101,8 @@ test("hostile reciprocal routes share a front while friendly routes use lanes", 
     position: { x: 500, y: 200 },
     energy: 20,
     capacity: 65,
+    maxOutgoingLinks: 1,
+    outgoingLinkCount: 0,
   };
   const forward = {
     id: "forward",
@@ -774,9 +778,12 @@ test("route limits reject new links without deleting stored energy", () => {
     ],
   };
   const simulation = new GameSimulation(level);
+  assert.equal(simulation.getSystem("source")?.maxOutgoingLinks, 1);
+  assert.equal(simulation.getSystem("source")?.outgoingLinkCount, 0);
   assert.deepEqual(simulation.createPlayerLink("source", "target-a"), {
     ok: true,
   });
+  assert.equal(simulation.getSystem("source")?.outgoingLinkCount, 1);
   const energyAfterFirstLink =
     simulation.getSystem("source")?.energy ?? 0;
   const firstLinkId = simulation.getLinks()[0]?.id;
@@ -928,6 +935,7 @@ test("cutting an active link removes it and launches stored energy", () => {
   assert.equal(simulation.cutPlayerLink(link.id, 0.2), true);
 
   assert.equal(simulation.getLinks().length, 0);
+  assert.equal(simulation.getSystem("player")?.outgoingLinkCount, 0);
   assert.ok((simulation.getSystem("player")?.energy ?? 0) > sourceBefore);
   assert.ok((simulation.getSystem("enemy")?.energy ?? 0) < targetBefore);
   const cutEvent = simulation

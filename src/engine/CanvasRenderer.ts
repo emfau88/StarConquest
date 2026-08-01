@@ -1780,7 +1780,7 @@ export class CanvasRenderer {
     context.fillText(String(Math.floor(system.energy)), 0, -2);
     context.shadowBlur = 0;
 
-    this.drawTierPips(context, system.className, radius, color);
+    this.drawConnectionSlots(context, system, radius, color, focused);
     context.restore();
   }
 
@@ -1997,39 +1997,62 @@ export class CanvasRenderer {
     context.restore();
   }
 
-  private drawTierPips(
+  private drawConnectionSlots(
     context: CanvasRenderingContext2D,
-    className: SystemClass,
+    system: StarSystemView,
     radius: number,
     color: string,
+    focused: boolean,
   ): void {
-    const count: Readonly<Record<SystemClass, number>> = {
-      PULSAR: 1,
-      GIANT: 2,
-      QUASAR: 3,
-      NEXUS: 4,
-    };
-    const pipCount = count[className];
-    const spacing = Math.min(12, radius * 0.2);
-    const startX = -((pipCount - 1) * spacing) / 2;
-    const y = radius * 0.38;
+    const slotCount = Math.max(
+      system.maxOutgoingLinks,
+      system.outgoingLinkCount,
+    );
+    const spacing = 13;
+    const counterWidth = focused ? 28 : 0;
+    const slotsWidth = Math.max(0, (slotCount - 1) * spacing) + 10;
+    const width = slotsWidth + counterWidth + 14;
+    const height = 15;
+    const y = radius + 21;
+    const slotsCenterX = focused ? -counterWidth / 2 : 0;
+    const startX = slotsCenterX - ((slotCount - 1) * spacing) / 2;
 
     context.save();
-    context.fillStyle = "#f4fcff";
-    context.strokeStyle = color;
-    context.lineWidth = 1.5;
-    context.shadowColor = color;
-    context.shadowBlur = 7;
-    for (let index = 0; index < pipCount; index += 1) {
+    context.fillStyle = "rgba(2, 12, 35, 0.9)";
+    context.strokeStyle = focused ? "rgba(238, 251, 255, 0.8)" : `${color}78`;
+    context.lineWidth = focused ? 1.5 : 1;
+    context.beginPath();
+    context.roundRect(-width / 2, y - height / 2, width, height, 7.5);
+    context.fill();
+    context.stroke();
+
+    for (let index = 0; index < slotCount; index += 1) {
       const x = startX + index * spacing;
+      const occupied = index < system.outgoingLinkCount;
+      const overloaded = index >= system.maxOutgoingLinks;
+      const slotColor = overloaded ? "#ff9b68" : color;
+      context.fillStyle = occupied ? "#f4fcff" : "rgba(2, 17, 43, 0.92)";
+      context.strokeStyle = occupied ? slotColor : `${slotColor}b0`;
+      context.lineWidth = occupied ? 2 : 1.5;
+      context.shadowColor = slotColor;
+      context.shadowBlur = occupied ? 8 : 0;
       context.beginPath();
-      context.moveTo(x, y - 3.4);
-      context.lineTo(x + 3.8, y);
-      context.lineTo(x, y + 3.4);
-      context.lineTo(x - 3.8, y);
-      context.closePath();
+      context.arc(x, y, occupied ? 3.5 : 3.2, 0, Math.PI * 2);
       context.fill();
       context.stroke();
+    }
+
+    if (focused) {
+      context.shadowBlur = 0;
+      context.fillStyle = "rgba(233, 248, 255, 0.9)";
+      context.font = "800 9px Inter, system-ui, sans-serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(
+        `${system.outgoingLinkCount}/${system.maxOutgoingLinks}`,
+        slotsWidth / 2 + 1,
+        y + 0.5,
+      );
     }
     context.restore();
   }
