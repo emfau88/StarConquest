@@ -17,6 +17,7 @@ export interface LevelSystemDefinition {
   className: SystemClass;
   position: Point;
   startEnergy: number;
+  maxClassName?: SystemClass;
 }
 
 export interface LevelDefinition {

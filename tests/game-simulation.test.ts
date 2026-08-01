@@ -93,6 +93,7 @@ test("hostile reciprocal routes share a front while friendly routes use lanes", 
     capacity: 65,
     maxOutgoingLinks: 1,
     outgoingLinkCount: 0,
+    morphProgress: 0,
   };
   const target = {
     id: "beta",
@@ -103,6 +104,7 @@ test("hostile reciprocal routes share a front while friendly routes use lanes", 
     capacity: 65,
     maxOutgoingLinks: 1,
     outgoingLinkCount: 0,
+    morphProgress: 0,
   };
   const forward = {
     id: "forward",
@@ -705,9 +707,13 @@ test("balance profiles preserve a readable campaign difficulty curve", () => {
   );
 
   assert.equal(learnerResults[0]?.status, "won");
-  assert.equal(learnerResults[5]?.status, "lost");
+  assert.equal(learnerResults[5]?.status, "won");
   assert.ok(regularResults.every((result) => result.status === "won"));
   assert.ok(expertResults.every((result) => result.status === "won"));
+  assert.ok(
+    learnerResults[5].elapsedSeconds >
+      regularResults[5].elapsedSeconds * 2,
+  );
   assert.ok(
     regularResults[3].elapsedSeconds >
       regularResults[0].elapsedSeconds,
@@ -724,6 +730,132 @@ test("owned systems produce energy", () => {
   advance(simulation, 1);
   const after = simulation.getSystem("player")?.energy ?? 0;
   assert.ok(after > before);
+});
+
+test("charged systems morph upward and gain route capacity", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    id: "system-morph-upgrade",
+    systems: [
+      {
+        ...DUEL_LEVEL.systems[0],
+        className: "PULSAR",
+        startEnergy: 55,
+        maxClassName: "GIANT",
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        className: "NEXUS",
+        startEnergy: 150,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+
+  simulation.update(0.1);
+  assert.equal(
+    simulation.getSystem("player")?.morphTargetClassName,
+    "GIANT",
+  );
+  advance(simulation, 0.8);
+
+  const upgraded = simulation.getSystem("player");
+  assert.equal(upgraded?.className, "GIANT");
+  assert.equal(upgraded?.capacity, SYSTEM_CLASS_SPECS.GIANT.capacity);
+  assert.equal(upgraded?.maxOutgoingLinks, 2);
+  assert.equal(upgraded?.morphTargetClassName, undefined);
+  assert.equal(upgraded?.morphProgress, 0);
+});
+
+test("level-defined class bounds keep authored systems stable", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    id: "system-morph-bounds",
+    systems: [
+      {
+        ...DUEL_LEVEL.systems[0],
+        className: "PULSAR",
+        startEnergy: 65,
+        maxClassName: "PULSAR",
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        className: "GIANT",
+        startEnergy: 5,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  advance(simulation, 2);
+
+  assert.equal(simulation.getSystem("player")?.className, "PULSAR");
+  assert.equal(simulation.getSystem("enemy")?.className, "GIANT");
+});
+
+test("a downgrade preserves excess routes and blocks new ones", () => {
+  const level: LevelDefinition = {
+    ...DUEL_LEVEL,
+    id: "system-morph-overload",
+    systems: [
+      {
+        id: "source",
+        owner: "player",
+        className: "PULSAR",
+        position: { x: 100, y: 450 },
+        startEnergy: 55,
+        maxClassName: "GIANT",
+      },
+      {
+        id: "target-a",
+        owner: "neutral",
+        className: "PULSAR",
+        position: { x: 170, y: 420 },
+        startEnergy: 3,
+      },
+      {
+        id: "target-b",
+        owner: "neutral",
+        className: "PULSAR",
+        position: { x: 170, y: 480 },
+        startEnergy: 3,
+      },
+      {
+        id: "target-c",
+        owner: "neutral",
+        className: "PULSAR",
+        position: { x: 260, y: 450 },
+        startEnergy: 3,
+      },
+      {
+        ...DUEL_LEVEL.systems[1],
+        id: "enemy-anchor",
+        className: "NEXUS",
+        startEnergy: 150,
+      },
+    ],
+  };
+  const simulation = new GameSimulation(level);
+  advance(simulation, 0.9);
+  assert.equal(simulation.getSystem("source")?.className, "GIANT");
+  assert.equal(simulation.createPlayerLink("source", "target-a").ok, true);
+  assert.equal(simulation.createPlayerLink("source", "target-b").ok, true);
+  assert.equal(simulation.getSystem("source")?.outgoingLinkCount, 2);
+
+  advance(simulation, 5);
+
+  const downgraded = simulation.getSystem("source");
+  assert.equal(downgraded?.className, "PULSAR");
+  assert.equal(downgraded?.maxOutgoingLinks, 1);
+  assert.equal(downgraded?.outgoingLinkCount, 2);
+  assert.equal(
+    simulation.getLinks().filter((link) => link.sourceId === "source")
+      .length,
+    2,
+  );
+  assert.deepEqual(simulation.createPlayerLink("source", "target-c"), {
+    ok: false,
+    reason: "link-limit",
+  });
 });
 
 test("link intensity follows stored route energy and stays bounded", () => {

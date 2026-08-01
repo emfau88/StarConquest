@@ -4,7 +4,9 @@ import {
 } from "../data/levels";
 import {
   GAME_RULES,
+  SYSTEM_CLASS_SEQUENCE,
   SYSTEM_CLASS_SPECS,
+  SYSTEM_MORPH_RULES,
 } from "./game-rules";
 import {
   combatFrontFraction,
@@ -18,11 +20,14 @@ import type {
   Owner,
   Point,
   StarSystemView,
+  SystemClass,
   SystemThreatView,
 } from "./types";
 
 interface StarSystemState extends StarSystemView {
   productionPerSecond: number;
+  minimumClassName: SystemClass;
+  maximumClassName: SystemClass;
 }
 
 interface EnergyLinkState extends EnergyLinkView {
@@ -132,6 +137,9 @@ export const calculateCutOutcome = (
 const distance = (a: Point, b: Point): number =>
   Math.hypot(b.x - a.x, b.y - a.y);
 
+const systemClassIndex = (className: SystemClass): number =>
+  SYSTEM_CLASS_SEQUENCE.indexOf(className);
+
 const HOSTILE_OWNERS = ["enemy", "enemy2"] as const;
 type HostileOwner = (typeof HOSTILE_OWNERS)[number];
 const AI_CUT_FRACTION = 0.22;
@@ -162,6 +170,20 @@ export class GameSimulation {
   reset(): void {
     this.systems = this.level.systems.map((definition) => {
       const spec = SYSTEM_CLASS_SPECS[definition.className];
+      const definitionClassIndex = systemClassIndex(definition.className);
+      const requestedMaximum =
+        definition.maxClassName ??
+        SYSTEM_CLASS_SEQUENCE[
+          Math.min(
+            SYSTEM_CLASS_SEQUENCE.length - 1,
+            definitionClassIndex + 1,
+          )
+        ];
+      const maximumClassName =
+        systemClassIndex(requestedMaximum) >=
+        definitionClassIndex
+          ? requestedMaximum
+          : definition.className;
       return {
         id: definition.id,
         owner: definition.owner,
@@ -172,6 +194,9 @@ export class GameSimulation {
         productionPerSecond: spec.productionPerSecond,
         maxOutgoingLinks: spec.maxOutgoingLinks,
         outgoingLinkCount: 0,
+        morphProgress: 0,
+        minimumClassName: definition.className,
+        maximumClassName,
       };
     });
     this.links = [];
@@ -193,6 +218,7 @@ export class GameSimulation {
     this.aiElapsedSeconds += delta;
     this.produceEnergy(delta);
     this.updateLinks(delta);
+    this.updateSystemMorphs(delta);
 
     if (this.aiElapsedSeconds >= this.level.aiActionIntervalSeconds) {
       this.aiElapsedSeconds = 0;
@@ -424,6 +450,87 @@ export class GameSimulation {
         system.energy + system.productionPerSecond * deltaSeconds,
       );
     }
+  }
+
+  private updateSystemMorphs(deltaSeconds: number): void {
+    for (const system of this.systems) {
+      if (system.owner === "neutral") {
+        this.cancelSystemMorph(system);
+        continue;
+      }
+
+      if (system.morphTargetClassName) {
+        if (!this.canContinueSystemMorph(system)) {
+          this.cancelSystemMorph(system);
+          continue;
+        }
+        system.morphProgress = Math.min(
+          1,
+          system.morphProgress +
+            deltaSeconds / GAME_RULES.systemMorphDurationSeconds,
+        );
+        if (system.morphProgress >= 1) {
+          this.completeSystemMorph(system);
+        }
+        continue;
+      }
+
+      const classIndex = systemClassIndex(system.className);
+      const maximumIndex = systemClassIndex(system.maximumClassName);
+      const minimumIndex = systemClassIndex(system.minimumClassName);
+      const rule = SYSTEM_MORPH_RULES[system.className];
+      if (
+        classIndex < maximumIndex &&
+        rule.upgradeAt !== undefined &&
+        system.energy >= rule.upgradeAt
+      ) {
+        system.morphTargetClassName =
+          SYSTEM_CLASS_SEQUENCE[classIndex + 1];
+        system.morphProgress = 0;
+      } else if (
+        classIndex > minimumIndex &&
+        rule.downgradeBelow !== undefined &&
+        system.energy < rule.downgradeBelow
+      ) {
+        system.morphTargetClassName =
+          SYSTEM_CLASS_SEQUENCE[classIndex - 1];
+        system.morphProgress = 0;
+      }
+    }
+  }
+
+  private canContinueSystemMorph(system: StarSystemState): boolean {
+    const target = system.morphTargetClassName;
+    if (!target) {
+      return false;
+    }
+    const rule = SYSTEM_MORPH_RULES[system.className];
+    if (systemClassIndex(target) > systemClassIndex(system.className)) {
+      return rule.upgradeAt !== undefined && system.energy >= rule.upgradeAt;
+    }
+    return (
+      rule.downgradeBelow !== undefined &&
+      system.energy < rule.downgradeBelow
+    );
+  }
+
+  private completeSystemMorph(system: StarSystemState): void {
+    const target = system.morphTargetClassName;
+    if (!target) {
+      return;
+    }
+    const spec = SYSTEM_CLASS_SPECS[target];
+    system.className = target;
+    system.capacity = spec.capacity;
+    system.productionPerSecond = spec.productionPerSecond;
+    system.maxOutgoingLinks = spec.maxOutgoingLinks;
+    system.energy = Math.min(system.energy, system.capacity);
+    this.cancelSystemMorph(system);
+  }
+
+  private cancelSystemMorph(system: StarSystemState): void {
+    delete system.morphTargetClassName;
+    system.morphProgress = 0;
   }
 
   private updateLinks(deltaSeconds: number): void {
@@ -786,6 +893,7 @@ export class GameSimulation {
 
     const previousOwner = target.owner;
     target.owner = owner;
+    this.cancelSystemMorph(target);
     target.energy = Math.min(
       target.capacity,
       Math.max(GAME_RULES.captureEnergyFloor, Math.abs(target.energy)),

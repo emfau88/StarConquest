@@ -23,6 +23,8 @@ export interface StarSystemView {
   capacity: number;
   maxOutgoingLinks: number;
   outgoingLinkCount: number;
+  morphTargetClassName?: SystemClass;
+  morphProgress: number;
 }
 
 export interface EnergyLinkView {

@@ -1627,13 +1627,29 @@ export class CanvasRenderer {
     focused: boolean,
   ): void {
     const color = OWNER_COLORS[system.owner];
-    const radius = SYSTEM_RADII[system.className];
+    const currentRadius = SYSTEM_RADII[system.className];
+    const morphProgress = Math.max(0, Math.min(1, system.morphProgress));
+    const easedMorphProgress =
+      morphProgress * morphProgress * (3 - 2 * morphProgress);
+    const targetRadius = system.morphTargetClassName
+      ? SYSTEM_RADII[system.morphTargetClassName]
+      : currentRadius;
+    const radius =
+      currentRadius +
+      (targetRadius - currentRadius) * easedMorphProgress;
     const phaseOffset = system.id.length * 0.31;
     const pulse =
       1 + Math.sin(elapsedSeconds * 2.1 + phaseOffset) * 0.035;
     const drawRadius = radius * pulse;
     const artwork = this.systemArt.get(system.owner, system.className);
     const hasArtwork = isSystemArtReady(artwork);
+    const targetArtwork = system.morphTargetClassName
+      ? this.systemArt.get(system.owner, system.morphTargetClassName)
+      : undefined;
+    const hasTargetArtwork = targetArtwork
+      ? isSystemArtReady(targetArtwork)
+      : false;
+    const hasAnyArtwork = hasArtwork || hasTargetArtwork;
     const energyRatio = Math.max(
       0,
       Math.min(1, system.energy / system.capacity),
@@ -1642,7 +1658,7 @@ export class CanvasRenderer {
     context.save();
     context.translate(system.position.x, system.position.y);
 
-    if (!hasArtwork) {
+    if (!hasAnyArtwork) {
       this.drawClassPattern(
         context,
         system.className,
@@ -1669,15 +1685,29 @@ export class CanvasRenderer {
     context.arc(0, 0, radius * SYSTEM_HALO_SCALE, 0, Math.PI * 2);
     context.fill();
 
-    if (hasArtwork) {
-      this.drawSystemArtwork(
-        context,
-        artwork,
-        radius,
-        pulse,
-        color,
-        focused,
-      );
+    if (hasAnyArtwork) {
+      if (hasArtwork) {
+        this.drawSystemArtwork(
+          context,
+          artwork,
+          radius,
+          pulse,
+          color,
+          focused,
+          hasTargetArtwork ? 1 - easedMorphProgress : 1,
+        );
+      }
+      if (hasTargetArtwork) {
+        this.drawSystemArtwork(
+          context,
+          targetArtwork!,
+          radius,
+          pulse,
+          color,
+          focused,
+          easedMorphProgress,
+        );
+      }
     } else {
       context.fillStyle = "rgba(3, 14, 42, 0.7)";
       context.beginPath();
@@ -1730,6 +1760,16 @@ export class CanvasRenderer {
       context.beginPath();
       context.arc(0, 0, radius * 0.72, 0, Math.PI * 2);
       context.stroke();
+    }
+
+    if (system.morphTargetClassName) {
+      this.drawSystemMorphEffect(
+        context,
+        radius,
+        color,
+        elapsedSeconds,
+        morphProgress,
+      );
     }
 
     context.strokeStyle = "rgba(3, 19, 51, 0.72)";
@@ -1838,14 +1878,15 @@ export class CanvasRenderer {
     pulse: number,
     color: string,
     focused: boolean,
+    alpha = 1,
   ): void {
     const size = radius * SYSTEM_ARTWORK_SCALE * pulse;
 
     context.save();
+    context.globalAlpha = Math.max(0, Math.min(1, alpha));
     context.shadowColor = color;
     context.shadowBlur = focused ? 22 : 10;
     context.drawImage(artwork, -size / 2, -size / 2, size, size);
-    context.restore();
 
     context.strokeStyle = focused
       ? "rgba(241, 253, 255, 0.96)"
@@ -1857,6 +1898,43 @@ export class CanvasRenderer {
     context.arc(0, 0, radius * 0.82, 0, Math.PI * 2);
     context.stroke();
     context.shadowBlur = 0;
+    context.restore();
+  }
+
+  private drawSystemMorphEffect(
+    context: CanvasRenderingContext2D,
+    radius: number,
+    color: string,
+    elapsedSeconds: number,
+    progress: number,
+  ): void {
+    const ringRadius = radius + 15;
+    const flash = Math.sin(progress * Math.PI);
+
+    context.save();
+    context.rotate(elapsedSeconds * 2.8);
+    context.strokeStyle = `rgba(242, 252, 255, ${0.38 + flash * 0.48})`;
+    context.shadowColor = color;
+    context.shadowBlur = 8 + flash * 8;
+    context.lineWidth = 2.5;
+    context.setLineDash([10, 8]);
+    context.lineDashOffset = -progress * 28;
+    context.beginPath();
+    context.arc(0, 0, ringRadius, 0, Math.PI * 2);
+    context.stroke();
+
+    context.setLineDash([]);
+    context.fillStyle = "rgba(246, 253, 255, 0.92)";
+    for (const direction of [-1, 1]) {
+      const x = direction * ringRadius;
+      context.beginPath();
+      context.moveTo(x, -4);
+      context.lineTo(x + direction * 6, 0);
+      context.lineTo(x, 4);
+      context.closePath();
+      context.fill();
+    }
+    context.restore();
   }
 
   private drawClassPattern(

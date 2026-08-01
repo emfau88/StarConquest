@@ -6,6 +6,18 @@ export interface SystemClassSpec {
   maxOutgoingLinks: number;
 }
 
+export interface SystemMorphRule {
+  upgradeAt?: number;
+  downgradeBelow?: number;
+}
+
+export const SYSTEM_CLASS_SEQUENCE = [
+  "PULSAR",
+  "GIANT",
+  "QUASAR",
+  "NEXUS",
+] as const satisfies readonly SystemClass[];
+
 export const SYSTEM_CLASS_SPECS: Readonly<
   Record<SystemClass, SystemClassSpec>
 > = Object.freeze({
@@ -31,6 +43,21 @@ export const SYSTEM_CLASS_SPECS: Readonly<
   }),
 });
 
+export const SYSTEM_MORPH_RULES: Readonly<
+  Record<SystemClass, SystemMorphRule>
+> = Object.freeze({
+  PULSAR: Object.freeze({ upgradeAt: 55 }),
+  GIANT: Object.freeze({
+    downgradeBelow: 30,
+    upgradeAt: 95,
+  }),
+  QUASAR: Object.freeze({
+    downgradeBelow: 65,
+    upgradeAt: 150,
+  }),
+  NEXUS: Object.freeze({ downgradeBelow: 110 }),
+});
+
 export const GAME_RULES = Object.freeze({
   distanceCostPerPixel: 0.04,
   baseFormationCost: 2,
@@ -48,4 +75,5 @@ export const GAME_RULES = Object.freeze({
   linkGrowPixelsPerSecond: 220,
   prominentBoostCutFraction: 0.38,
   prominentBoostMinimumForwardEnergy: 3,
+  systemMorphDurationSeconds: 0.7,
 });
