@@ -11,10 +11,15 @@ the right moment to launch a decisive surge.
 ## The game
 
 - Draw routes from your systems to reinforce allies or attack hostile worlds.
+- Watch a marked pioneer ship establish each new corridor while an evenly
+  spaced convoy follows without changing speed or formation at activation.
 - Cut a charged corridor to send its forward fleet surging toward the target
   while the rear formation retreats.
 - Contest reciprocal attacks at a shared battle front whose position reflects
   the strength of both source systems.
+- Read free and occupied route slots directly on every system, then grow
+  sufficiently charged systems into a larger class with more capacity and
+  another outgoing route.
 - Capture Pulsars, Giants, Quasars and fortified Nexus systems across eight
   progressively denser sectors.
 - Face two visually and tactically distinct hostile factions, including the

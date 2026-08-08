@@ -9,9 +9,18 @@ import {
   calculateCutOutcome,
   linkIntensityForEnergy,
 } from "../src/core/GameSimulation";
-import { SYSTEM_CLASS_SPECS } from "../src/core/game-rules";
+import {
+  GAME_RULES,
+  SYSTEM_CLASS_SPECS,
+} from "../src/core/game-rules";
 import { combatFrontFraction } from "../src/core/link-combat";
 import { FixedStepClock } from "../src/engine/FixedStepClock";
+import {
+  activeConvoyDistances,
+  convoyShipCount,
+  FLEET_SHIP_SPEED_PIXELS_PER_SECOND,
+  formingConvoyDistances,
+} from "../src/engine/fleet-motion";
 import {
   getLinkCurve,
   getLinkLaneOffset,
@@ -81,6 +90,50 @@ test("fixed-step clock produces consistent simulation time across frame rates", 
 
   assert.ok(Math.abs(runClock(60) - 2) < 0.000_001);
   assert.ok(Math.abs(runClock(144) - 2) < 1 / 60);
+});
+
+test("route convoys keep constant speed and even spacing", () => {
+  const routeLength = 440;
+  assert.equal(convoyShipCount(routeLength, 7), 4);
+  const before = activeConvoyDistances(1, routeLength, 7);
+  const after = activeConvoyDistances(1.2, routeLength, 7);
+  assert.equal(before.length, 4);
+  assert.equal(after.length, 4);
+
+  const travelled =
+    (after[0] - before[0] + routeLength) % routeLength;
+  assert.ok(
+    Math.abs(
+      travelled - FLEET_SHIP_SPEED_PIXELS_PER_SECOND * 0.2,
+    ) < 0.000_001,
+  );
+  const ordered = [...before].sort((a, b) => a - b);
+  const gaps = ordered.map((distance, index) => {
+    const next = ordered[(index + 1) % ordered.length];
+    return (next - distance + routeLength) % routeLength;
+  });
+  assert.ok(gaps.every((gap) => Math.abs(gap - 110) < 0.000_001));
+});
+
+test("the forming convoy hands off seamlessly behind its pioneer", () => {
+  const routeLength = 440;
+  const formationSeconds =
+    routeLength / GAME_RULES.linkGrowPixelsPerSecond;
+  const forming = formingConvoyDistances(
+    formationSeconds,
+    routeLength,
+    routeLength,
+    7,
+  );
+  const active = activeConvoyDistances(
+    formationSeconds,
+    routeLength,
+    7,
+  );
+  assert.deepEqual(forming, active);
+  assert.ok(
+    formingConvoyDistances(0.2, 44, routeLength, 7).length >= 1,
+  );
 });
 
 test("hostile reciprocal routes share a front while friendly routes use lanes", () => {

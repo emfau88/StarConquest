@@ -30,6 +30,11 @@ import {
   isShipArtReady,
   type ShipRole,
 } from "./ShipArt";
+import {
+  activeConvoyDistances,
+  convoyShipCount,
+  formingConvoyDistances,
+} from "./fleet-motion";
 import { SYSTEM_RADII } from "./system-geometry";
 import {
   isSystemArtReady,
@@ -74,7 +79,6 @@ const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
   enemy2: "#ffb14a",
   neutral: "#b8c8dd",
 });
-const FLEET_SHIP_SPEED_PIXELS_PER_SECOND = 205;
 const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
 const SYSTEM_ARTWORK_SCALE = 2.84;
 const SYSTEM_HALO_SCALE = 1.72;
@@ -386,9 +390,8 @@ export class CanvasRenderer {
       0,
       forwardReach,
       forward,
-      false,
       true,
-      1,
+      7,
     );
     this.drawRouteFleet(
       context,
@@ -397,8 +400,7 @@ export class CanvasRenderer {
       reverseReach,
       reverse,
       true,
-      true,
-      1,
+      7,
     );
 
     if (hasFront) {
@@ -463,7 +465,6 @@ export class CanvasRenderer {
     routeStart: number,
     routeEnd: number,
     link: EnergyLinkView,
-    reverseDirection: boolean,
     isAttacking: boolean,
     maximumShips: number,
   ): void {
@@ -475,39 +476,49 @@ export class CanvasRenderer {
         curve.target.y - curve.source.y,
       ),
     );
-    if (routeFraction < 0.08 || link.unitsInTransit <= 0.25) {
+    if (routeFraction < 0.045 || link.unitsInTransit <= 0.25) {
       return;
     }
-    const shipCount = this.visibleFleetCount(link, maximumShips);
-    const padding = Math.min(0.035, 7 / routeLength);
-    const minimum = Math.min(routeStart, routeEnd) + padding;
-    const maximum = Math.max(routeStart, routeEnd) - padding;
+    const segmentLength = routeLength * routeFraction;
+    const direction = routeEnd >= routeStart ? 1 : -1;
+    const distances =
+      link.state === "growing"
+        ? formingConvoyDistances(
+            link.ageSeconds,
+            segmentLength,
+            routeLength,
+            maximumShips,
+          )
+        : activeConvoyDistances(
+            link.ageSeconds,
+            segmentLength,
+            maximumShips,
+          );
+    const targetShipCount = convoyShipCount(
+      link.state === "growing" ? routeLength : segmentLength,
+      maximumShips,
+    );
     const color = OWNER_COLORS[link.owner];
 
-    for (let index = 0; index < shipCount; index += 1) {
-      const travelled =
-        (link.ageSeconds * FLEET_SHIP_SPEED_PIXELS_PER_SECOND +
-          (index * routeLength) / Math.max(1, maximumShips)) %
-        routeLength;
-      const phase = travelled / routeLength;
-      const fraction = reverseDirection ? 1 - phase : phase;
+    for (let index = 0; index < distances.length; index += 1) {
+      const travelled = distances[index];
+      const segmentPhase = travelled / segmentLength;
+      const fraction =
+        routeStart + direction * (travelled / routeLength);
       if (
         isAttacking &&
         link.state === "active" &&
-        !reverseDirection &&
+        direction > 0 &&
         routeEnd > 0.97 &&
-        phase > 0.9
+        segmentPhase > 0.9
       ) {
         this.drawDeliveryImpact(
           context,
           curve,
           link.owner,
-          (phase - 0.9) / 0.1,
+          (segmentPhase - 0.9) / 0.1,
           link.intensity,
         );
-      }
-      if (fraction < minimum || fraction > maximum) {
-        continue;
       }
       const point = pointOnLink(curve, fraction);
       const tangent = this.tangentOnLink(curve, fraction);
@@ -515,15 +526,71 @@ export class CanvasRenderer {
         context,
         point,
         Math.atan2(tangent.y, tangent.x) +
-          (reverseDirection ? Math.PI : 0),
+          (direction < 0 ? Math.PI : 0),
         link.owner,
         color,
         link.intensity,
         isAttacking,
-        this.roleForFleetSlot(index, shipCount),
+        this.roleForFleetSlot(index, targetShipCount),
         1,
       );
     }
+
+    if (link.state === "growing") {
+      const pioneerFraction = Math.max(0, Math.min(1, routeEnd));
+      const pioneerPoint = pointOnLink(curve, pioneerFraction);
+      const pioneerTangent = this.tangentOnLink(curve, pioneerFraction);
+      const pioneerAngle =
+        Math.atan2(pioneerTangent.y, pioneerTangent.x) +
+        (direction < 0 ? Math.PI : 0);
+      this.drawPioneerMarker(
+        context,
+        pioneerPoint,
+        pioneerAngle,
+        color,
+        link.ageSeconds,
+      );
+      this.drawFleetShip(
+        context,
+        pioneerPoint,
+        pioneerAngle,
+        link.owner,
+        color,
+        link.intensity,
+        isAttacking,
+        "interceptor",
+        0.88,
+      );
+    }
+  }
+
+  private drawPioneerMarker(
+    context: CanvasRenderingContext2D,
+    position: Point,
+    angle: number,
+    color: string,
+    ageSeconds: number,
+  ): void {
+    const pulse = 0.5 + Math.sin(ageSeconds * 9) * 0.5;
+    context.save();
+    context.translate(position.x, position.y);
+    context.rotate(angle);
+    context.globalAlpha = 0.68 + pulse * 0.22;
+    context.strokeStyle = "#f2fcff";
+    context.fillStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 7 + pulse * 5;
+    context.lineWidth = 1.6;
+    context.beginPath();
+    context.arc(0, 0, 27 + pulse * 2, -0.82, 0.82);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(31 + pulse * 2, 0);
+    context.lineTo(24, -4.5);
+    context.lineTo(24, 4.5);
+    context.closePath();
+    context.fill();
+    context.restore();
   }
 
   private drawDeliveryImpact(
@@ -761,16 +828,15 @@ export class CanvasRenderer {
       context.restore();
     }
 
-    if (progress > 0.18 && link.unitsInTransit > 0.25) {
+    if (progress > 0.045 && link.unitsInTransit > 0.25) {
       this.drawRouteFleet(
         context,
         curve,
         0,
         progress,
         link,
-        false,
         isAttacking,
-        isAttacking ? 5 : 4,
+        isAttacking ? 7 : 6,
       );
     }
 
