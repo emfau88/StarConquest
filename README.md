@@ -6,7 +6,7 @@ the right moment to launch a decisive surge.
 
 [Play the campaign on GitHub Pages](https://emfau88.github.io/StarConquest/)
 
-![A Helion fleet pushing several active fronts in sector six](docs/screenshots/helion-front.webp)
+![Blue and Helion convoys opening parallel fronts in sector six](docs/screenshots/helion-front.webp)
 
 ## The game
 
@@ -27,19 +27,12 @@ the right moment to launch a decisive surge.
 - Play with mouse or touch in a responsive landscape layout with persistent
   campaign unlocks and best star ratings.
 
-## From first contact to sector command
+## From first convoy to sector command
 
-| Guided opening | Persistent campaign |
+| Fleet movement in play | Eight-sector campaign |
 | --- | --- |
-| ![The connect gesture tutorial in the first sector](docs/screenshots/first-contact.webp) | ![The eight-sector StarConquest campaign map](docs/screenshots/campaign-map.webp) |
-| The first sector teaches route creation directly on the battlefield. | Completed sectors, unlocks and best ratings remain available between sessions. |
-
-### Pressure Line in motion
-
-![Blue and red fleets contesting several routes in sector two](docs/screenshots/pressure-line.webp)
-
-By sector two, both hostile outposts expand independently while the player
-races to secure the central Giant and maintain a stable energy network.
+| ![Continuous blue and red fleet convoys in the first sector](docs/screenshots/first-contact.webp) | ![The complete eight-sector StarConquest campaign map](docs/screenshots/campaign-map.webp) |
+| Pioneer-led formations establish new routes, then continue as evenly spaced convoys. | The campaign grows from a guided opening into Helion, three-faction and Nexus scenarios. |
 
 ## Campaign
 
