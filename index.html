@@ -20,6 +20,73 @@
         aria-label="StarConquest game field"
       ></canvas>
 
+      <section
+        class="launch-overlay"
+        id="launch-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="launch-title"
+        aria-describedby="launch-description"
+      >
+        <div class="launch-card">
+          <header class="launch-card__header">
+            <span class="launch-card__emblem" aria-hidden="true"></span>
+            <span class="launch-card__brand">StarConquest</span>
+            <button
+              class="launch-card__language"
+              id="launch-language-button"
+              type="button"
+              aria-label="Language: English. Switch to German"
+            >
+              <span id="launch-language-label">EN</span>
+            </button>
+          </header>
+
+          <div class="launch-card__loading" id="launch-loading-panel">
+            <span class="launch-card__eyebrow" id="launch-loading-eyebrow">
+              Campaign systems
+            </span>
+            <h1 id="launch-title">Preparing sector</h1>
+            <p id="launch-description">Loading critical game assets</p>
+            <div
+              class="launch-progress"
+              id="launch-progress"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span class="launch-progress__fill" id="launch-progress-fill"></span>
+            </div>
+            <span class="launch-progress__value" id="launch-progress-value">0%</span>
+          </div>
+
+          <div class="launch-card__briefing" id="launch-briefing-panel" hidden>
+            <div class="launch-card__meta">
+              <span class="launch-card__eyebrow" id="launch-briefing-eyebrow">
+                Mission briefing
+              </span>
+              <span class="launch-card__sector" id="launch-sector">Sector 01 / 08</span>
+            </div>
+            <h1 id="launch-level-title">First Contact</h1>
+            <span class="launch-card__objective-label" id="launch-objective-label">
+              Mission
+            </span>
+            <p class="launch-card__objective" id="launch-objective">
+              Secure the neutral stars, then capture the red system
+            </p>
+            <div class="launch-card__campaign-status">
+              <span id="launch-campaign-label">Campaign progress</span>
+              <strong id="launch-campaign-value">0 / 8 secured</strong>
+            </div>
+            <div class="launch-card__actions">
+              <button id="launch-start-button" type="button">Start mission</button>
+              <button id="launch-map-button" type="button">Campaign map</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <header class="hud" aria-label="Mission status">
         <div class="hud__mission">
           <span class="hud__brand-mark" aria-hidden="true"></span>
@@ -170,7 +237,7 @@
         </div>
       </header>
 
-      <aside class="status-card" aria-live="polite">
+      <aside class="status-card" aria-live="polite" aria-hidden="true">
         <span class="status-card__pulse" aria-hidden="true"></span>
         <span id="status-message">
           Drag from your blue system to another star
@@ -187,7 +254,7 @@
       >
         <img
           class="campaign-map__art"
-          data-src="./assets/backgrounds/campaign-map.webp"
+          data-src="./assets/backgrounds/campaign-atlas.webp"
           decoding="async"
           alt=""
           aria-hidden="true"
@@ -198,6 +265,14 @@
             Campaign
           </span>
           <h1 id="campaign-map-title">Sector map</h1>
+          <div class="campaign-map__progress" aria-live="polite">
+            <span id="campaign-progress-label">Campaign progress</span>
+            <strong id="campaign-progress-value">0 / 8 secured</strong>
+            <span class="campaign-map__progress-track" aria-hidden="true">
+              <span id="campaign-progress-fill"></span>
+            </span>
+            <span id="campaign-stars-value">0 / 24 stars</span>
+          </div>
           <button
             class="campaign-map__close"
             id="campaign-map-close"
@@ -206,84 +281,82 @@
             Close
           </button>
         </header>
-        <nav class="campaign-map__nodes" aria-label="Campaign sectors">
-          <span
-            class="campaign-map__helion-branch"
-            aria-hidden="true"
-          ></span>
-          <span
-            class="campaign-map__red-branch"
-            aria-hidden="true"
-          ></span>
-          <span
-            class="campaign-map__final-route"
-            aria-hidden="true"
-          ></span>
-          <button
-            class="campaign-map__node campaign-map__node--1"
-            data-level-index="0"
-            type="button"
-          >
-            <span class="campaign-map__number">01</span>
-            <span class="campaign-map__name">First Contact</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--2"
-            data-level-index="1"
-            type="button"
-          >
-            <span class="campaign-map__number">02</span>
-            <span class="campaign-map__name">Pressure Line</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--3"
-            data-level-index="2"
-            type="button"
-          >
-            <span class="campaign-map__number">03</span>
-            <span class="campaign-map__name">Cut the Current</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--4"
-            data-level-index="3"
-            type="button"
-          >
-            <span class="campaign-map__number">04</span>
-            <span class="campaign-map__name">Twin Fronts</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--5"
-            data-level-index="4"
-            type="button"
-          >
-            <span class="campaign-map__number">05</span>
-            <span class="campaign-map__name">Heavy Orbit</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--6 campaign-map__node--helion"
-            data-level-index="5"
-            type="button"
-          >
-            <span class="campaign-map__number">06</span>
-            <span class="campaign-map__name">Helion Run</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--7 campaign-map__node--contested"
-            data-level-index="6"
-            type="button"
-          >
-            <span class="campaign-map__number">07</span>
-            <span class="campaign-map__name">Three Powers</span>
-          </button>
-          <button
-            class="campaign-map__node campaign-map__node--8 campaign-map__node--contested"
-            data-level-index="7"
-            type="button"
-          >
-            <span class="campaign-map__number">08</span>
-            <span class="campaign-map__name">Nexus Siege</span>
-          </button>
-        </nav>
+        <div class="campaign-map__content">
+          <section class="campaign-map__atlas-panel">
+            <header class="campaign-map__atlas-header">
+              <span id="campaign-atlas-eyebrow">Galactic atlas</span>
+              <h2 id="campaign-atlas-title">Select sector</h2>
+            </header>
+            <nav class="campaign-map__nodes" aria-label="Campaign sectors">
+              <button class="campaign-map__node" data-level-index="0" type="button">
+                <span class="campaign-map__number">01</span>
+                <span class="campaign-map__name">First Contact</span>
+                <span class="campaign-map__node-state">Available</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="1" type="button">
+                <span class="campaign-map__number">02</span>
+                <span class="campaign-map__name">Pressure Line</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="2" type="button">
+                <span class="campaign-map__number">03</span>
+                <span class="campaign-map__name">Cut the Current</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="3" type="button">
+                <span class="campaign-map__number">04</span>
+                <span class="campaign-map__name">Twin Fronts</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="4" type="button">
+                <span class="campaign-map__number">05</span>
+                <span class="campaign-map__name">Heavy Orbit</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="5" type="button">
+                <span class="campaign-map__number">06</span>
+                <span class="campaign-map__name">Helion Run</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="6" type="button">
+                <span class="campaign-map__number">07</span>
+                <span class="campaign-map__name">Three Powers</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+              <button class="campaign-map__node" data-level-index="7" type="button">
+                <span class="campaign-map__number">08</span>
+                <span class="campaign-map__name">Nexus Siege</span>
+                <span class="campaign-map__node-state">Locked</span>
+              </button>
+            </nav>
+          </section>
+
+          <aside class="campaign-map__detail" aria-live="polite">
+            <div class="campaign-map__detail-meta">
+              <span id="campaign-detail-sector">Sector 01 / 08</span>
+              <span id="campaign-detail-state">Available</span>
+            </div>
+            <h2 id="campaign-detail-title">First Contact</h2>
+            <span class="campaign-map__detail-label" id="campaign-detail-objective-label">
+              Mission
+            </span>
+            <p id="campaign-detail-objective">
+              Secure the neutral stars, then capture the red system
+            </p>
+            <canvas
+              class="campaign-map__preview"
+              id="campaign-level-preview"
+              width="640"
+              height="300"
+              aria-label="Selected sector preview"
+            ></canvas>
+            <div class="campaign-map__detail-stats">
+              <span id="campaign-detail-difficulty">Difficulty 1 / 8</span>
+              <span id="campaign-detail-stars">No rating yet</span>
+            </div>
+            <button id="campaign-start-button" type="button">Start mission</button>
+          </aside>
+        </div>
       </section>
 
       <section

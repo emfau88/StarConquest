@@ -116,6 +116,7 @@ export class GameApp {
   private lastFrameTime = 0;
   private focusedSystemId: string | null = null;
   private paused = false;
+  private awaitingMissionStart = true;
   private campaignMapOpen = false;
   private pausedBeforeMap = false;
   private tutorialStage = 0;
@@ -133,13 +134,32 @@ export class GameApp {
   }
 
   async start(): Promise<void> {
+    this.hud.showLoading();
     this.platform.loadingStart();
+    let imageProgress = 0;
+    let audioProgress = 0;
+    const reportLoadingProgress = (): void => {
+      this.hud.setLoadingProgress(
+        0.08 + imageProgress * 0.82 + audioProgress * 0.1,
+      );
+    };
     try {
       await this.platform.initialize();
+      reportLoadingProgress();
       await Promise.all([
-        preloadCriticalRuntimeAssets(this.currentLevel),
-        this.audio.preload(),
+        preloadCriticalRuntimeAssets(
+          this.currentLevel,
+          (loaded, total) => {
+            imageProgress = total > 0 ? loaded / total : 1;
+            reportLoadingProgress();
+          },
+        ),
+        this.audio.preload().then(() => {
+          audioProgress = 1;
+          reportLoadingProgress();
+        }),
       ]);
+      this.hud.setLoadingProgress(1);
     } catch (error) {
       this.platform.loadingStop();
       throw error;
@@ -149,6 +169,7 @@ export class GameApp {
       onMapOpen: () => this.openCampaignMap(),
       onMapClose: () => this.closeCampaignMap(),
       onMapSelect: (levelIndex) => this.selectLevel(levelIndex),
+      onMissionStart: () => this.beginMission(),
       onLanguageToggle: () => this.toggleLocale(),
       onPauseToggle: () => this.togglePause(),
       onRestart: () => this.restart(),
@@ -172,18 +193,21 @@ export class GameApp {
     this.hud.setSfxEnabled(this.audio.isSfxEnabled());
     this.hud.setElapsedSeconds(0);
     this.hud.setLevel(this.currentLevel);
-    this.showOpeningHint();
+    this.hud.hideStatus();
 
     this.resizeObserver.observe(this.canvas);
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
     document.addEventListener("click", this.handleAudioInteraction);
     this.canvas.addEventListener("pointerdown", this.handleAudioInteraction);
     this.platform.loadingStop();
-    this.platform.gameplayStart();
     this.configureGameplayMusic();
-    this.audio.setMusicMode("gameplay");
+    this.audio.setMusicMode("menu");
     this.audio.preloadMusic();
     this.animationFrameId = requestAnimationFrame(this.frame);
+    this.hud.showMissionBriefing(
+      this.currentLevel,
+      this.progress.snapshot(),
+    );
     void preloadDeferredRuntimeAssets(
       this.currentLevel,
       LEVELS[this.currentLevelIndex + 1],
@@ -217,7 +241,7 @@ export class GameApp {
     this.lastFrameTime = currentTime;
 
     this.processInput();
-    if (!this.paused) {
+    if (!this.paused && !this.awaitingMissionStart) {
       this.simulationClock.advance(rawDelta, (stepSeconds) => {
         this.simulation.update(stepSeconds);
         this.updateEffects(stepSeconds);
@@ -236,6 +260,7 @@ export class GameApp {
     for (const event of this.input.drainEvents()) {
       if (
         this.paused ||
+        this.awaitingMissionStart ||
         this.simulation.status !== "playing" ||
         !event.position.insideSafeArea
       ) {
@@ -569,7 +594,7 @@ export class GameApp {
   }
 
   private togglePause(): void {
-    if (this.simulation.status !== "playing") {
+    if (this.awaitingMissionStart || this.simulation.status !== "playing") {
       return;
     }
     this.paused = !this.paused;
@@ -594,6 +619,7 @@ export class GameApp {
     this.focusedSystemId = null;
     this.tutorialStage = 0;
     this.paused = false;
+    this.awaitingMissionStart = false;
     this.campaignMapOpen = false;
     this.pausedBeforeMap = false;
     this.simulationClock.reset();
@@ -629,9 +655,11 @@ export class GameApp {
       return;
     }
     this.loadLevel(levelIndex);
+    this.beginMission();
   }
 
   private loadLevel(levelIndex: number): void {
+    this.platform.gameplayStop();
     this.currentLevelIndex = levelIndex;
     this.currentLevel = LEVELS[levelIndex];
     this.simulation = new GameSimulation(this.currentLevel);
@@ -640,6 +668,7 @@ export class GameApp {
     this.focusedSystemId = null;
     this.tutorialStage = 0;
     this.paused = false;
+    this.awaitingMissionStart = true;
     this.campaignMapOpen = false;
     this.pausedBeforeMap = false;
     this.simulationClock.reset();
@@ -650,10 +679,28 @@ export class GameApp {
     this.hud.setPaused(false);
     this.hud.hideCampaignMap();
     this.hud.hideResult();
-    this.showOpeningHint();
+    this.hud.hideStatus();
+    this.configureGameplayMusic();
+    this.audio.setMusicMode("menu");
+    this.hud.showMissionBriefing(
+      this.currentLevel,
+      this.progress.snapshot(),
+    );
+  }
+
+  private beginMission(): void {
+    if (!this.awaitingMissionStart || this.simulation.status !== "playing") {
+      return;
+    }
+    this.awaitingMissionStart = false;
+    this.hud.hideMissionBriefing();
+    this.simulationClock.reset();
+    this.lastFrameTime = performance.now();
     this.configureGameplayMusic();
     this.audio.setMusicMode("gameplay");
+    this.showOpeningHint();
     this.platform.gameplayStart();
+    void this.audio.unlock();
   }
 
   private openCampaignMap(): void {
@@ -667,6 +714,9 @@ export class GameApp {
     this.simulationClock.reset();
     this.platform.gameplayStop();
     this.audio.setMusicMode("menu");
+    if (this.awaitingMissionStart) {
+      this.hud.hideMissionBriefing();
+    }
     this.hud.showCampaignMap(
       this.currentLevelIndex,
       this.progress.snapshot(),
@@ -679,16 +729,28 @@ export class GameApp {
     }
     this.campaignMapOpen = false;
     this.hud.hideCampaignMap();
+    if (this.awaitingMissionStart) {
+      this.paused = this.pausedBeforeMap;
+      this.pausedBeforeMap = false;
+      this.hud.showMissionBriefing(
+        this.currentLevel,
+        this.progress.snapshot(),
+      );
+      return;
+    }
     this.paused =
       this.pausedBeforeMap || this.simulation.status !== "playing";
     this.pausedBeforeMap = false;
     this.simulationClock.reset();
-    if (!this.paused) {
+    if (!this.paused && !this.awaitingMissionStart) {
       this.audio.setMusicMode("gameplay");
       this.lastFrameTime = performance.now();
       this.platform.gameplayStart();
       this.restoreTutorialHint();
-    } else if (this.simulation.status === "playing") {
+    } else if (
+      !this.awaitingMissionStart &&
+      this.simulation.status === "playing"
+    ) {
       this.audio.setMusicPaused(true);
     }
   }
@@ -762,14 +824,22 @@ export class GameApp {
 
   private readonly handleVisibilityChange = (): void => {
     if (!document.hidden) {
-      if (this.campaignMapOpen || this.simulation.status !== "playing") {
+      if (
+        this.awaitingMissionStart ||
+        this.campaignMapOpen ||
+        this.simulation.status !== "playing"
+      ) {
         this.audio.setMusicMode("menu");
       }
       return;
     }
 
     this.audio.setMusicPaused(true);
-    if (!this.paused && this.simulation.status === "playing") {
+    if (
+      !this.awaitingMissionStart &&
+      !this.paused &&
+      this.simulation.status === "playing"
+    ) {
       this.paused = true;
       this.gesture = null;
       this.simulationClock.reset();

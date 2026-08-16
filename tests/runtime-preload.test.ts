@@ -44,7 +44,7 @@ test("critical preload covers the opening sector without later faction art", () 
   const allAssets = new Set(ALL_RUNTIME_ASSET_URLS);
 
   assert.ok(critical.includes(BACKDROP_URLS[LEVEL_ONE.theme]));
-  assert.ok(critical.some((url) => url.endsWith("campaign-map.webp")));
+  assert.ok(critical.some((url) => url.endsWith("campaign-atlas.webp")));
   assert.ok(critical.some((url) => url.endsWith("connect-gesture.png")));
   assert.ok(critical.some((url) => url.endsWith("capture-burst.webp")));
   assert.ok(critical.some((url) => url.endsWith("cruiser-player.webp")));

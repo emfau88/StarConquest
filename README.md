@@ -10,7 +10,7 @@ StarConquest is a touch-first browser strategy game about drawing energy
 corridors between star systems, building fleet pressure and cutting routes at
 the right moment to launch a decisive surge.
 
-[Play the campaign on GitHub Pages](https://emfau88.github.io/StarConquest/)
+[Play the campaign](https://starconquest-game.netlify.app/) · [GitHub Pages mirror](https://emfau88.github.io/StarConquest/)
 
 ![Blue and Helion convoys opening parallel fronts in sector six / Blaue und Helion-Konvois eröffnen mehrere Fronten in Sektor sechs](docs/screenshots/helion-front.webp)
 
@@ -28,6 +28,11 @@ Artwork, responsive effects, bilingual UI, streamed background music and
 event-specific sound effects form one consistent presentation. Critical visual
 and sound assets are decoded before gameplay starts; the next sector is prepared
 during browser idle time before the remaining optional assets follow.
+
+A real loading indicator appears only when startup takes long enough to notice.
+The opening briefing freezes the board until **Start mission** is pressed, while
+the campaign atlas shows all eight sectors, completion progress, ratings,
+objectives and a compact preview of each starting layout.
 
 ### The game
 
@@ -119,7 +124,7 @@ StarConquest ist ein touch-optimiertes Browser-Strategiespiel. Du zeichnest
 Energiekorridore zwischen Sternensystemen, baust Flottendruck auf und trennst
 Routen im richtigen Moment für einen entscheidenden Vorstoß.
 
-[Kampagne auf GitHub Pages spielen](https://emfau88.github.io/StarConquest/)
+[Kampagne spielen](https://starconquest-game.netlify.app/) · [GitHub-Pages-Spiegel](https://emfau88.github.io/StarConquest/)
 
 ### Aktueller Stand
 
@@ -137,6 +142,11 @@ Hintergrundmusik und ereignisbezogene Soundeffekte ergeben eine einheitliche
 Präsentation. Kritische Grafik- und Sound-Assets werden vor dem Spielstart
 dekodiert. In Browser-Leerlaufphasen folgt zuerst der nächste Sektor und danach
 der verbleibende optionale Asset-Katalog.
+
+Ein echter Ladebalken erscheint nur, wenn der Start spürbar dauert. Das
+Missionsbriefing friert das Spielfeld ein, bis **Mission starten** gedrückt wird.
+Der neue Kampagnenatlas zeigt alle acht Sektoren, Fortschritt, Wertungen,
+Missionsziele und eine kompakte Vorschau der jeweiligen Ausgangslage.
 
 ### Das Spiel
 

@@ -1,4 +1,5 @@
 import {
+  LEVELS,
   localizeLevelText,
   type LevelDefinition,
 } from "../../data/levels";
@@ -45,9 +46,11 @@ export class TopBarHud {
       `${"\u2606".repeat(5 - displayedDifficulty)}`;
     this.sector.textContent =
       `${translate(this.locale, "sectorLabel")} ` +
-      `${String(level.sector).padStart(2, "0")} · ${difficulty}`;
+      `${String(level.sector).padStart(2, "0")} / ` +
+      `${String(LEVELS.length).padStart(2, "0")} · ${difficulty}`;
     this.compactSector.textContent =
-      `${String(level.sector).padStart(2, "0")} · ` +
+      `${String(level.sector).padStart(2, "0")}/` +
+      `${String(LEVELS.length).padStart(2, "0")} · ` +
       `${"\u2605".repeat(displayedDifficulty)}`;
     this.title.textContent = localizeLevelText(level.title, this.locale);
     this.objective.textContent = localizeLevelText(

@@ -69,7 +69,7 @@ export const shipAssetUrl = (
 ): string => assetUrl(`ships/${role}-${owner}.webp`);
 
 const SHARED_ASSET_URLS = [
-  assetUrl("backgrounds/campaign-map.webp"),
+  assetUrl("backgrounds/campaign-atlas.webp"),
   assetUrl("progression/completed.png"),
   assetUrl("progression/locked.png"),
   assetUrl("progression/star.png"),
@@ -126,8 +126,9 @@ export const criticalRuntimeAssetUrls = (
 
 export const preloadCriticalRuntimeAssets = async (
   level: LevelDefinition,
+  onProgress?: (loaded: number, total: number) => void,
 ): Promise<void> => {
-  await preloadImageAssets(criticalRuntimeAssetUrls(level));
+  await preloadImageAssets(criticalRuntimeAssetUrls(level), onProgress);
 };
 
 export const deferredRuntimeAssetBatches = (

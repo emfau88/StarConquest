@@ -8,6 +8,7 @@ import {
 import type { CampaignProgressSnapshot } from "../storage/CampaignProgress";
 import { ActionControlsHud } from "./hud/ActionControlsHud";
 import { CampaignMapOverlay } from "./hud/CampaignMapOverlay";
+import { MissionLaunchOverlay } from "./hud/MissionLaunchOverlay";
 import { ResultOverlay } from "./hud/ResultOverlay";
 import { StatusPrompt } from "./hud/StatusPrompt";
 import { TopBarHud } from "./hud/TopBarHud";
@@ -16,6 +17,7 @@ export interface HudActions {
   onMapOpen: () => void;
   onMapClose: () => void;
   onMapSelect: (levelIndex: number) => void;
+  onMissionStart: () => void;
   onLanguageToggle: () => void;
   onPauseToggle: () => void;
   onRestart: () => void;
@@ -30,6 +32,7 @@ export class HudController {
   private readonly topBar: TopBarHud;
   private readonly controls: ActionControlsHud;
   private readonly campaignMap: CampaignMapOverlay;
+  private readonly launch: MissionLaunchOverlay;
   private readonly status: StatusPrompt;
   private readonly result: ResultOverlay;
   private bindings = new AbortController();
@@ -40,9 +43,10 @@ export class HudController {
     this.topBar = new TopBarHud(locale);
     this.controls = new ActionControlsHud(locale);
     this.campaignMap = new CampaignMapOverlay(locale);
+    this.launch = new MissionLaunchOverlay(locale);
     this.status = new StatusPrompt();
+    this.status.setIdleMessage(translate(locale, "connectHint"));
     this.result = new ResultOverlay(locale);
-    this.setStatusKey("connectHint");
   }
 
   setLocale(locale: Locale): void {
@@ -50,6 +54,8 @@ export class HudController {
     this.topBar.setLocale(locale);
     this.controls.setLocale(locale);
     this.campaignMap.setLocale(locale);
+    this.launch.setLocale(locale);
+    this.status.setIdleMessage(translate(locale, "connectHint"));
     this.result.setLocale(locale);
   }
 
@@ -57,6 +63,12 @@ export class HudController {
     this.bindings.abort();
     this.bindings = new AbortController();
     this.controls.bind(actions, this.bindings.signal);
+    this.launch.bind(
+      actions.onMissionStart,
+      actions.onMapOpen,
+      actions.onLanguageToggle,
+      this.bindings.signal,
+    );
     this.campaignMap.bind(
       actions.onMapSelect,
       actions.onMapClose,
@@ -71,6 +83,7 @@ export class HudController {
 
   dispose(): void {
     this.bindings.abort();
+    this.status.dispose();
   }
 
   setElapsedSeconds(elapsedSeconds: number): void {
@@ -106,6 +119,29 @@ export class HudController {
 
   setStatus(message: string): void {
     this.status.setMessage(message);
+  }
+
+  hideStatus(): void {
+    this.status.hide();
+  }
+
+  showLoading(): void {
+    this.launch.showLoading();
+  }
+
+  setLoadingProgress(progress: number): void {
+    this.launch.setLoadingProgress(progress);
+  }
+
+  showMissionBriefing(
+    level: LevelDefinition,
+    progress: CampaignProgressSnapshot,
+  ): void {
+    this.launch.showBriefing(level, progress);
+  }
+
+  hideMissionBriefing(): void {
+    this.launch.hide();
   }
 
   setStatusKey(key: StringKey): void {

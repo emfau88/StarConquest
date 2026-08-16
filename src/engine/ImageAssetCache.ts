@@ -45,8 +45,15 @@ export const preloadImageAsset = (url: string): Promise<void> => {
 
 export const preloadImageAssets = async (
   urls: readonly string[],
+  onProgress?: (loaded: number, total: number) => void,
 ): Promise<void> => {
-  await Promise.all(urls.map((url) => preloadImageAsset(url)));
+  let loaded = 0;
+  onProgress?.(loaded, urls.length);
+  await Promise.all(urls.map(async (url) => {
+    await preloadImageAsset(url);
+    loaded += 1;
+    onProgress?.(loaded, urls.length);
+  }));
 };
 
 const decodeImage = async (image: HTMLImageElement): Promise<void> => {
