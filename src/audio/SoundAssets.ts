@@ -13,6 +13,8 @@ export interface SoundAssetDefinition {
 }
 
 export type MusicMode = "menu" | "gameplay";
+export type GameplayMusicTrack = "gameplay-chill" | "gameplay-space";
+export type MusicTrack = "menu" | GameplayMusicTrack;
 
 export interface MusicAssetDefinition {
   readonly url: string;
@@ -68,15 +70,19 @@ export const SOUND_ASSET_URLS = Object.values(SOUND_ASSETS).map(
 );
 
 export const MUSIC_ASSETS: Readonly<
-  Record<MusicMode, MusicAssetDefinition>
+  Record<MusicTrack, MusicAssetDefinition>
 > = Object.freeze({
   menu: {
     url: musicAssetUrl("a_chill_fever.mp3"),
     volume: 0.075,
   },
-  gameplay: {
+  "gameplay-chill": {
     url: musicAssetUrl("chillloopable.mp3"),
     volume: 0.05,
+  },
+  "gameplay-space": {
+    url: musicAssetUrl("plains_of_luminescence_loop.mp3"),
+    volume: 0.055,
   },
 });
 

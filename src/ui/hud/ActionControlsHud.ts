@@ -18,7 +18,8 @@ export interface HudControlActions {
   onLanguageToggle: () => void;
   onPauseToggle: () => void;
   onRestart: () => void;
-  onAudioToggle: () => void;
+  onMusicToggle: () => void;
+  onSfxToggle: () => void;
   onFullscreenToggle: () => void;
 }
 
@@ -45,6 +46,10 @@ export class ActionControlsHud {
   );
   private readonly audioButton = requireElement(
     "#audio-button",
+    HTMLButtonElement,
+  );
+  private readonly musicButton = requireElement(
+    "#music-button",
     HTMLButtonElement,
   );
   private readonly fullscreenButton = requireElement(
@@ -83,6 +88,10 @@ export class ActionControlsHud {
     "#audio-label",
     HTMLSpanElement,
   );
+  private readonly musicLabel = requireElement(
+    "#music-label",
+    HTMLSpanElement,
+  );
   private readonly fullscreenLabel = requireElement(
     "#fullscreen-label",
     HTMLSpanElement,
@@ -97,7 +106,8 @@ export class ActionControlsHud {
   );
   private locale: Locale;
   private paused = false;
-  private audioEnabled = true;
+  private sfxEnabled = true;
+  private musicEnabled = true;
   private fullscreenActive = false;
 
   constructor(locale: Locale) {
@@ -139,9 +149,13 @@ export class ActionControlsHud {
     }, {
       signal,
     });
+    this.musicButton.addEventListener("click", () => {
+      actions.onMusicToggle();
+    }, {
+      signal,
+    });
     this.audioButton.addEventListener("click", () => {
-      this.setSecondaryActionsOpen(false);
-      actions.onAudioToggle();
+      actions.onSfxToggle();
     }, {
       signal,
     });
@@ -178,7 +192,8 @@ export class ActionControlsHud {
     this.languageButton.setAttribute("aria-label", languageLabel);
     this.languageButton.title = languageLabel;
     this.setPaused(this.paused);
-    this.setAudioEnabled(this.audioEnabled);
+    this.setMusicEnabled(this.musicEnabled);
+    this.setSfxEnabled(this.sfxEnabled);
     this.setFullscreen(this.fullscreenActive);
   }
 
@@ -196,16 +211,29 @@ export class ActionControlsHud {
     this.pauseButton.setAttribute("aria-pressed", String(paused));
   }
 
-  setAudioEnabled(enabled: boolean): void {
-    this.audioEnabled = enabled;
+  setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    this.musicLabel.textContent = translate(
+      this.locale,
+      enabled ? "musicOn" : "musicOff",
+    );
+    this.setControlLabel(
+      this.musicButton,
+      translate(this.locale, enabled ? "musicOn" : "musicOff"),
+    );
+    this.musicButton.setAttribute("aria-pressed", String(enabled));
+  }
+
+  setSfxEnabled(enabled: boolean): void {
+    this.sfxEnabled = enabled;
     this.audioLabel.textContent = translate(
       this.locale,
-      enabled ? "audioOn" : "audioOff",
+      enabled ? "sfxOn" : "sfxOff",
     );
     this.audioIcon.src = iconUrl(enabled ? "audio-on" : "audio-off");
     this.setControlLabel(
       this.audioButton,
-      translate(this.locale, enabled ? "audioOn" : "audioOff"),
+      translate(this.locale, enabled ? "sfxOn" : "sfxOff"),
     );
     this.audioButton.setAttribute("aria-pressed", String(enabled));
   }

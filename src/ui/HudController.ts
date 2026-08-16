@@ -19,7 +19,8 @@ export interface HudActions {
   onLanguageToggle: () => void;
   onPauseToggle: () => void;
   onRestart: () => void;
-  onAudioToggle: () => void;
+  onMusicToggle: () => void;
+  onSfxToggle: () => void;
   onFullscreenToggle: () => void;
   onRetry: () => void;
   onNext: () => void;
@@ -87,8 +88,12 @@ export class HudController {
     }
   }
 
-  setAudioEnabled(enabled: boolean): void {
-    this.controls.setAudioEnabled(enabled);
+  setMusicEnabled(enabled: boolean): void {
+    this.controls.setMusicEnabled(enabled);
+  }
+
+  setSfxEnabled(enabled: boolean): void {
+    this.controls.setSfxEnabled(enabled);
   }
 
   setFullscreenSupported(supported: boolean): void {

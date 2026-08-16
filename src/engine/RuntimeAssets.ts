@@ -130,11 +130,44 @@ export const preloadCriticalRuntimeAssets = async (
   await preloadImageAssets(criticalRuntimeAssetUrls(level));
 };
 
-export const preloadDeferredRuntimeAssets = async (
-  level: LevelDefinition,
-): Promise<void> => {
-  const critical = new Set(criticalRuntimeAssetUrls(level));
-  await preloadImageAssets(
-    ALL_RUNTIME_ASSET_URLS.filter((url) => !critical.has(url)),
+export const deferredRuntimeAssetBatches = (
+  currentLevel: LevelDefinition,
+  nextLevel?: LevelDefinition,
+): readonly (readonly string[])[] => {
+  const loaded = new Set(criticalRuntimeAssetUrls(currentLevel));
+  const nextLevelAssets = nextLevel
+    ? criticalRuntimeAssetUrls(nextLevel).filter((url) => !loaded.has(url))
+    : [];
+  nextLevelAssets.forEach((url) => loaded.add(url));
+  const remainingAssets = ALL_RUNTIME_ASSET_URLS.filter(
+    (url) => !loaded.has(url),
   );
+
+  return [nextLevelAssets, remainingAssets];
 };
+
+export const preloadDeferredRuntimeAssets = async (
+  currentLevel: LevelDefinition,
+  nextLevel?: LevelDefinition,
+): Promise<void> => {
+  const batches = deferredRuntimeAssetBatches(currentLevel, nextLevel);
+  for (const [index, batch] of batches.entries()) {
+    await waitForBrowserIdle(index === 0 ? 2_000 : 5_000);
+    if (batch.length > 0) {
+      await preloadImageAssets(batch);
+    }
+  }
+};
+
+const waitForBrowserIdle = (timeoutMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve();
+      return;
+    }
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(() => resolve(), { timeout: timeoutMs });
+      return;
+    }
+    globalThis.setTimeout(resolve, Math.min(timeoutMs, 1_200));
+  });

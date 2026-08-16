@@ -41,8 +41,12 @@ test("sound mix settings stay within safe Web Audio ranges", () => {
 });
 
 test("menu and gameplay music use separate quiet tracks", () => {
-  assert.deepEqual(Object.keys(MUSIC_ASSETS), ["menu", "gameplay"]);
-  assert.equal(new Set(MUSIC_ASSET_URLS).size, 2);
+  assert.deepEqual(Object.keys(MUSIC_ASSETS), [
+    "menu",
+    "gameplay-chill",
+    "gameplay-space",
+  ]);
+  assert.equal(new Set(MUSIC_ASSET_URLS).size, 3);
 
   for (const asset of Object.values(MUSIC_ASSETS)) {
     const filename = asset.url.split("/").at(-1);

@@ -52,9 +52,9 @@ test("interactive assets excluding music stay below two megabytes", () => {
   );
 });
 
-test("streamed music stays below 3.1 megabytes", () => {
+test("streamed music stays below 6.4 megabytes", () => {
   assert.ok(
-    directorySize(join(publicAssets, "music")) < 3_100_000,
-    "Runtime music exceeded the explicit 3.1-megabyte budget",
+    directorySize(join(publicAssets, "music")) < 6_400_000,
+    "Runtime music exceeded the explicit 6.4-megabyte budget",
   );
 });

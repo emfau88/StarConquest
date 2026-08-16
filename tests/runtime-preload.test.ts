@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LEVEL_ONE } from "../src/data/levels";
+import { LEVEL_ONE, LEVELS } from "../src/data/levels";
 import {
   ALL_RUNTIME_ASSET_URLS,
   BACKDROP_URLS,
   criticalRuntimeAssetUrls,
+  deferredRuntimeAssetBatches,
 } from "../src/engine/RuntimeAssets";
 
 test("runtime asset catalogue is complete and deduplicated", () => {
@@ -16,6 +17,26 @@ test("runtime asset catalogue is complete and deduplicated", () => {
   for (const url of ALL_RUNTIME_ASSET_URLS) {
     assert.match(url, /assets\//);
   }
+});
+
+test("deferred preload prioritizes the next sector without duplication", () => {
+  const current = new Set(criticalRuntimeAssetUrls(LEVEL_ONE));
+  const batches = deferredRuntimeAssetBatches(LEVEL_ONE, LEVELS[1]);
+  assert.equal(batches.length, 2);
+
+  const [nextSector, remaining] = batches;
+  assert.equal(nextSector.length, 0);
+  assert.ok(nextSector.every((url) => !current.has(url)));
+  assert.ok(remaining.every((url) => !current.has(url)));
+  assert.ok(remaining.every((url) => !nextSector.includes(url)));
+  assert.deepEqual(
+    new Set([...current, ...nextSector, ...remaining]),
+    new Set(ALL_RUNTIME_ASSET_URLS),
+  );
+
+  const helionBatches = deferredRuntimeAssetBatches(LEVELS[4], LEVELS[5]);
+  assert.ok(helionBatches[0].some((url) => url.includes("enemy2")));
+  assert.ok(helionBatches[1].every((url) => !helionBatches[0].includes(url)));
 });
 
 test("critical preload covers the opening sector without later faction art", () => {

@@ -13,6 +13,8 @@ test("compact HUD exposes a secondary controls menu", () => {
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /id="hud-secondary-actions"/);
   assert.match(html, /id="hud-sector-compact"/);
+  assert.match(html, /id="music-button"/);
+  assert.match(html, /id="audio-button"/);
 });
 
 test("compact HUD preserves readable objectives and touch targets", () => {
@@ -33,6 +35,7 @@ test("every compact HUD control receives a runtime accessible name", () => {
     "restartButton",
     "moreButton",
     "pauseButton",
+    "musicButton",
     "audioButton",
     "fullscreenButton",
   ]) {

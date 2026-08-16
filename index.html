@@ -106,10 +106,20 @@
             </button>
             <button
               class="icon-button"
+              id="music-button"
+              type="button"
+              aria-label="Music on"
+              title="Music on"
+            >
+              <span class="icon-button__music-mark" aria-hidden="true">♫</span>
+              <span class="icon-button__label" id="music-label">Music on</span>
+            </button>
+            <button
+              class="icon-button"
               id="audio-button"
               type="button"
-              aria-label="Audio on"
-              title="Audio on"
+              aria-label="Sound effects on"
+              title="Sound effects on"
             >
               <img
                 class="hud-icon"
@@ -118,7 +128,9 @@
                 alt=""
                 aria-hidden="true"
               />
-              <span class="icon-button__label" id="audio-label">Audio on</span>
+              <span class="icon-button__label" id="audio-label">
+                Sound effects on
+              </span>
             </button>
             <button
               class="icon-button"

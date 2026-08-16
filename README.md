@@ -26,8 +26,8 @@ while the HUD changes layout instead of truncating mission text or controls.
 
 Artwork, responsive effects, bilingual UI, streamed background music and
 event-specific sound effects form one consistent presentation. Critical visual
-and sound assets are decoded before gameplay starts; additional sector artwork
-and music load in the background only when needed.
+and sound assets are decoded before gameplay starts; the next sector is prepared
+during browser idle time before the remaining optional assets follow.
 
 ### The game
 
@@ -48,8 +48,9 @@ and music load in the background only when needed.
 - Play with mouse or touch in a responsive landscape layout with persistent
   campaign unlocks and best star ratings.
 - Switch between English and German at any time; the preference is saved.
-- Hear separate low-volume music for the campaign map and gameplay, with smooth
-  transitions, pause handling and event-specific science-fiction sound effects.
+- Hear separate low-volume music for the campaign map and a varied gameplay
+  playlist, with smooth transitions and event-specific science-fiction effects.
+- Toggle music and sound effects independently; both preferences are saved.
 
 ### From first convoy to sector command
 
@@ -73,8 +74,8 @@ and music load in the background only when needed.
 
 - **Connect or attack:** drag from one owned system to another system.
 - **Cut and surge:** swipe across an active corridor.
-- **Manage the run:** use the HUD for the campaign map, restart, audio,
-  fullscreen and pause.
+- **Manage the run:** use the HUD for the campaign map, restart, separate music
+  and sound-effect controls, fullscreen and pause.
 - **Compact screens:** open **More** for secondary actions; the primary pause
   control remains directly accessible.
 - **Change language:** use the `EN`/`DE` button; the game updates immediately.
@@ -85,6 +86,10 @@ StarConquest uses TypeScript, Vite and a custom Canvas 2D renderer. Gameplay is
 driven by a fixed-timestep simulation and covered by automated mechanics,
 campaign, balance, responsive-HUD, audio, runtime-asset, preloading and
 localization tests.
+
+The opening sector's critical assets load first. Deferred loading then uses
+browser idle time to prepare the next sector before fetching the rest of the
+campaign catalogue, keeping startup fast without delaying later transitions.
 
 ```powershell
 npm.cmd install
@@ -130,7 +135,8 @@ Bedienelemente abzuschneiden.
 Grafik, responsive Effekte, zweisprachige Oberfläche, gestreamte
 Hintergrundmusik und ereignisbezogene Soundeffekte ergeben eine einheitliche
 Präsentation. Kritische Grafik- und Sound-Assets werden vor dem Spielstart
-dekodiert; weitere Sektorgrafiken und Musik laden nur bei Bedarf im Hintergrund.
+dekodiert. In Browser-Leerlaufphasen folgt zuerst der nächste Sektor und danach
+der verbleibende optionale Asset-Katalog.
 
 ### Das Spiel
 
@@ -152,8 +158,10 @@ dekodiert; weitere Sektorgrafiken und Musik laden nur bei Bedarf im Hintergrund.
   Bestwertungen werden gespeichert.
 - Wechsle jederzeit live zwischen Deutsch und Englisch; die Auswahl bleibt
   gespeichert.
-- Menü und Gameplay besitzen eigene leise Musikstücke mit weichen Übergängen,
-  Pausenbehandlung und passenden Science-Fiction-Soundeffekten.
+- Menü und Gameplay besitzen eigene leise Musik; während des Spiels wechseln
+  sich mehrere Stücke mit weichen Übergängen ab.
+- Musik und Soundeffekte lassen sich unabhängig schalten; beide Einstellungen
+  bleiben gespeichert.
 
 ### Kampagne
 
@@ -171,8 +179,8 @@ dekodiert; weitere Sektorgrafiken und Musik laden nur bei Bedarf im Hintergrund.
 - **Verbinden oder angreifen:** von einem eigenen System zu einem anderen
   System ziehen.
 - **Trennen und vorstoßen:** über einen aktiven Energiekorridor wischen.
-- **Partie verwalten:** Kampagnenkarte, Neustart, Audio, Vollbild und Pause
-  befinden sich im HUD.
+- **Partie verwalten:** Kampagnenkarte, Neustart, getrennte Regler für Musik und
+  Soundeffekte, Vollbild und Pause befinden sich im HUD.
 - **Kompakte Bildschirme:** Unter **Mehr** befinden sich Sekundäraktionen; die
   zentrale Pausensteuerung bleibt direkt erreichbar.
 - **Sprache wechseln:** die Schaltfläche `DE`/`EN` verwenden; die Oberfläche
@@ -184,6 +192,11 @@ StarConquest verwendet TypeScript, Vite und einen eigenen Canvas-2D-Renderer.
 Eine Fixed-Timestep-Simulation bildet die Spielgrundlage; Mechanik, Kampagne,
 Balancing, responsives HUD, Audio, Laufzeit-Assets, Preloading und Lokalisierung
 werden automatisiert getestet.
+
+Beim Start laden nur die kritischen Assets des ersten Sektors. Danach bereitet
+das Spiel in Browser-Leerlaufphasen zuerst den nächsten Sektor und anschließend
+den restlichen Kampagnen-Katalog vor. So bleibt der Start schnell und spätere
+Sektorwechsel laufen dennoch ohne unnötige Wartezeit.
 
 ```powershell
 npm.cmd install

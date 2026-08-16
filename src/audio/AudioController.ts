@@ -2,11 +2,15 @@ import { SafeStorage } from "../storage/SafeStorage";
 import {
   MUSIC_ASSETS,
   SOUND_ASSETS,
+  type GameplayMusicTrack,
   type MusicMode,
+  type MusicTrack,
   type SoundEffect,
 } from "./SoundAssets";
 
-const AUDIO_PREFERENCE_KEY = "audio-enabled";
+const LEGACY_AUDIO_PREFERENCE_KEY = "audio-enabled";
+const SFX_PREFERENCE_KEY = "sfx-enabled";
+const MUSIC_PREFERENCE_KEY = "music-enabled";
 const MUSIC_FADE_MS = 650;
 
 const SOUND_FREQUENCIES: Readonly<Record<SoundEffect, readonly number[]>> = {
@@ -21,45 +25,72 @@ const SOUND_FREQUENCIES: Readonly<Record<SoundEffect, readonly number[]>> = {
 export class AudioController {
   private context: AudioContext | null = null;
   private readonly buffers = new Map<SoundEffect, AudioBuffer>();
-  private readonly music = new Map<MusicMode, HTMLAudioElement>();
+  private readonly music = new Map<MusicTrack, HTMLAudioElement>();
   private preloadPromise: Promise<void> | null = null;
   private musicMode: MusicMode = "gameplay";
-  private activeMusicMode: MusicMode | null = null;
+  private gameplayMusicTrack: GameplayMusicTrack = "gameplay-chill";
+  private activeMusicTrack: MusicTrack | null = null;
   private musicFadeTimer: number | null = null;
   private musicUnlocked = false;
   private musicPaused = false;
-  private enabled: boolean;
+  private sfxEnabled: boolean;
+  private musicEnabled: boolean;
 
   constructor(private readonly storage: SafeStorage) {
-    this.enabled = storage.get(AUDIO_PREFERENCE_KEY) !== "false";
+    const legacyEnabled = storage.get(LEGACY_AUDIO_PREFERENCE_KEY) !== "false";
+    this.sfxEnabled = storage.get(SFX_PREFERENCE_KEY) === null
+      ? legacyEnabled
+      : storage.get(SFX_PREFERENCE_KEY) !== "false";
+    this.musicEnabled = storage.get(MUSIC_PREFERENCE_KEY) === null
+      ? legacyEnabled
+      : storage.get(MUSIC_PREFERENCE_KEY) !== "false";
   }
 
-  isEnabled(): boolean {
-    return this.enabled;
+  isSfxEnabled(): boolean {
+    return this.sfxEnabled;
   }
 
-  setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    this.storage.set(AUDIO_PREFERENCE_KEY, String(enabled));
+  isMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+
+  setSfxEnabled(enabled: boolean): void {
+    this.sfxEnabled = enabled;
+    this.storage.set(SFX_PREFERENCE_KEY, String(enabled));
     if (!enabled && this.context?.state === "running") {
       void this.context.suspend();
     }
+  }
+
+  toggleSfx(): boolean {
+    this.setSfxEnabled(!this.sfxEnabled);
+    return this.sfxEnabled;
+  }
+
+  setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    this.storage.set(MUSIC_PREFERENCE_KEY, String(enabled));
     if (!enabled) {
       this.pauseMusic();
     }
   }
 
-  toggle(): boolean {
-    this.setEnabled(!this.enabled);
-    return this.enabled;
+  toggleMusic(): boolean {
+    this.setMusicEnabled(!this.musicEnabled);
+    return this.musicEnabled;
   }
 
   async unlock(): Promise<void> {
-    if (!this.enabled) {
+    if (!this.sfxEnabled && !this.musicEnabled) {
       return;
     }
-    this.musicUnlocked = true;
-    this.syncMusic();
+    if (this.musicEnabled) {
+      this.musicUnlocked = true;
+      this.syncMusic();
+    }
+    if (!this.sfxEnabled) {
+      return;
+    }
     const context = this.getContext();
     if (context.state === "suspended") {
       await context.resume();
@@ -73,8 +104,8 @@ export class AudioController {
   }
 
   preloadMusic(): void {
-    (Object.keys(MUSIC_ASSETS) as MusicMode[]).forEach((mode) => {
-      this.getMusicElement(mode);
+    (Object.keys(MUSIC_ASSETS) as MusicTrack[]).forEach((track) => {
+      this.getMusicElement(track);
     });
   }
 
@@ -82,6 +113,13 @@ export class AudioController {
     this.musicMode = mode;
     this.musicPaused = false;
     this.syncMusic();
+  }
+
+  setGameplayMusicTrack(track: GameplayMusicTrack): void {
+    this.gameplayMusicTrack = track;
+    if (this.musicMode === "gameplay") {
+      this.syncMusic();
+    }
   }
 
   setMusicPaused(paused: boolean): void {
@@ -97,7 +135,11 @@ export class AudioController {
   }
 
   play(effect: SoundEffect): void {
-    if (!this.enabled || !this.context || this.context.state !== "running") {
+    if (
+      !this.sfxEnabled ||
+      !this.context ||
+      this.context.state !== "running"
+    ) {
       return;
     }
 
@@ -169,23 +211,28 @@ export class AudioController {
     });
   }
 
-  private getMusicElement(mode: MusicMode): HTMLAudioElement {
-    const existing = this.music.get(mode);
+  private getMusicElement(track: MusicTrack): HTMLAudioElement {
+    const existing = this.music.get(track);
     if (existing) {
       return existing;
     }
     const element = new Audio();
-    element.loop = true;
+    element.loop = track === "menu";
     element.preload = "none";
-    element.src = MUSIC_ASSETS[mode].url;
+    element.src = MUSIC_ASSETS[track].url;
     element.volume = 0;
-    this.music.set(mode, element);
+    if (track !== "menu") {
+      element.addEventListener("ended", () => {
+        this.advanceGameplayMusic(track);
+      });
+    }
+    this.music.set(track, element);
     return element;
   }
 
   private syncMusic(): void {
     if (
-      !this.enabled ||
+      !this.musicEnabled ||
       !this.musicUnlocked ||
       this.musicPaused ||
       document.hidden
@@ -193,24 +240,26 @@ export class AudioController {
       this.pauseMusic();
       return;
     }
-    this.transitionMusic(this.musicMode);
+    this.transitionMusic(
+      this.musicMode === "menu" ? "menu" : this.gameplayMusicTrack,
+    );
   }
 
-  private transitionMusic(nextMode: MusicMode): void {
-    const next = this.getMusicElement(nextMode);
-    if (this.activeMusicMode === nextMode && !next.paused) {
+  private transitionMusic(nextTrack: MusicTrack): void {
+    const next = this.getMusicElement(nextTrack);
+    if (this.activeMusicTrack === nextTrack && !next.paused) {
       return;
     }
 
     this.stopMusicFade();
-    const previous = this.activeMusicMode
-      ? this.getMusicElement(this.activeMusicMode)
+    const previous = this.activeMusicTrack
+      ? this.getMusicElement(this.activeMusicTrack)
       : null;
     const previousVolume = previous?.volume ?? 0;
-    const targetVolume = MUSIC_ASSETS[nextMode].volume;
+    const targetVolume = MUSIC_ASSETS[nextTrack].volume;
     next.volume = previous === next ? next.volume : 0;
     void next.play().catch(() => {});
-    this.activeMusicMode = nextMode;
+    this.activeMusicTrack = nextTrack;
 
     const startedAt = performance.now();
     this.musicFadeTimer = window.setInterval(() => {
@@ -239,7 +288,21 @@ export class AudioController {
       element.pause();
       element.volume = 0;
     });
-    this.activeMusicMode = null;
+    this.activeMusicTrack = null;
+  }
+
+  private advanceGameplayMusic(completedTrack: GameplayMusicTrack): void {
+    if (
+      this.musicMode !== "gameplay" ||
+      this.activeMusicTrack !== completedTrack
+    ) {
+      return;
+    }
+    this.gameplayMusicTrack = completedTrack === "gameplay-chill"
+      ? "gameplay-space"
+      : "gameplay-chill";
+    this.activeMusicTrack = null;
+    this.syncMusic();
   }
 
   private stopMusicFade(): void {

@@ -324,6 +324,16 @@ button {
   line-height: 1;
 }
 
+.icon-button__music-mark {
+  width: 18px;
+  color: #9eeaff;
+  font-size: 1.12rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(103, 220, 255, 0.5);
+}
+
 .icon-button--map .icon-button__label {
   display: inline;
   font-size: 0.66rem;

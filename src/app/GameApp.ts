@@ -152,7 +152,8 @@ export class GameApp {
       onLanguageToggle: () => this.toggleLocale(),
       onPauseToggle: () => this.togglePause(),
       onRestart: () => this.restart(),
-      onAudioToggle: () => this.toggleAudio(),
+      onMusicToggle: () => this.toggleMusic(),
+      onSfxToggle: () => this.toggleSfx(),
       onFullscreenToggle: () => {
         void this.fullscreen.toggle().catch(() => {
           this.hud.setStatusKey("invalid");
@@ -167,7 +168,8 @@ export class GameApp {
     });
     this.hud.setFullscreenSupported(this.fullscreen.isSupported());
     this.hud.setFullscreen(this.fullscreen.isFullscreen());
-    this.hud.setAudioEnabled(this.audio.isEnabled());
+    this.hud.setMusicEnabled(this.audio.isMusicEnabled());
+    this.hud.setSfxEnabled(this.audio.isSfxEnabled());
     this.hud.setElapsedSeconds(0);
     this.hud.setLevel(this.currentLevel);
     this.showOpeningHint();
@@ -178,10 +180,14 @@ export class GameApp {
     this.canvas.addEventListener("pointerdown", this.handleAudioInteraction);
     this.platform.loadingStop();
     this.platform.gameplayStart();
+    this.configureGameplayMusic();
     this.audio.setMusicMode("gameplay");
     this.audio.preloadMusic();
     this.animationFrameId = requestAnimationFrame(this.frame);
-    void preloadDeferredRuntimeAssets(this.currentLevel).catch(() => {});
+    void preloadDeferredRuntimeAssets(
+      this.currentLevel,
+      LEVELS[this.currentLevelIndex + 1],
+    ).catch(() => {});
   }
 
   stop(): void {
@@ -597,6 +603,7 @@ export class GameApp {
     this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
+    this.configureGameplayMusic();
     this.audio.setMusicMode("gameplay");
     this.platform.gameplayStart();
   }
@@ -644,6 +651,7 @@ export class GameApp {
     this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
+    this.configureGameplayMusic();
     this.audio.setMusicMode("gameplay");
     this.platform.gameplayStart();
   }
@@ -728,12 +736,28 @@ export class GameApp {
     );
   }
 
-  private toggleAudio(): void {
-    const enabled = this.audio.toggle();
-    this.hud.setAudioEnabled(enabled);
+  private toggleMusic(): void {
+    const enabled = this.audio.toggleMusic();
+    this.hud.setMusicEnabled(enabled);
     if (enabled) {
       void this.audio.unlock();
     }
+  }
+
+  private toggleSfx(): void {
+    const enabled = this.audio.toggleSfx();
+    this.hud.setSfxEnabled(enabled);
+    if (enabled) {
+      void this.audio.unlock();
+    }
+  }
+
+  private configureGameplayMusic(): void {
+    this.audio.setGameplayMusicTrack(
+      this.currentLevel.sector % 2 === 0
+        ? "gameplay-space"
+        : "gameplay-chill",
+    );
   }
 
   private readonly handleVisibilityChange = (): void => {
