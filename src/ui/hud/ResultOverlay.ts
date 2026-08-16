@@ -3,7 +3,11 @@ import {
   localizeLevelText,
   type LevelDefinition,
 } from "../../data/levels";
-import { translate, type Locale } from "../../i18n/strings";
+import {
+  formatStarLabel,
+  translate,
+  type Locale,
+} from "../../i18n/strings";
 import { formatTime, requireElement } from "./dom";
 
 export class ResultOverlay {
@@ -26,10 +30,27 @@ export class ResultOverlay {
     "#next-button",
     HTMLButtonElement,
   );
+  private locale: Locale;
+  private currentResult: {
+    status: Exclude<GameStatus, "playing">;
+    elapsedSeconds: number;
+    stars: number;
+    level: LevelDefinition;
+    hasNextLevel: boolean;
+  } | null = null;
 
-  constructor(private readonly locale: Locale) {
+  constructor(locale: Locale) {
+    this.locale = locale;
+    this.setLocale(locale);
+  }
+
+  setLocale(locale: Locale): void {
+    this.locale = locale;
     this.retryButton.textContent = translate(locale, "retry");
     this.nextButton.textContent = translate(locale, "nextSector");
+    if (this.currentResult) {
+      this.render(false);
+    }
   }
 
   bind(
@@ -48,6 +69,22 @@ export class ResultOverlay {
     level: LevelDefinition,
     hasNextLevel: boolean,
   ): void {
+    this.currentResult = {
+      status,
+      elapsedSeconds,
+      stars,
+      level,
+      hasNextLevel,
+    };
+    this.render(true);
+  }
+
+  private render(focusAction: boolean): void {
+    if (!this.currentResult) {
+      return;
+    }
+    const { status, elapsedSeconds, stars, level, hasNextLevel } =
+      this.currentResult;
     const won = status === "won";
     this.overlay.classList.toggle("is-won", won);
     this.overlay.classList.toggle("is-lost", !won);
@@ -64,7 +101,7 @@ export class ResultOverlay {
       : "\u2606\u2606\u2606";
     this.stars.setAttribute(
       "aria-label",
-      `${won ? stars : 0} ${won && stars === 1 ? "star" : "stars"}`,
+      formatStarLabel(this.locale, won ? stars : 0),
     );
     this.summary.textContent = won
       ? `${localizeLevelText(level.title, this.locale)} ` +
@@ -72,12 +109,15 @@ export class ResultOverlay {
       : translate(this.locale, "lostSummary");
     this.nextButton.hidden = !won || !hasNextLevel;
     this.overlay.hidden = false;
-    (won && hasNextLevel ? this.nextButton : this.retryButton).focus({
-      preventScroll: true,
-    });
+    if (focusAction) {
+      (won && hasNextLevel ? this.nextButton : this.retryButton).focus({
+        preventScroll: true,
+      });
+    }
   }
 
   hide(): void {
+    this.currentResult = null;
     this.overlay.hidden = true;
   }
 }

@@ -13,10 +13,22 @@ export class TopBarHud {
     HTMLParagraphElement,
   );
   private readonly time = requireElement("#hud-time", HTMLTimeElement);
+  private locale: Locale;
+  private level: LevelDefinition | null = null;
 
-  constructor(private readonly locale: Locale) {}
+  constructor(locale: Locale) {
+    this.locale = locale;
+  }
+
+  setLocale(locale: Locale): void {
+    this.locale = locale;
+    if (this.level) {
+      this.setLevel(this.level);
+    }
+  }
 
   setLevel(level: LevelDefinition): void {
+    this.level = level;
     const displayedDifficulty = Math.max(
       1,
       Math.min(5, level.difficulty),

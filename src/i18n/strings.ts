@@ -1,8 +1,11 @@
 export type Locale = "en" | "de";
 
-const STRINGS = {
+export const LOCALE_PREFERENCE_KEY = "language";
+
+export const STRINGS = {
   en: {
     sectorLabel: "Sector",
+    missionLabel: "Mission",
     pause: "Pause",
     resume: "Resume",
     restart: "Restart",
@@ -10,6 +13,8 @@ const STRINGS = {
     audioOff: "Audio off",
     fullscreen: "Fullscreen",
     exitFullscreen: "Exit fullscreen",
+    languageCode: "EN",
+    languageToggleLabel: "Language: English. Switch to German",
     map: "Map",
     campaign: "Campaign",
     campaignMapTitle: "Sector map",
@@ -18,7 +23,16 @@ const STRINGS = {
     available: "Available",
     locked: "Locked",
     completed: "Completed",
+    star: "star",
     stars: "stars",
+    canvasAriaLabel: "StarConquest game field",
+    missionStatusAriaLabel: "Mission status",
+    deviceOrientationAriaLabel: "Device orientation",
+    rotateDevice: "Rotate your device",
+    landscapePlay: "StarConquest is designed for landscape play.",
+    documentDescription:
+      "StarConquest is a fast strategy game about linking star systems and redirecting energy.",
+    startFailure: "Unable to start StarConquest",
     connectHint: "Drag from your blue system to another star",
     cutHint: "Sever a blue flux lane: the front surges, the rear recalls",
     battleHint: "Build routes, reinforce your network and capture every hostile system",
@@ -41,6 +55,7 @@ const STRINGS = {
   },
   de: {
     sectorLabel: "Sektor",
+    missionLabel: "Mission",
     pause: "Pause",
     resume: "Weiter",
     restart: "Neustart",
@@ -48,6 +63,8 @@ const STRINGS = {
     audioOff: "Audio aus",
     fullscreen: "Vollbild",
     exitFullscreen: "Vollbild verlassen",
+    languageCode: "DE",
+    languageToggleLabel: "Sprache: Deutsch. Zu Englisch wechseln",
     map: "Karte",
     campaign: "Kampagne",
     campaignMapTitle: "Sektorkarte",
@@ -56,7 +73,16 @@ const STRINGS = {
     available: "Verfügbar",
     locked: "Gesperrt",
     completed: "Abgeschlossen",
+    star: "Stern",
     stars: "Sterne",
+    canvasAriaLabel: "StarConquest-Spielfeld",
+    missionStatusAriaLabel: "Missionsstatus",
+    deviceOrientationAriaLabel: "Geräteausrichtung",
+    rotateDevice: "Drehe dein Gerät",
+    landscapePlay: "StarConquest ist für das Querformat ausgelegt.",
+    documentDescription:
+      "StarConquest ist ein schnelles Strategiespiel über Sternenverbindungen und umgeleitete Energie.",
+    startFailure: "StarConquest konnte nicht gestartet werden",
     connectHint: "Ziehe vom blauen System zu einem anderen Stern",
     cutHint: "Trenne einen blauen Energiekorridor: vorn Vorstoß, hinten Rückruf",
     battleHint: "Baue Routen, verstärke dein Netz und erobere alle feindlichen Systeme",
@@ -85,6 +111,21 @@ export function resolveLocale(candidate?: string): Locale {
   return candidate?.toLowerCase().startsWith("de") ? "de" : "en";
 }
 
+export function resolvePreferredLocale(
+  storedLocale: string | null,
+  browserLanguage?: string,
+): Locale {
+  return storedLocale === "de" || storedLocale === "en"
+    ? storedLocale
+    : resolveLocale(browserLanguage);
+}
+
 export function translate(locale: Locale, key: StringKey): string {
   return STRINGS[locale][key] ?? STRINGS.en[key];
+}
+
+export function formatStarLabel(locale: Locale, count: number): string {
+  const normalizedCount = Math.max(0, Math.floor(count));
+  const key = normalizedCount === 1 ? "star" : "stars";
+  return `${normalizedCount} ${translate(locale, key)}`;
 }

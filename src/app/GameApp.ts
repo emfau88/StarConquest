@@ -34,8 +34,10 @@ import {
 } from "../engine/link-geometry";
 import { systemHitRadius } from "../engine/system-geometry";
 import { PointerInput } from "../input/PointerInput";
+import { applyDocumentLocale } from "../i18n/document";
 import {
-  resolveLocale,
+  LOCALE_PREFERENCE_KEY,
+  resolvePreferredLocale,
   type Locale,
   type StringKey,
 } from "../i18n/strings";
@@ -98,7 +100,10 @@ export class GameApp {
   private readonly progress = new CampaignProgress(this.storage);
   private readonly audio = new AudioController(this.storage);
   private readonly platform: PlatformAdapter = createPlatformAdapter();
-  private readonly locale: Locale = resolveLocale(navigator.language);
+  private locale: Locale = resolvePreferredLocale(
+    this.storage.get(LOCALE_PREFERENCE_KEY),
+    navigator.language,
+  );
   private readonly hud = new HudController(this.locale);
   private readonly fullscreen: FullscreenController;
   private readonly resizeObserver: ResizeObserver;
@@ -115,6 +120,7 @@ export class GameApp {
   private nextEffectId = 1;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
+    this.applyLocaleToDocument();
     this.viewport = new CanvasViewport(canvas);
     this.renderer = new CanvasRenderer(this.viewport);
     this.input = new PointerInput(canvas, this.viewport);
@@ -130,6 +136,7 @@ export class GameApp {
       onMapOpen: () => this.openCampaignMap(),
       onMapClose: () => this.closeCampaignMap(),
       onMapSelect: (levelIndex) => this.selectLevel(levelIndex),
+      onLanguageToggle: () => this.toggleLocale(),
       onPauseToggle: () => this.togglePause(),
       onRestart: () => this.restart(),
       onAudioToggle: () => this.toggleAudio(),
@@ -605,6 +612,7 @@ export class GameApp {
     this.pausedBeforeMap = false;
     this.simulationClock.reset();
     this.lastFrameTime = performance.now();
+    this.applyLocaleToDocument();
     this.hud.setLevel(this.currentLevel);
     this.hud.setElapsedSeconds(0);
     this.hud.setPaused(false);
@@ -660,6 +668,33 @@ export class GameApp {
   private showOpeningHint(): void {
     this.hud.setStatus(
       localizeLevelText(this.currentLevel.openingHint, this.locale),
+    );
+  }
+
+  private toggleLocale(): void {
+    this.locale = this.locale === "en" ? "de" : "en";
+    this.storage.set(LOCALE_PREFERENCE_KEY, this.locale);
+    this.hud.setLocale(this.locale);
+    this.applyLocaleToDocument();
+
+    if (this.campaignMapOpen) {
+      this.hud.showCampaignMap(
+        this.currentLevelIndex,
+        this.progress.snapshot(),
+      );
+    } else if (this.simulation.status === "playing") {
+      if (this.paused) {
+        this.hud.setStatusKey("paused");
+      } else {
+        this.restoreTutorialHint();
+      }
+    }
+  }
+
+  private applyLocaleToDocument(): void {
+    applyDocumentLocale(
+      this.locale,
+      localizeLevelText(this.currentLevel.title, this.locale),
     );
   }
 

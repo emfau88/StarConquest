@@ -1,14 +1,20 @@
 # StarConquest
 
+[English](#english) · [Deutsch](#deutsch)
+
+<a id="english"></a>
+
+## English
+
 StarConquest is a touch-first browser strategy game about drawing energy
 corridors between star systems, building fleet pressure and cutting routes at
 the right moment to launch a decisive surge.
 
 [Play the campaign on GitHub Pages](https://emfau88.github.io/StarConquest/)
 
-![Blue and Helion convoys opening parallel fronts in sector six](docs/screenshots/helion-front.webp)
+![Blue and Helion convoys opening parallel fronts in sector six / Blaue und Helion-Konvois eröffnen mehrere Fronten in Sektor sechs](docs/screenshots/helion-front.webp)
 
-## The game
+### The game
 
 - Draw routes from your systems to reinforce allies or attack hostile worlds.
 - Watch a marked pioneer ship establish each new corridor while an evenly
@@ -26,15 +32,16 @@ the right moment to launch a decisive surge.
   long-range orange Helion Compact.
 - Play with mouse or touch in a responsive landscape layout with persistent
   campaign unlocks and best star ratings.
+- Switch between English and German at any time; the preference is saved.
 
-## From first convoy to sector command
+### From first convoy to sector command
 
 | Fleet movement in play | Eight-sector campaign |
 | --- | --- |
-| ![Continuous blue and red fleet convoys in the first sector](docs/screenshots/first-contact.webp) | ![The complete eight-sector StarConquest campaign map](docs/screenshots/campaign-map.webp) |
+| ![Continuous blue and red fleet convoys in the first sector / Gleichmäßige blaue und rote Flottenkonvois im ersten Sektor](docs/screenshots/first-contact.webp) | ![The complete eight-sector StarConquest campaign map / Die vollständige StarConquest-Karte mit acht Sektoren](docs/screenshots/campaign-map.webp) |
 | Pioneer-led formations establish new routes, then continue as evenly spaced convoys. | The campaign grows from a guided opening into Helion, three-faction and Nexus scenarios. |
 
-## Campaign
+### Campaign
 
 1. **First Contact:** connect systems and expand through neutral space.
 2. **Pressure Line:** react to two independently expanding enemy outposts.
@@ -45,18 +52,19 @@ the right moment to launch a decisive surge.
 7. **Three Powers:** survive a shifting conflict between three factions.
 8. **Nexus Siege:** break two fortified hostile networks.
 
-## Controls
+### Controls
 
 - **Connect or attack:** drag from one owned system to another system.
 - **Cut and surge:** swipe across an active corridor.
 - **Manage the run:** use the HUD for the campaign map, restart, audio,
   fullscreen and pause.
+- **Change language:** use the `EN`/`DE` button; the game updates immediately.
 
-## Development
+### Development
 
 StarConquest uses TypeScript, Vite and a custom Canvas 2D renderer. Gameplay is
 driven by a fixed-timestep simulation and covered by automated mechanics,
-campaign, balance and runtime-asset tests.
+campaign, balance, runtime-asset and localization tests.
 
 ```powershell
 npm.cmd install
@@ -72,4 +80,81 @@ The protected gameplay contract is documented in
 balance report in [`docs/balance-report.md`](docs/balance-report.md).
 
 Every push to `main` validates and publishes the production build through
+GitHub Pages.
+
+---
+
+<a id="deutsch"></a>
+
+## Deutsch
+
+StarConquest ist ein touch-optimiertes Browser-Strategiespiel. Du zeichnest
+Energiekorridore zwischen Sternensystemen, baust Flottendruck auf und trennst
+Routen im richtigen Moment für einen entscheidenden Vorstoß.
+
+[Kampagne auf GitHub Pages spielen](https://emfau88.github.io/StarConquest/)
+
+### Das Spiel
+
+- Verbinde eigene Systeme, um Verbündete zu verstärken oder feindliche Welten
+  anzugreifen.
+- Ein markiertes Pionierschiff eröffnet jede neue Route; anschließend folgt
+  ein gleichmäßig bewegter Flottenkonvoi.
+- Trenne einen geladenen Korridor, um die vordere Flotte zum Ziel zu schicken,
+  während sich der hintere Teil zurückzieht.
+- Gegenseitige Angriffe treffen sich an einer gemeinsamen, von der Stärke
+  beider Quellsysteme bestimmten Kampffront.
+- Freie und belegte Routenslots sind an jedem System sichtbar. Stark geladene
+  Systeme wachsen in größere Klassen mit höherer Kapazität und weiteren Routen.
+- Erobere Pulsare, Giants, Quasare und befestigte Nexus-Systeme in acht
+  zunehmend komplexen Sektoren.
+- Kämpfe gegen zwei visuell und taktisch unterschiedliche Fraktionen,
+  darunter das orange Helion-Kompakt mit seinen Langstreckenrouten.
+- Spiele mit Maus oder Touch im responsiven Querformat; Freischaltungen und
+  Bestwertungen werden gespeichert.
+- Wechsle jederzeit live zwischen Deutsch und Englisch; die Auswahl bleibt
+  gespeichert.
+
+### Kampagne
+
+1. **Erster Kontakt:** Systeme verbinden und durch neutralen Raum expandieren.
+2. **Drucklinie:** auf zwei unabhängig expandierende Außenposten reagieren.
+3. **Stromschnitt:** gespeicherte Routenenergie in einen Flottenstoß umwandeln.
+4. **Doppelfront:** zwischen gleichzeitigen Angriffsachsen priorisieren.
+5. **Schwere Umlaufbahn:** alle Systemklassen rund um einen Nexus koordinieren.
+6. **Helion-Vorstoß:** die langen Versorgungsrouten des Helion-Kompakts kontern.
+7. **Drei Mächte:** einen wechselnden Konflikt zwischen drei Fraktionen bestehen.
+8. **Nexus-Belagerung:** zwei befestigte gegnerische Netzwerke durchbrechen.
+
+### Steuerung
+
+- **Verbinden oder angreifen:** von einem eigenen System zu einem anderen
+  System ziehen.
+- **Trennen und vorstoßen:** über einen aktiven Energiekorridor wischen.
+- **Partie verwalten:** Kampagnenkarte, Neustart, Audio, Vollbild und Pause
+  befinden sich im HUD.
+- **Sprache wechseln:** die Schaltfläche `DE`/`EN` verwenden; die Oberfläche
+  wird sofort umgestellt.
+
+### Entwicklung
+
+StarConquest verwendet TypeScript, Vite und einen eigenen Canvas-2D-Renderer.
+Eine Fixed-Timestep-Simulation bildet die Spielgrundlage; Mechanik, Kampagne,
+Balancing, Laufzeit-Assets und Lokalisierung werden automatisiert getestet.
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+npm.cmd test
+npm.cmd run balance:sim
+npm.cmd run build
+```
+
+Der Legacy-Quellstand ist unter
+[`reference/legacy-build/`](reference/legacy-build/) eingefroren. Der geschützte
+Spielmechanik-Vertrag steht in [`docs/core-mechanics.md`](docs/core-mechanics.md),
+der aktuelle automatisierte Balancebericht in
+[`docs/balance-report.md`](docs/balance-report.md).
+
+Jeder Push auf `main` validiert und veröffentlicht den Produktionsbuild über
 GitHub Pages.

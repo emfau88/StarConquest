@@ -16,6 +16,7 @@ export interface HudActions {
   onMapOpen: () => void;
   onMapClose: () => void;
   onMapSelect: (levelIndex: number) => void;
+  onLanguageToggle: () => void;
   onPauseToggle: () => void;
   onRestart: () => void;
   onAudioToggle: () => void;
@@ -31,14 +32,24 @@ export class HudController {
   private readonly status: StatusPrompt;
   private readonly result: ResultOverlay;
   private bindings = new AbortController();
+  private locale: Locale;
 
-  constructor(private readonly locale: Locale) {
+  constructor(locale: Locale) {
+    this.locale = locale;
     this.topBar = new TopBarHud(locale);
     this.controls = new ActionControlsHud(locale);
     this.campaignMap = new CampaignMapOverlay(locale);
     this.status = new StatusPrompt();
     this.result = new ResultOverlay(locale);
     this.setStatusKey("connectHint");
+  }
+
+  setLocale(locale: Locale): void {
+    this.locale = locale;
+    this.topBar.setLocale(locale);
+    this.controls.setLocale(locale);
+    this.campaignMap.setLocale(locale);
+    this.result.setLocale(locale);
   }
 
   bind(actions: HudActions): void {

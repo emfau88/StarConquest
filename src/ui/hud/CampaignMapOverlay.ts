@@ -13,7 +13,8 @@ type ProgressionIconName = "completed" | "locked" | "star";
 
 interface CampaignNodeView {
   readonly button: HTMLButtonElement;
-  readonly baseLabel: string;
+  readonly name: HTMLSpanElement;
+  baseLabel: string;
   readonly statusIcon: HTMLImageElement;
   readonly stars: HTMLSpanElement;
   readonly starIcons: readonly HTMLImageElement[];
@@ -47,8 +48,12 @@ export class CampaignMapOverlay {
     document.querySelectorAll<HTMLButtonElement>("[data-level-index]"),
   );
   private readonly nodeViews: CampaignNodeView[];
+  private locale: Locale;
+  private currentLevelIndex = 0;
+  private progress: CampaignProgressSnapshot | null = null;
 
-  constructor(private readonly locale: Locale) {
+  constructor(locale: Locale) {
+    this.locale = locale;
     if (this.nodes.length !== LEVELS.length) {
       throw new Error("Campaign map nodes do not match the level count");
     }
@@ -99,12 +104,35 @@ export class CampaignMapOverlay {
       node.append(statusIcon, stars);
       return {
         button: node,
+        name,
         baseLabel,
         statusIcon,
         stars,
         starIcons,
       };
     });
+  }
+
+  setLocale(locale: Locale): void {
+    this.locale = locale;
+    this.eyebrow.textContent = translate(locale, "campaign");
+    this.title.textContent = translate(locale, "campaignMapTitle");
+    this.closeButton.textContent = translate(locale, "closeMap");
+    requireElement(
+      ".campaign-map__nodes",
+      HTMLElement,
+    ).setAttribute(
+      "aria-label",
+      translate(locale, "campaignSectors"),
+    );
+    this.nodeViews.forEach((view, index) => {
+      const level = LEVELS[index];
+      const localizedTitle = localizeLevelText(level.title, locale);
+      view.name.textContent = localizedTitle;
+      view.baseLabel =
+        `${translate(locale, "sectorLabel")} ${level.sector}: ${localizedTitle}`;
+    });
+    this.renderProgress();
   }
 
   bind(
@@ -137,9 +165,21 @@ export class CampaignMapOverlay {
         this.artwork.src = source;
       }
     }
+    this.currentLevelIndex = currentLevelIndex;
+    this.progress = progress;
+    this.renderProgress();
+    this.overlay.hidden = false;
+    this.closeButton.focus({ preventScroll: true });
+  }
+
+  private renderProgress(): void {
+    const progress = this.progress;
+    if (!progress) {
+      return;
+    }
     this.nodeViews.forEach((view, index) => {
       const { button, statusIcon, stars, starIcons } = view;
-      const isCurrent = index === currentLevelIndex;
+      const isCurrent = index === this.currentLevelIndex;
       const isUnlocked = index <= progress.unlockedThrough;
       const bestStars = Math.max(
         0,
@@ -173,8 +213,6 @@ export class CampaignMapOverlay {
           : translate(this.locale, "available");
       button.setAttribute("aria-label", `${view.baseLabel}, ${state}`);
     });
-    this.overlay.hidden = false;
-    this.closeButton.focus({ preventScroll: true });
   }
 
   hide(): void {
