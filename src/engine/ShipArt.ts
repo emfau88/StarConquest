@@ -1,7 +1,6 @@
 import type { Owner } from "../core/types";
-
-const assetUrl = (filename: string): string =>
-  `${import.meta.env.BASE_URL}assets/ships/${filename}`;
+import { getImageAsset } from "./ImageAssetCache";
+import { shipAssetUrl } from "./RuntimeAssets";
 
 export type ShipRole = "transport" | "interceptor" | "cruiser";
 
@@ -17,9 +16,7 @@ export class FleetShipArtLibrary {
     if (cached) {
       return cached;
     }
-    const image = new Image();
-    image.decoding = "async";
-    image.src = assetUrl(`${role}-${owner}.webp`);
+    const image = getImageAsset(shipAssetUrl(owner, role));
     this.images.set(key, image);
     return image;
   }

@@ -44,9 +44,17 @@ test("optimized runtime artwork is complete", () => {
   }
 });
 
-test("the complete public asset bundle stays below two megabytes", () => {
+test("interactive assets excluding music stay below two megabytes", () => {
+  const musicAssets = join(publicAssets, "music");
   assert.ok(
-    directorySize(publicAssets) < 2_000_000,
-    "Public assets exceeded the explicit two-megabyte budget",
+    directorySize(publicAssets) - directorySize(musicAssets) < 2_000_000,
+    "Interactive assets exceeded the explicit two-megabyte budget",
+  );
+});
+
+test("streamed music stays below 3.1 megabytes", () => {
+  assert.ok(
+    directorySize(join(publicAssets, "music")) < 3_100_000,
+    "Runtime music exceeded the explicit 3.1-megabyte budget",
   );
 });

@@ -24,7 +24,14 @@
         <div class="hud__mission">
           <span class="hud__brand-mark" aria-hidden="true"></span>
           <span class="hud__mission-copy">
-            <span class="hud__eyebrow" id="hud-sector">Sector 01</span>
+            <span class="hud__eyebrow" id="hud-sector">
+              <span class="hud__sector-full" id="hud-sector-full">Sector 01</span>
+              <span
+                class="hud__sector-compact"
+                id="hud-sector-compact"
+                aria-hidden="true"
+              >01</span>
+            </span>
             <strong class="hud__title" id="hud-title">First Contact</strong>
           </span>
         </div>
@@ -47,69 +54,97 @@
             <time class="hud__time" id="hud-time" datetime="PT0S">00:00</time>
           </span>
           <button
-            class="icon-button icon-button--language"
-            id="language-button"
+            class="icon-button icon-button--more"
+            id="more-button"
             type="button"
-            aria-label="Language: English. Switch to German"
-            title="Language: English. Switch to German"
+            aria-controls="hud-secondary-actions"
+            aria-expanded="false"
+            aria-label="More controls"
+            title="More controls"
           >
-            <span class="icon-button__label" id="language-label">EN</span>
+            <span class="icon-button__more-mark" aria-hidden="true">•••</span>
           </button>
-          <button
-            class="icon-button icon-button--map"
-            id="map-button"
-            type="button"
+          <div
+            class="hud__secondary-actions"
+            id="hud-secondary-actions"
+            role="group"
+            aria-label="More controls"
           >
-            <span class="icon-button__label" id="map-label">Map</span>
-          </button>
-          <button
-            class="icon-button"
-            id="restart-button"
-            type="button"
-          >
-            <img
-              class="hud-icon"
-              id="restart-icon"
-              src="./assets/ui/restart.png"
-              alt=""
-              aria-hidden="true"
-            />
-            <span class="icon-button__label" id="restart-label">Restart</span>
-          </button>
-          <button
-            class="icon-button"
-            id="audio-button"
-            type="button"
-          >
-            <img
-              class="hud-icon"
-              id="audio-icon"
-              src="./assets/ui/audio-on.png"
-              alt=""
-              aria-hidden="true"
-            />
-            <span class="icon-button__label" id="audio-label">Audio on</span>
-          </button>
-          <button
-            class="icon-button"
-            id="fullscreen-button"
-            type="button"
-          >
-            <img
-              class="hud-icon"
-              id="fullscreen-icon"
-              src="./assets/ui/fullscreen-enter.png"
-              alt=""
-              aria-hidden="true"
-            />
-            <span class="icon-button__label" id="fullscreen-label">
-              Fullscreen
-            </span>
-          </button>
+            <button
+              class="icon-button icon-button--language"
+              id="language-button"
+              type="button"
+              aria-label="Language: English. Switch to German"
+              title="Language: English. Switch to German"
+            >
+              <span class="icon-button__label" id="language-label">EN</span>
+            </button>
+            <button
+              class="icon-button icon-button--map"
+              id="map-button"
+              type="button"
+              aria-label="Map"
+              title="Map"
+            >
+              <span class="icon-button__label" id="map-label">Map</span>
+            </button>
+            <button
+              class="icon-button"
+              id="restart-button"
+              type="button"
+              aria-label="Restart"
+              title="Restart"
+            >
+              <img
+                class="hud-icon"
+                id="restart-icon"
+                src="./assets/ui/restart.png"
+                alt=""
+                aria-hidden="true"
+              />
+              <span class="icon-button__label" id="restart-label">Restart</span>
+            </button>
+            <button
+              class="icon-button"
+              id="audio-button"
+              type="button"
+              aria-label="Audio on"
+              title="Audio on"
+            >
+              <img
+                class="hud-icon"
+                id="audio-icon"
+                src="./assets/ui/audio-on.png"
+                alt=""
+                aria-hidden="true"
+              />
+              <span class="icon-button__label" id="audio-label">Audio on</span>
+            </button>
+            <button
+              class="icon-button"
+              id="fullscreen-button"
+              type="button"
+              aria-label="Fullscreen"
+              title="Fullscreen"
+            >
+              <img
+                class="hud-icon"
+                id="fullscreen-icon"
+                src="./assets/ui/fullscreen-enter.png"
+                alt=""
+                aria-hidden="true"
+              />
+              <span class="icon-button__label" id="fullscreen-label">
+                Fullscreen
+              </span>
+            </button>
+          </div>
           <button
             class="icon-button icon-button--primary"
             id="pause-button"
             type="button"
+            aria-label="Pause"
+            title="Pause"
           >
             <img
               class="hud-icon"

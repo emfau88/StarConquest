@@ -2,42 +2,20 @@ import type {
   Owner,
   SystemClass,
 } from "../core/types";
-
-const assetUrl = (filename: string): string =>
-  `${import.meta.env.BASE_URL}assets/systems/${filename}`;
-
-const systemFilename = (
-  owner: Owner,
-  className: SystemClass,
-): string => {
-  if (
-    className === "QUASAR" &&
-    owner !== "neutral"
-  ) {
-    return `system-${owner}-quasar.webp`;
-  }
-  const tier =
-    className === "PULSAR"
-      ? "small"
-      : className === "GIANT"
-        ? "medium"
-        : "large";
-  return `system-${owner}-${tier}.webp`;
-};
+import { getImageAsset } from "./ImageAssetCache";
+import { systemAssetUrl } from "./RuntimeAssets";
 
 export class SystemArtLibrary {
   private readonly images = new Map<string, HTMLImageElement>();
 
   get(owner: Owner, className: SystemClass): HTMLImageElement {
-    const filename = systemFilename(owner, className);
-    const cached = this.images.get(filename);
+    const url = systemAssetUrl(owner, className);
+    const cached = this.images.get(url);
     if (cached) {
       return cached;
     }
-    const image = new Image();
-    image.decoding = "async";
-    image.src = assetUrl(filename);
-    this.images.set(filename, image);
+    const image = getImageAsset(url);
+    this.images.set(url, image);
     return image;
   }
 }

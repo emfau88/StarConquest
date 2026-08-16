@@ -53,6 +53,7 @@ test("localized accessibility labels use the correct singular and plural", () =>
 test("the static shell exposes the language control and bilingual fallback", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="language-button"/);
+  assert.match(html, /id="more-button"/);
   assert.match(html, /id="language-label">EN</);
   assert.match(html, /StarConquest requires JavaScript/);
   assert.match(html, /StarConquest benötigt JavaScript/);

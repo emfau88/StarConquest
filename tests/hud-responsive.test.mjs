@@ -1,0 +1,46 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const readProjectFile = (path) =>
+  readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+
+test("compact HUD exposes a secondary controls menu", () => {
+  const html = readProjectFile("index.html");
+
+  assert.match(html, /id="more-button"/);
+  assert.match(html, /aria-controls="hud-secondary-actions"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /id="hud-secondary-actions"/);
+  assert.match(html, /id="hud-sector-compact"/);
+});
+
+test("compact HUD preserves readable objectives and touch targets", () => {
+  const css = readProjectFile("src/styles.css");
+  const compactRules = css.slice(css.indexOf("@media (max-width: 1100px)"));
+
+  assert.match(compactRules, /\.hud__objective\s*\{[^}]*white-space:\s*normal/s);
+  assert.match(compactRules, /\.icon-button\s*\{[^}]*min-width:\s*48px/s);
+  assert.match(compactRules, /\.icon-button\s*\{[^}]*min-height:\s*48px/s);
+  assert.match(compactRules, /\.hud__secondary-actions\.is-open\s*\{[^}]*display:\s*flex/s);
+});
+
+test("every compact HUD control receives a runtime accessible name", () => {
+  const source = readProjectFile("src/ui/hud/ActionControlsHud.ts");
+
+  for (const control of [
+    "mapButton",
+    "restartButton",
+    "moreButton",
+    "pauseButton",
+    "audioButton",
+    "fullscreenButton",
+  ]) {
+    assert.match(
+      source,
+      new RegExp(`setControlLabel\\(\\s*this\\.${control}`),
+      `${control} must receive a localized accessible name`,
+    );
+  }
+  assert.match(source, /languageButton\.setAttribute\("aria-label"/);
+});

@@ -23,6 +23,14 @@ export interface HudControlActions {
 }
 
 export class ActionControlsHud {
+  private readonly secondaryActions = requireElement(
+    "#hud-secondary-actions",
+    HTMLDivElement,
+  );
+  private readonly moreButton = requireElement(
+    "#more-button",
+    HTMLButtonElement,
+  );
   private readonly languageButton = requireElement(
     "#language-button",
     HTMLButtonElement,
@@ -99,28 +107,61 @@ export class ActionControlsHud {
   }
 
   bind(actions: HudControlActions, signal: AbortSignal): void {
-    this.mapButton.addEventListener("click", actions.onMapOpen, {
+    this.setSecondaryActionsOpen(false);
+    this.moreButton.addEventListener("click", () => {
+      this.setSecondaryActionsOpen(
+        !this.secondaryActions.classList.contains("is-open"),
+      );
+    }, { signal });
+    this.mapButton.addEventListener("click", () => {
+      this.setSecondaryActionsOpen(false);
+      actions.onMapOpen();
+    }, {
       signal,
     });
     this.languageButton.addEventListener(
       "click",
-      actions.onLanguageToggle,
+      () => {
+        this.setSecondaryActionsOpen(false);
+        actions.onLanguageToggle();
+      },
       { signal },
     );
-    this.pauseButton.addEventListener("click", actions.onPauseToggle, {
+    this.pauseButton.addEventListener("click", () => {
+      this.setSecondaryActionsOpen(false);
+      actions.onPauseToggle();
+    }, {
       signal,
     });
-    this.restartButton.addEventListener("click", actions.onRestart, {
+    this.restartButton.addEventListener("click", () => {
+      this.setSecondaryActionsOpen(false);
+      actions.onRestart();
+    }, {
       signal,
     });
-    this.audioButton.addEventListener("click", actions.onAudioToggle, {
+    this.audioButton.addEventListener("click", () => {
+      this.setSecondaryActionsOpen(false);
+      actions.onAudioToggle();
+    }, {
       signal,
     });
     this.fullscreenButton.addEventListener(
       "click",
-      actions.onFullscreenToggle,
+      () => {
+        this.setSecondaryActionsOpen(false);
+        actions.onFullscreenToggle();
+      },
       { signal },
     );
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        this.secondaryActions.classList.contains("is-open")
+      ) {
+        this.setSecondaryActionsOpen(false);
+        this.moreButton.focus({ preventScroll: true });
+      }
+    }, { signal });
   }
 
   setLocale(locale: Locale): void {
@@ -128,6 +169,11 @@ export class ActionControlsHud {
     this.mapLabel.textContent = translate(locale, "map");
     this.restartLabel.textContent = translate(locale, "restart");
     this.languageLabel.textContent = translate(locale, "languageCode");
+    this.setControlLabel(this.mapButton, translate(locale, "map"));
+    this.setControlLabel(this.restartButton, translate(locale, "restart"));
+    const moreControls = translate(locale, "moreControls");
+    this.setControlLabel(this.moreButton, moreControls);
+    this.secondaryActions.setAttribute("aria-label", moreControls);
     const languageLabel = translate(locale, "languageToggleLabel");
     this.languageButton.setAttribute("aria-label", languageLabel);
     this.languageButton.title = languageLabel;
@@ -143,6 +189,10 @@ export class ActionControlsHud {
       paused ? "resume" : "pause",
     );
     this.pauseIcon.src = iconUrl(paused ? "play" : "pause");
+    this.setControlLabel(
+      this.pauseButton,
+      translate(this.locale, paused ? "resume" : "pause"),
+    );
     this.pauseButton.setAttribute("aria-pressed", String(paused));
   }
 
@@ -153,6 +203,10 @@ export class ActionControlsHud {
       enabled ? "audioOn" : "audioOff",
     );
     this.audioIcon.src = iconUrl(enabled ? "audio-on" : "audio-off");
+    this.setControlLabel(
+      this.audioButton,
+      translate(this.locale, enabled ? "audioOn" : "audioOff"),
+    );
     this.audioButton.setAttribute("aria-pressed", String(enabled));
   }
 
@@ -169,6 +223,26 @@ export class ActionControlsHud {
     this.fullscreenIcon.src = iconUrl(
       active ? "fullscreen-exit" : "fullscreen-enter",
     );
+    this.setControlLabel(
+      this.fullscreenButton,
+      translate(
+        this.locale,
+        active ? "exitFullscreen" : "fullscreen",
+      ),
+    );
     this.fullscreenButton.setAttribute("aria-pressed", String(active));
+  }
+
+  private setSecondaryActionsOpen(open: boolean): void {
+    this.secondaryActions.classList.toggle("is-open", open);
+    this.moreButton.setAttribute("aria-expanded", String(open));
+  }
+
+  private setControlLabel(
+    button: HTMLButtonElement,
+    label: string,
+  ): void {
+    button.setAttribute("aria-label", label);
+    button.title = label;
   }
 }

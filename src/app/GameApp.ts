@@ -33,6 +33,10 @@ import {
   pointOnLink,
 } from "../engine/link-geometry";
 import { systemHitRadius } from "../engine/system-geometry";
+import {
+  preloadCriticalRuntimeAssets,
+  preloadDeferredRuntimeAssets,
+} from "../engine/RuntimeAssets";
 import { PointerInput } from "../input/PointerInput";
 import { applyDocumentLocale } from "../i18n/document";
 import {
@@ -130,7 +134,16 @@ export class GameApp {
 
   async start(): Promise<void> {
     this.platform.loadingStart();
-    await this.platform.initialize();
+    try {
+      await this.platform.initialize();
+      await Promise.all([
+        preloadCriticalRuntimeAssets(this.currentLevel),
+        this.audio.preload(),
+      ]);
+    } catch (error) {
+      this.platform.loadingStop();
+      throw error;
+    }
 
     this.hud.bind({
       onMapOpen: () => this.openCampaignMap(),
@@ -161,9 +174,14 @@ export class GameApp {
 
     this.resizeObserver.observe(this.canvas);
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
+    document.addEventListener("click", this.handleAudioInteraction);
+    this.canvas.addEventListener("pointerdown", this.handleAudioInteraction);
     this.platform.loadingStop();
     this.platform.gameplayStart();
+    this.audio.setMusicMode("gameplay");
+    this.audio.preloadMusic();
     this.animationFrameId = requestAnimationFrame(this.frame);
+    void preloadDeferredRuntimeAssets(this.currentLevel).catch(() => {});
   }
 
   stop(): void {
@@ -179,6 +197,9 @@ export class GameApp {
       "visibilitychange",
       this.handleVisibilityChange,
     );
+    document.removeEventListener("click", this.handleAudioInteraction);
+    this.canvas.removeEventListener("pointerdown", this.handleAudioInteraction);
+    this.audio.dispose();
     this.platform.gameplayStop();
   }
 
@@ -219,7 +240,6 @@ export class GameApp {
       }
 
       if (event.kind === "down") {
-        void this.audio.unlock();
         const selected = this.findSystemAt(
           event.position.x,
           event.position.y,
@@ -475,6 +495,7 @@ export class GameApp {
         break;
       case "won": {
         this.audio.play("win");
+        this.audio.setMusicMode("menu");
         this.platform.gameplayStop();
         const stars = this.starRating(event.elapsedSeconds);
         this.progress.recordWin(this.currentLevelIndex, stars);
@@ -489,6 +510,7 @@ export class GameApp {
       }
       case "lost":
         this.audio.play("lose");
+        this.audio.setMusicMode("menu");
         this.platform.gameplayStop();
         this.hud.showResult(
           "lost",
@@ -549,8 +571,10 @@ export class GameApp {
     this.simulationClock.reset();
     this.hud.setPaused(this.paused);
     if (this.paused) {
+      this.audio.setMusicPaused(true);
       this.platform.gameplayStop();
     } else {
+      this.audio.setMusicMode("gameplay");
       this.lastFrameTime = performance.now();
       this.platform.gameplayStart();
       this.restoreTutorialHint();
@@ -573,6 +597,7 @@ export class GameApp {
     this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
+    this.audio.setMusicMode("gameplay");
     this.platform.gameplayStart();
   }
 
@@ -619,6 +644,7 @@ export class GameApp {
     this.hud.hideCampaignMap();
     this.hud.hideResult();
     this.showOpeningHint();
+    this.audio.setMusicMode("gameplay");
     this.platform.gameplayStart();
   }
 
@@ -632,6 +658,7 @@ export class GameApp {
     this.gesture = null;
     this.simulationClock.reset();
     this.platform.gameplayStop();
+    this.audio.setMusicMode("menu");
     this.hud.showCampaignMap(
       this.currentLevelIndex,
       this.progress.snapshot(),
@@ -649,9 +676,12 @@ export class GameApp {
     this.pausedBeforeMap = false;
     this.simulationClock.reset();
     if (!this.paused) {
+      this.audio.setMusicMode("gameplay");
       this.lastFrameTime = performance.now();
       this.platform.gameplayStart();
       this.restoreTutorialHint();
+    } else if (this.simulation.status === "playing") {
+      this.audio.setMusicPaused(true);
     }
   }
 
@@ -707,17 +737,25 @@ export class GameApp {
   }
 
   private readonly handleVisibilityChange = (): void => {
-    if (
-      document.hidden &&
-      !this.paused &&
-      this.simulation.status === "playing"
-    ) {
+    if (!document.hidden) {
+      if (this.campaignMapOpen || this.simulation.status !== "playing") {
+        this.audio.setMusicMode("menu");
+      }
+      return;
+    }
+
+    this.audio.setMusicPaused(true);
+    if (!this.paused && this.simulation.status === "playing") {
       this.paused = true;
       this.gesture = null;
       this.simulationClock.reset();
       this.hud.setPaused(true);
       this.platform.gameplayStop();
     }
+  };
+
+  private readonly handleAudioInteraction = (): void => {
+    void this.audio.unlock();
   };
 
   private snapshot(): SceneSnapshot {

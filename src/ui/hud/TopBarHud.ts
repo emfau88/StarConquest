@@ -6,7 +6,14 @@ import { translate, type Locale } from "../../i18n/strings";
 import { formatTime, requireElement } from "./dom";
 
 export class TopBarHud {
-  private readonly sector = requireElement("#hud-sector", HTMLSpanElement);
+  private readonly sector = requireElement(
+    "#hud-sector-full",
+    HTMLSpanElement,
+  );
+  private readonly compactSector = requireElement(
+    "#hud-sector-compact",
+    HTMLSpanElement,
+  );
   private readonly title = requireElement("#hud-title", HTMLElement);
   private readonly objective = requireElement(
     "#hud-objective",
@@ -39,6 +46,9 @@ export class TopBarHud {
     this.sector.textContent =
       `${translate(this.locale, "sectorLabel")} ` +
       `${String(level.sector).padStart(2, "0")} · ${difficulty}`;
+    this.compactSector.textContent =
+      `${String(level.sector).padStart(2, "0")} · ` +
+      `${"\u2605".repeat(displayedDifficulty)}`;
     this.title.textContent = localizeLevelText(level.title, this.locale);
     this.objective.textContent = localizeLevelText(
       level.objective,

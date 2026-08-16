@@ -36,6 +36,12 @@ import {
   formingConvoyDistances,
 } from "./fleet-motion";
 import { SYSTEM_RADII } from "./system-geometry";
+import { getImageAsset } from "./ImageAssetCache";
+import {
+  BACKDROP_URLS,
+  CAPTURE_BURST_URL,
+  TUTORIAL_GESTURE_URLS,
+} from "./RuntimeAssets";
 import {
   isSystemArtReady,
   SystemArtLibrary,
@@ -48,30 +54,6 @@ interface Star {
   alpha: number;
   phase: number;
 }
-
-const BACKDROP_URLS: Readonly<Record<SectorTheme, string>> = Object.freeze({
-  "azure-frontier":
-    `${import.meta.env.BASE_URL}assets/backgrounds/sector-azure.webp`,
-  "quasar-rift":
-    `${import.meta.env.BASE_URL}assets/backgrounds/sector-quasar.webp`,
-  "nexus-void":
-    `${import.meta.env.BASE_URL}assets/backgrounds/sector-nexus.webp`,
-});
-const CAPTURE_BURST_URL =
-  `${import.meta.env.BASE_URL}assets/vfx/capture-burst.webp`;
-const TUTORIAL_GESTURE_URLS = Object.freeze({
-  connect:
-    `${import.meta.env.BASE_URL}assets/tutorial/connect-gesture.png`,
-  cut:
-    `${import.meta.env.BASE_URL}assets/tutorial/cut-gesture.png`,
-});
-
-const loadImage = (url: string): HTMLImageElement => {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = url;
-  return image;
-};
 
 const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
   player: "#39c2ff",
@@ -129,14 +111,14 @@ export class CanvasRenderer {
     if (cached) {
       return cached;
     }
-    const image = loadImage(BACKDROP_URLS[theme]);
+    const image = getImageAsset(BACKDROP_URLS[theme]);
     this.backdropImages[theme] = image;
     return image;
   }
 
   private getCaptureBurstImage(): HTMLImageElement {
     if (!this.captureBurstImage) {
-      this.captureBurstImage = loadImage(CAPTURE_BURST_URL);
+      this.captureBurstImage = getImageAsset(CAPTURE_BURST_URL);
     }
     return this.captureBurstImage;
   }
@@ -148,7 +130,7 @@ export class CanvasRenderer {
     if (cached) {
       return cached;
     }
-    const image = loadImage(TUTORIAL_GESTURE_URLS[kind]);
+    const image = getImageAsset(TUTORIAL_GESTURE_URLS[kind]);
     this.tutorialGestureImages[kind] = image;
     return image;
   }
