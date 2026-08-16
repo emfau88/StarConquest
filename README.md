@@ -14,6 +14,21 @@ the right moment to launch a decisive surge.
 
 ![Blue and Helion convoys opening parallel fronts in sector six / Blaue und Helion-Konvois eröffnen mehrere Fronten in Sektor sechs](docs/screenshots/helion-front.webp)
 
+### Current status
+
+StarConquest is fully playable on desktop and mobile browsers. The same Canvas
+game scales cleanly from wide desktop screens to compact landscape phones,
+while the HUD changes layout instead of truncating mission text or controls.
+
+| Desktop | Mobile |
+| --- | --- |
+| Mouse input, wide mission HUD, accessible HUD buttons and fullscreen support. | Touch input, compact sector display, wrapped mission text, 48 px touch targets and secondary actions grouped behind **More**. |
+
+Artwork, responsive effects, bilingual UI, streamed background music and
+event-specific sound effects form one consistent presentation. Critical visual
+and sound assets are decoded before gameplay starts; additional sector artwork
+and music load in the background only when needed.
+
 ### The game
 
 - Draw routes from your systems to reinforce allies or attack hostile worlds.
@@ -33,6 +48,8 @@ the right moment to launch a decisive surge.
 - Play with mouse or touch in a responsive landscape layout with persistent
   campaign unlocks and best star ratings.
 - Switch between English and German at any time; the preference is saved.
+- Hear separate low-volume music for the campaign map and gameplay, with smooth
+  transitions, pause handling and event-specific science-fiction sound effects.
 
 ### From first convoy to sector command
 
@@ -58,13 +75,16 @@ the right moment to launch a decisive surge.
 - **Cut and surge:** swipe across an active corridor.
 - **Manage the run:** use the HUD for the campaign map, restart, audio,
   fullscreen and pause.
+- **Compact screens:** open **More** for secondary actions; the primary pause
+  control remains directly accessible.
 - **Change language:** use the `EN`/`DE` button; the game updates immediately.
 
 ### Development
 
 StarConquest uses TypeScript, Vite and a custom Canvas 2D renderer. Gameplay is
 driven by a fixed-timestep simulation and covered by automated mechanics,
-campaign, balance, runtime-asset and localization tests.
+campaign, balance, responsive-HUD, audio, runtime-asset, preloading and
+localization tests.
 
 ```powershell
 npm.cmd install
@@ -94,6 +114,22 @@ Routen im richtigen Moment für einen entscheidenden Vorstoß.
 
 [Kampagne auf GitHub Pages spielen](https://emfau88.github.io/StarConquest/)
 
+### Aktueller Stand
+
+StarConquest ist auf Desktop- und Mobile-Browsern vollständig spielbar. Das
+Canvas-Spiel skaliert sauber vom breiten Desktop bis zum kompakten Smartphone
+im Querformat. Dabei ordnet sich das HUD neu an, statt Missionstexte oder
+Bedienelemente abzuschneiden.
+
+| Desktop | Mobile |
+| --- | --- |
+| Maussteuerung, breites Missions-HUD, zugängliche HUD-Schaltflächen und Vollbild-Unterstützung. | Touch-Steuerung, kompakte Sektoranzeige, umbrechende Missionstexte, 48-Pixel-Touchziele und gebündelte Sekundäraktionen unter **Mehr**. |
+
+Grafik, responsive Effekte, zweisprachige Oberfläche, gestreamte
+Hintergrundmusik und ereignisbezogene Soundeffekte ergeben eine einheitliche
+Präsentation. Kritische Grafik- und Sound-Assets werden vor dem Spielstart
+dekodiert; weitere Sektorgrafiken und Musik laden nur bei Bedarf im Hintergrund.
+
 ### Das Spiel
 
 - Verbinde eigene Systeme, um Verbündete zu verstärken oder feindliche Welten
@@ -114,6 +150,8 @@ Routen im richtigen Moment für einen entscheidenden Vorstoß.
   Bestwertungen werden gespeichert.
 - Wechsle jederzeit live zwischen Deutsch und Englisch; die Auswahl bleibt
   gespeichert.
+- Menü und Gameplay besitzen eigene leise Musikstücke mit weichen Übergängen,
+  Pausenbehandlung und passenden Science-Fiction-Soundeffekten.
 
 ### Kampagne
 
@@ -133,6 +171,8 @@ Routen im richtigen Moment für einen entscheidenden Vorstoß.
 - **Trennen und vorstoßen:** über einen aktiven Energiekorridor wischen.
 - **Partie verwalten:** Kampagnenkarte, Neustart, Audio, Vollbild und Pause
   befinden sich im HUD.
+- **Kompakte Bildschirme:** Unter **Mehr** befinden sich Sekundäraktionen; die
+  zentrale Pausensteuerung bleibt direkt erreichbar.
 - **Sprache wechseln:** die Schaltfläche `DE`/`EN` verwenden; die Oberfläche
   wird sofort umgestellt.
 
@@ -140,7 +180,8 @@ Routen im richtigen Moment für einen entscheidenden Vorstoß.
 
 StarConquest verwendet TypeScript, Vite und einen eigenen Canvas-2D-Renderer.
 Eine Fixed-Timestep-Simulation bildet die Spielgrundlage; Mechanik, Kampagne,
-Balancing, Laufzeit-Assets und Lokalisierung werden automatisiert getestet.
+Balancing, responsives HUD, Audio, Laufzeit-Assets, Preloading und Lokalisierung
+werden automatisiert getestet.
 
 ```powershell
 npm.cmd install
