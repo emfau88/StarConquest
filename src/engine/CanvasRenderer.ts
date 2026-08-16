@@ -64,6 +64,36 @@ const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
 const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
 const SYSTEM_ARTWORK_SCALE = 2.84;
 const SYSTEM_HALO_SCALE = 1.72;
+
+const addRoundedRectPath = (
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+): void => {
+  const safeRadius = Math.max(
+    0,
+    Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2),
+  );
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - safeRadius,
+    y + height,
+  );
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+};
+
 const SYSTEM_ARTWORK_DRAW_OFFSETS: Readonly<
   Record<Owner, Readonly<Record<SystemClass, Point>>>
 > = Object.freeze({
@@ -832,7 +862,8 @@ export class CanvasRenderer {
         (isAttacking ? 0.34 : 0.24) + link.intensity * 0.24;
       context.fillStyle = "#f4fcff";
       context.beginPath();
-      context.roundRect(
+      addRoundedRectPath(
+        context,
         -4 - link.intensity * 1.5,
         -1.1,
         8 + link.intensity * 3,
@@ -1156,7 +1187,14 @@ export class CanvasRenderer {
     context.shadowColor = color;
     context.shadowBlur = preview.prominentBoost ? 16 : 8;
     context.beginPath();
-    context.roundRect(labelX - width / 2, labelY - 18, width, 36, 12);
+    addRoundedRectPath(
+      context,
+      labelX - width / 2,
+      labelY - 18,
+      width,
+      36,
+      12,
+    );
     context.fill();
     context.stroke();
 
@@ -1897,16 +1935,24 @@ export class CanvasRenderer {
     const energyFontSize = Math.round(Math.max(18, radius * 0.5));
     context.font = `900 ${energyFontSize}px Inter, system-ui, sans-serif`;
     context.textAlign = "center";
-    context.textBaseline = "alphabetic";
     const energyMetrics = context.measureText(energyLabel);
-    const energyX =
-      (energyMetrics.actualBoundingBoxLeft -
-        energyMetrics.actualBoundingBoxRight) /
-      2;
-    const energyY =
-      (energyMetrics.actualBoundingBoxAscent -
-        energyMetrics.actualBoundingBoxDescent) /
-      2;
+    const hasInkBounds = [
+      energyMetrics.actualBoundingBoxLeft,
+      energyMetrics.actualBoundingBoxRight,
+      energyMetrics.actualBoundingBoxAscent,
+      energyMetrics.actualBoundingBoxDescent,
+    ].every(Number.isFinite);
+    context.textBaseline = hasInkBounds ? "alphabetic" : "middle";
+    const energyX = hasInkBounds
+      ? (energyMetrics.actualBoundingBoxLeft -
+          energyMetrics.actualBoundingBoxRight) /
+        2
+      : 0;
+    const energyY = hasInkBounds
+      ? (energyMetrics.actualBoundingBoxAscent -
+          energyMetrics.actualBoundingBoxDescent) /
+        2
+      : 0;
     context.lineWidth = Math.max(3, energyFontSize * 0.14);
     context.strokeStyle = "rgba(2, 12, 36, 0.72)";
     context.strokeText(energyLabel, energyX, energyY);
@@ -2198,7 +2244,14 @@ export class CanvasRenderer {
     context.strokeStyle = focused ? "rgba(238, 251, 255, 0.8)" : `${color}78`;
     context.lineWidth = focused ? 1.5 : 1;
     context.beginPath();
-    context.roundRect(-width / 2, y - height / 2, width, height, 7.5);
+    addRoundedRectPath(
+      context,
+      -width / 2,
+      y - height / 2,
+      width,
+      height,
+      7.5,
+    );
     context.fill();
     context.stroke();
 

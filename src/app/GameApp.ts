@@ -285,7 +285,7 @@ export class GameApp {
     if (this.gesture?.kind === "link") {
       this.gesture.current = position;
     } else if (this.gesture?.kind === "cut") {
-      const last = this.gesture.trail.at(-1);
+      const last = this.gesture.trail[this.gesture.trail.length - 1];
       if (
         !last ||
         Math.hypot(position.x - last.x, position.y - last.y) >=
