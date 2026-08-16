@@ -1855,17 +1855,27 @@ export class CanvasRenderer {
       context.shadowBlur = 0;
     }
 
+    const energyLabel = String(Math.floor(system.energy));
     context.fillStyle = "#f4f9ff";
     const energyFontSize = Math.round(Math.max(18, radius * 0.5));
     context.font = `900 ${energyFontSize}px Inter, system-ui, sans-serif`;
     context.textAlign = "center";
-    context.textBaseline = "middle";
+    context.textBaseline = "alphabetic";
+    const energyMetrics = context.measureText(energyLabel);
+    const energyX =
+      (energyMetrics.actualBoundingBoxLeft -
+        energyMetrics.actualBoundingBoxRight) /
+      2;
+    const energyY =
+      (energyMetrics.actualBoundingBoxAscent -
+        energyMetrics.actualBoundingBoxDescent) /
+      2;
     context.lineWidth = Math.max(3, energyFontSize * 0.14);
     context.strokeStyle = "rgba(2, 12, 36, 0.72)";
-    context.strokeText(String(Math.floor(system.energy)), 0, -2);
+    context.strokeText(energyLabel, energyX, energyY);
     context.shadowColor = "#03112c";
     context.shadowBlur = 10;
-    context.fillText(String(Math.floor(system.energy)), 0, -2);
+    context.fillText(energyLabel, energyX, energyY);
     context.shadowBlur = 0;
 
     this.drawConnectionSlots(context, system, radius, color, focused);
@@ -1936,10 +1946,8 @@ export class CanvasRenderer {
     context.shadowBlur = focused ? 22 : 10;
     context.drawImage(artwork, -size / 2, -size / 2, size, size);
 
-    context.strokeStyle = focused
-      ? "rgba(241, 253, 255, 0.96)"
-      : `${color}b8`;
-    context.lineWidth = focused ? 4 : 2;
+    context.strokeStyle = focused ? `${color}e8` : `${color}b8`;
+    context.lineWidth = focused ? 2.8 : 2;
     context.shadowColor = color;
     context.shadowBlur = focused ? 20 : 10;
     context.beginPath();
