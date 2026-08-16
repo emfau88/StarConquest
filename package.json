@@ -12,7 +12,7 @@
     "test:assets": "node --test tests/runtime-assets.test.mjs",
     "test:legacy": "node --test tests/core-mechanics.test.mjs tests/legacy-snapshot.test.mjs",
     "test:ui": "node --test tests/hud-responsive.test.mjs",
-    "test:game": "tsx --test tests/audio-assets.test.ts tests/game-simulation.test.ts tests/i18n.test.ts tests/runtime-preload.test.ts"
+    "test:game": "tsx --test tests/audio-assets.test.ts tests/game-simulation.test.ts tests/i18n.test.ts tests/runtime-preload.test.ts tests/system-artwork-layout.test.ts"
   },
   "devDependencies": {
     "tsx": "^4.23.1",

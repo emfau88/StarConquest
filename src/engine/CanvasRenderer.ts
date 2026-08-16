@@ -64,6 +64,24 @@ const OWNER_COLORS: Readonly<Record<Owner, string>> = Object.freeze({
 const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
 const SYSTEM_ARTWORK_SCALE = 2.84;
 const SYSTEM_HALO_SCALE = 1.72;
+const SYSTEM_ARTWORK_DRAW_OFFSETS: Readonly<
+  Partial<Record<Owner, Partial<Record<SystemClass, Point>>>>
+> = Object.freeze({
+  player: {
+    QUASAR: { x: -18 / 512, y: 20 / 512 },
+  },
+  enemy: {
+    QUASAR: { x: 20 / 512, y: 24 / 512 },
+  },
+});
+const ZERO_ARTWORK_DRAW_OFFSET: Point = Object.freeze({ x: 0, y: 0 });
+
+export const systemArtworkDrawOffset = (
+  owner: Owner,
+  className: SystemClass,
+): Point =>
+  SYSTEM_ARTWORK_DRAW_OFFSETS[owner]?.[className] ??
+  ZERO_ARTWORK_DRAW_OFFSET;
 
 const buildStars = (): Star[] => {
   let seed = 0x51a7c0;
@@ -1742,6 +1760,8 @@ export class CanvasRenderer {
           pulse,
           color,
           focused,
+          system.owner,
+          system.className,
           hasTargetArtwork ? 1 - easedMorphProgress : 1,
         );
       }
@@ -1753,6 +1773,8 @@ export class CanvasRenderer {
           pulse,
           color,
           focused,
+          system.owner,
+          system.morphTargetClassName!,
           easedMorphProgress,
         );
       }
@@ -1936,15 +1958,20 @@ export class CanvasRenderer {
     pulse: number,
     color: string,
     focused: boolean,
+    owner: Owner,
+    className: SystemClass,
     alpha = 1,
   ): void {
     const size = radius * SYSTEM_ARTWORK_SCALE * pulse;
+    const drawOffset = systemArtworkDrawOffset(owner, className);
+    const drawX = -size / 2 + drawOffset.x * size;
+    const drawY = -size / 2 + drawOffset.y * size;
 
     context.save();
     context.globalAlpha = Math.max(0, Math.min(1, alpha));
     context.shadowColor = color;
     context.shadowBlur = focused ? 22 : 10;
-    context.drawImage(artwork, -size / 2, -size / 2, size, size);
+    context.drawImage(artwork, drawX, drawY, size, size);
 
     context.strokeStyle = focused ? `${color}e8` : `${color}b8`;
     context.lineWidth = focused ? 2.8 : 2;
