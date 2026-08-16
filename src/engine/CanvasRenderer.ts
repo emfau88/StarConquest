@@ -65,23 +65,38 @@ const ENERGY_PULSE_SPEED_PIXELS_PER_SECOND = 250;
 const SYSTEM_ARTWORK_SCALE = 2.84;
 const SYSTEM_HALO_SCALE = 1.72;
 const SYSTEM_ARTWORK_DRAW_OFFSETS: Readonly<
-  Partial<Record<Owner, Partial<Record<SystemClass, Point>>>>
+  Record<Owner, Readonly<Record<SystemClass, Point>>>
 > = Object.freeze({
   player: {
+    PULSAR: { x: -1 / 640, y: -23 / 640 },
+    GIANT: { x: 5 / 640, y: 3 / 640 },
     QUASAR: { x: -18 / 512, y: 20 / 512 },
+    NEXUS: { x: 1 / 640, y: -5 / 640 },
   },
   enemy: {
+    PULSAR: { x: -13 / 640, y: -12 / 640 },
+    GIANT: { x: 0, y: 1 / 640 },
     QUASAR: { x: 20 / 512, y: 24 / 512 },
+    NEXUS: { x: 0, y: 8 / 640 },
+  },
+  enemy2: {
+    PULSAR: { x: 0, y: -25 / 414 },
+    GIANT: { x: -1 / 512, y: -17 / 512 },
+    QUASAR: { x: 2 / 512, y: 1 / 512 },
+    NEXUS: { x: 0, y: -21 / 512 },
+  },
+  neutral: {
+    PULSAR: { x: 1 / 640, y: 11 / 640 },
+    GIANT: { x: -2 / 640, y: -13 / 640 },
+    QUASAR: { x: 1 / 640, y: 14 / 640 },
+    NEXUS: { x: 1 / 640, y: 14 / 640 },
   },
 });
-const ZERO_ARTWORK_DRAW_OFFSET: Point = Object.freeze({ x: 0, y: 0 });
 
 export const systemArtworkDrawOffset = (
   owner: Owner,
   className: SystemClass,
-): Point =>
-  SYSTEM_ARTWORK_DRAW_OFFSETS[owner]?.[className] ??
-  ZERO_ARTWORK_DRAW_OFFSET;
+): Point => SYSTEM_ARTWORK_DRAW_OFFSETS[owner][className];
 
 const buildStars = (): Star[] => {
   let seed = 0x51a7c0;
