@@ -98,6 +98,8 @@ The legacy source is frozen in [`reference/legacy-build/`](reference/legacy-buil
 The protected gameplay contract is documented in
 [`docs/core-mechanics.md`](docs/core-mechanics.md), with the latest automated
 balance report in [`docs/balance-report.md`](docs/balance-report.md).
+Third-party music and sound licenses are recorded in
+[`docs/third-party-assets.md`](docs/third-party-assets.md).
 
 Every push to `main` validates and publishes the production build through
 GitHub Pages.
@@ -196,6 +198,8 @@ Der Legacy-Quellstand ist unter
 Spielmechanik-Vertrag steht in [`docs/core-mechanics.md`](docs/core-mechanics.md),
 der aktuelle automatisierte Balancebericht in
 [`docs/balance-report.md`](docs/balance-report.md).
+Lizenzen und Originalquellen externer Musik- und Sound-Assets stehen unter
+[`docs/third-party-assets.md`](docs/third-party-assets.md).
 
 Jeder Push auf `main` validiert und veröffentlicht den Produktionsbuild über
 GitHub Pages.
